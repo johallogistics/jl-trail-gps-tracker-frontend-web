@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class DigitalSignatureScreen extends StatefulWidget {
+  const DigitalSignatureScreen({super.key});
+
   @override
   _DigitalSignatureScreenState createState() => _DigitalSignatureScreenState();
 }
