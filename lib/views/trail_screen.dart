@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:trail_tracker/views/daily_report_screen.dart'; // Your Daily Report Form Screen
 import 'package:http/http.dart' as http;
 
+import 'consolidated_report_screen.dart';
+
 class TrailScreen extends StatefulWidget {
   final bool isContinuingTrail; // Flag to check if it's continue or start
   const TrailScreen({super.key, required this.isContinuingTrail});
@@ -117,6 +119,18 @@ class _TrailScreenState extends State<TrailScreen> {
                 backgroundColor: Colors.blue,
               ),
               child: const Text('Open Daily Report Form'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to Daily Report Screen
+                Get.to(() =>  FormScreen());
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(200, 50),
+                backgroundColor: Colors.blue,
+              ),
+              child: const Text('Open Consolidated Report Form'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
