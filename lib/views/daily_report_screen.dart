@@ -1,227 +1,90 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For formatting date
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
-class DailyReportScreen extends StatefulWidget {
-  final Map<String, String> employeeData;
-  const DailyReportScreen({super.key, required this.employeeData});
+class DailyReportController extends GetxController {
+  final shiftController = TextEditingController();
+  final otHoursController = TextEditingController();
+  final vehicleModelController = TextEditingController();
+  final regNoController = TextEditingController();
+  final inTimeController = TextEditingController();
+  final outTimeController = TextEditingController();
+  final workingHoursController = TextEditingController();
+  final startingKmController = TextEditingController();
+  final endingKmController = TextEditingController();
+  final totalKmController = TextEditingController();
+  final fromPlaceController = TextEditingController();
+  final toPlaceController = TextEditingController();
+  final fuelAvgController = TextEditingController();
+  final coDriverNameController = TextEditingController();
+  final coDriverPhoneController = TextEditingController();
+  final inchargeSignController = TextEditingController();
 
-  @override
-  _DailyReportScreenState createState() => _DailyReportScreenState();
+  final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
 }
 
-class _DailyReportScreenState extends State<DailyReportScreen> {
-  final _formKey = GlobalKey<FormState>();
+class DailyReportScreen extends StatelessWidget {
+  final Map<String, String> employeeData;
+  final DailyReportController controller = Get.put(DailyReportController());
 
-  // Controllers for form fields
-  final TextEditingController _shiftController = TextEditingController();
-  final TextEditingController _otHoursController = TextEditingController();
-  final TextEditingController _vehicleModelController = TextEditingController();
-  final TextEditingController _regNoController = TextEditingController();
-  final TextEditingController _inTimeController = TextEditingController();
-  final TextEditingController _outTimeController = TextEditingController();
-  final TextEditingController _workingHoursController = TextEditingController();
-  final TextEditingController _startingKmController = TextEditingController();
-  final TextEditingController _endingKmController = TextEditingController();
-  final TextEditingController _totalKmController = TextEditingController();
-  final TextEditingController _fromPlaceController = TextEditingController();
-  final TextEditingController _toPlaceController = TextEditingController();
-  final TextEditingController _fuelAvgController = TextEditingController();
-  final TextEditingController _coDriverNameController = TextEditingController();
-  final TextEditingController _coDriverPhoneController = TextEditingController();
-  final TextEditingController _inchargeSignController = TextEditingController();
-
-  // For default date
-  String _date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  DailyReportScreen({super.key, required this.employeeData});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Report Form'),
-        backgroundColor: Colors.blue,
+        title: Text('daily_report_form'.tr),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Display employee details
-            Text('Employee Name: ${widget.employeeData['name']}'),
-            Text('Employee Phone: ${widget.employeeData['phone']}'),
-            Text('Employee Code: ${widget.employeeData['code']}'),
-            Text('Month: ${widget.employeeData['month']}'),
-            Text('Year: ${widget.employeeData['year']}'),
-            Text('DICV Incharge Name: ${widget.employeeData['inchargeName']}'),
-            Text('Incharge Phone: ${widget.employeeData['inchargePhone']}'),
-            const SizedBox(height: 20),
-
-            // Form for daily report
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Date',
-                      border: OutlineInputBorder(),
-                    ),
-                    initialValue: _date,
-                    enabled: false,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _shiftController,
-                    decoration: const InputDecoration(
-                      labelText: 'Shift',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _otHoursController,
-                    decoration: const InputDecoration(
-                      labelText: 'OT Hours',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _vehicleModelController,
-                    decoration: const InputDecoration(
-                      labelText: 'Vehicle Model',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _regNoController,
-                    decoration: const InputDecoration(
-                      labelText: 'Vehicle Reg. No.',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _inTimeController,
-                    decoration: const InputDecoration(
-                      labelText: 'IN Time',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _outTimeController,
-                    decoration: const InputDecoration(
-                      labelText: 'OUT Time',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _workingHoursController,
-                    decoration: const InputDecoration(
-                      labelText: 'Working Hours',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _startingKmController,
-                    decoration: const InputDecoration(
-                      labelText: 'Starting KM',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _endingKmController,
-                    decoration: const InputDecoration(
-                      labelText: 'Ending KM',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _totalKmController,
-                    decoration: const InputDecoration(
-                      labelText: 'Total KM',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _fromPlaceController,
-                    decoration: const InputDecoration(
-                      labelText: 'From Place',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _toPlaceController,
-                    decoration: const InputDecoration(
-                      labelText: 'To Place',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _fuelAvgController,
-                    decoration: const InputDecoration(
-                      labelText: 'Fuel Avg.',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _coDriverNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Co Driver Name',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _coDriverPhoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Co Driver Phone No.',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _inchargeSignController,
-                    decoration: const InputDecoration(
-                      labelText: 'Incharge Sign',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Handle form submission logic
-                        print('Form Submitted');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Colors.blue, // White text color
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30), // Custom padding
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10), // Rounded corners
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 18, // Larger text for better readability
-                        fontWeight: FontWeight.bold, // Make the text bold
-                      ),
-                    ),
-                    child: const Text('Submit Report'),
-                  )
-                ],
-              ),
+            Text('${'employee_name'.tr}: ${employeeData['name']}'),
+            Text('${'employee_phone'.tr}: ${employeeData['phone']}'),
+            Text('${'employee_code'.tr}: ${employeeData['code']}'),
+            Text('${'month'.tr}: ${employeeData['month']}'),
+            Text('${'year'.tr}: ${employeeData['year']}'),
+            Text('${'incharge_name'.tr}: ${employeeData['inchargeName']}'),
+            Text('${'incharge_phone'.tr}: ${employeeData['inchargePhone']}'),
+            SizedBox(height: 20),
+            buildTextField('date'.tr, TextEditingController(text: controller.date), enabled: false),
+            buildTextField('shift'.tr, controller.shiftController),
+            buildTextField('ot_hours'.tr, controller.otHoursController),
+            buildTextField('vehicle_model'.tr, controller.vehicleModelController),
+            buildTextField('vehicle_reg_no'.tr, controller.regNoController),
+            buildTextField('in_time'.tr, controller.inTimeController),
+            buildTextField('out_time'.tr, controller.outTimeController),
+            buildTextField('working_hours'.tr, controller.workingHoursController),
+            buildTextField('starting_km'.tr, controller.startingKmController),
+            buildTextField('ending_km'.tr, controller.endingKmController),
+            buildTextField('total_km'.tr, controller.totalKmController),
+            buildTextField('from_place'.tr, controller.fromPlaceController),
+            buildTextField('to_place'.tr, controller.toPlaceController),
+            buildTextField('fuel_avg'.tr, controller.fuelAvgController),
+            buildTextField('co_driver_name'.tr, controller.coDriverNameController),
+            buildTextField('co_driver_phone'.tr, controller.coDriverPhoneController),
+            buildTextField('incharge_sign'.tr, controller.inchargeSignController),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                print("Form Submitted");
+              },
+              child: Text('submit_report'.tr),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller, {bool enabled = true}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        decoration: InputDecoration(labelText: label, border: OutlineInputBorder()),
       ),
     );
   }

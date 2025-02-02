@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+// Language Translations
+
+// Form Controller
 class FormController extends GetxController {
   final locationController = TextEditingController();
   final dateController = TextEditingController();
@@ -15,116 +18,71 @@ class FormController extends GetxController {
   var competitorReference = <String, TextEditingController>{}.obs;
   var selectedFieldsForCompetitor = <String, bool>{}.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // addVehicleDetail(); // Ensure at least one set of vehicle fields is present
-  }
-
   void addVehicleDetail() {
     var newVehicle = {
-      'vehicleRegNo': TextEditingController(),
-      'brand': TextEditingController(),
-      'chassisNo': TextEditingController(),
-      'vehicleModel': TextEditingController(),
-      'wheelBase': TextEditingController(),
-      'atsType': TextEditingController(),
-      'emission': TextEditingController(),
-      'tyreBrand': TextEditingController(),
-      'application': TextEditingController(),
-      'gvwCarried': TextEditingController(),
-      'tripStartDate': TextEditingController(),
-      'startOdo': TextEditingController(),
-      'tripFinishDate': TextEditingController(),
-      'endOdo': TextEditingController(),
-      'startPlace': TextEditingController(),
-      'endPlace': TextEditingController(),
-      'totalTrailKms': TextEditingController(),
-      'fuelConsumed': TextEditingController(),
-      'adBlueConsumedCluster': TextEditingController(),
+      'vehicleRegNo'.tr: TextEditingController(),
+      'brand'.tr: TextEditingController(),
+      'chassisNo'.tr: TextEditingController(),
+      'vehicleModel'.tr: TextEditingController(),
+      'wheelBase'.tr: TextEditingController(),
+      'atsType'.tr: TextEditingController(),
+      'emission'.tr: TextEditingController(),
+      'tyreBrand'.tr: TextEditingController(),
+      'application'.tr: TextEditingController(),
+      'gvwCarried'.tr: TextEditingController(),
+      'tripStartDate'.tr: TextEditingController(),
+      'startOdo'.tr: TextEditingController(),
+      'tripFinishDate'.tr: TextEditingController(),
+      'endOdo'.tr: TextEditingController(),
+      'startPlace'.tr: TextEditingController(),
+      'endPlace'.tr: TextEditingController(),
+      'totalTrailKms'.tr: TextEditingController(),
+      'fuelConsumed'.tr: TextEditingController(),
+      'adBlueConsumedCluster'.tr: TextEditingController(),
       'didRegenerationHappen': false.obs,
-      'leadDistance': TextEditingController(),
-      'drivingSpeed': TextEditingController(),
-      'actualFeInBB': TextEditingController(),
-    };
+      'leadDistance'.tr: TextEditingController(),
+      'drivingSpeed'.tr: TextEditingController(),
+      'actualFeInBB'.tr: TextEditingController(),
+    }
+    ;
     vehicleDetails.add(newVehicle);
   }
-
-  void updateCompetitorReference() {
-    competitorReference.clear();
-    if (vehicleDetails.isNotEmpty) {
-      selectedFieldsForCompetitor.forEach((key, value) {
-        if (value) {
-          competitorReference[key] = TextEditingController(text: vehicleDetails[0][key].text);
-        }
-      });
-    }
-  }
-
-  @override
-  void onClose() {
-    locationController.dispose();
-    dateController.dispose();
-    masterDriverNameController.dispose();
-    empCodeController.dispose();
-    mobileNoController.dispose();
-    customerDriverNameController.dispose();
-    customerMobileNoController.dispose();
-    licenseNoController.dispose();
-
-    for (var vehicle in vehicleDetails) {
-      vehicle.forEach((key, value) {
-        if (value is TextEditingController) value.dispose();
-      });
-    }
-
-    super.onClose();
-  }
 }
-
+// Form Screen
 class FormScreen extends StatelessWidget {
   final FormController controller = Get.put(FormController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Trip Form")),
+      appBar: AppBar(
+        title: Text('trip_form'.tr),
+      ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              buildTextField("Location", controller.locationController),
-              buildTextField("Date", controller.dateController),
-              buildTextField("Master Driver Name", controller.masterDriverNameController),
-              buildTextField("Emp Code", controller.empCodeController),
-              buildTextField("Mobile No", controller.mobileNoController),
-              buildTextField("Customer Driver Name", controller.customerDriverNameController),
-              buildTextField("Customer Mobile No", controller.customerMobileNoController),
-              buildTextField("License No", controller.licenseNoController),
+              buildTextField('location'.tr, controller.locationController),
+              buildTextField('date'.tr, controller.dateController),
+              buildTextField('master_driver_name'.tr, controller.masterDriverNameController),
+              buildTextField('emp_code'.tr, controller.empCodeController),
+              buildTextField('mobile_no'.tr, controller.mobileNoController),
+              buildTextField('customer_driver_name'.tr, controller.customerDriverNameController),
+              buildTextField('customer_mobile_no'.tr, controller.customerMobileNoController),
+              buildTextField('license_no'.tr, controller.licenseNoController),
               SizedBox(height: 20),
-              Text("Vehicle Details"),
+              Text('vehicle_details'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Obx(() => Column(
                 children: [
                   for (var vehicle in controller.vehicleDetails)
                     Column(
                       children: vehicle.entries.map((entry) {
                         if (entry.key != 'didRegenerationHappen') {
-                          return Row(
-                            children: [
-                              Expanded(child: buildTextField(entry.key, entry.value)),
-                              Obx(() => Checkbox(
-                                value: controller.selectedFieldsForCompetitor[entry.key] ?? false,
-                                onChanged: (val) {
-                                  controller.selectedFieldsForCompetitor[entry.key] = val ?? false;
-                                  controller.updateCompetitorReference();
-                                },
-                              )),
-                            ],
-                          );
+                          return buildTextField(entry.key.tr, entry.value);
                         }
                         return Obx(() => CheckboxListTile(
-                          title: Text("Did Regeneration happen during trip?"),
+                          title: Text('did_regeneration'.tr),
                           value: vehicle['didRegenerationHappen'].value,
                           onChanged: (val) {
                             vehicle['didRegenerationHappen'].value = val ?? false;
@@ -135,25 +93,16 @@ class FormScreen extends StatelessWidget {
                 ],
               )),
               SizedBox(height: 20),
-              Text("Competitor Reference"),
-              Obx(() => Column(
-                children: controller.competitorReference.entries
-                    .map((entry) => buildTextField(entry.key, entry.value))
-                    .toList(),
-              )),
-              SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  controller.addVehicleDetail();
-                },
-                child: Text("Add Vehicle Details"),
+                onPressed: controller.addVehicleDetail,
+                child: Text('add_vehicle'.tr),
               ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   print("Form Submitted");
                 },
-                child: Text("Submit"),
+                child: Text('submit'.tr),
               ),
             ],
           ),

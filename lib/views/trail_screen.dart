@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:trail_tracker/views/daily_report_screen.dart'; // Your Daily Report Form Screen
+import 'package:trail_tracker/views/daily_report_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:trail_tracker/views/shift_log_detail_screen.dart';
 
 import 'consolidated_report_screen.dart';
 
 class TrailScreen extends StatefulWidget {
-  final bool isContinuingTrail; // Flag to check if it's continue or start
+  final bool isContinuingTrail;
   const TrailScreen({super.key, required this.isContinuingTrail});
 
   @override
@@ -21,15 +22,14 @@ class _TrailScreenState extends State<TrailScreen> {
   @override
   void initState() {
     super.initState();
-    _startTrackingLocation();
+    // _startTrackingLocation();
   }
 
-  // Start tracking the location
   void _startTrackingLocation() {
     Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update every 10 meters
+        distanceFilter: 10,
       ),
     ).listen((Position position) {
       setState(() {
@@ -39,21 +39,18 @@ class _TrailScreenState extends State<TrailScreen> {
     });
   }
 
-  // Stop tracking location
   void _stopTrackingLocation() {
     setState(() {
       _isTracking = false;
     });
   }
 
-  // Send live location to the server (Database)
   void _sendLocationToServer(double latitude, double longitude) async {
-    // Replace with your API endpoint
     final String apiUrl = 'http://localhost:3000/update-location';
     final response = await http.post(
       Uri.parse(apiUrl),
       body: {
-        'driverId': 'driver123', // Replace with actual driver ID
+        'driverId': 'driver123',
         'latitude': latitude.toString(),
         'longitude': longitude.toString(),
       },
@@ -68,27 +65,25 @@ class _TrailScreenState extends State<TrailScreen> {
 
   @override
   void dispose() {
-    // Stop the location tracking when the screen is disposed
     _stopTrackingLocation();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
     final employeeData = {
-    'name': 'John Doe',
-    'phone': '123-456-7890',
-    'code': 'EMP123',
-    'month': 'January',
-    'year': '2025',
-    'inchargeName': 'Jane Smith',
-    'inchargePhone': '987-654-3210',
+      'name': 'John Doe',
+      'phone': '123-456-7890',
+      'code': 'EMP123',
+      'month': 'January',
+      'year': '2025',
+      'inchargeName': 'Jane Smith',
+      'inchargePhone': '987-654-3210',
     };
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trail Screen'),
+        title: Text('trail_screen'.tr),
         backgroundColor: Colors.orange,
       ),
       body: Center(
@@ -97,54 +92,61 @@ class _TrailScreenState extends State<TrailScreen> {
           children: [
             if (_currentPosition != null)
               Text(
-                'Current Location: \nLat: ${_currentPosition!.latitude}, Lon: ${_currentPosition!.longitude}',
+                '${'current_location'.tr} \nLat: ${_currentPosition!.latitude}, Lon: ${_currentPosition!.longitude}',
                 textAlign: TextAlign.center,
               ),
             const SizedBox(height: 20),
-            Text('Employee Name: ${employeeData['name']}'),
-            Text('Employee Phone: ${employeeData['phone']}'),
-            Text('Employee Code: ${employeeData['code']}'),
-            Text('Month: ${employeeData['month']}'),
-            Text('Year: ${employeeData['year']}'),
-            Text('DICV Incharge Name: ${employeeData['inchargeName']}'),
-            Text('Incharge Phone: ${employeeData['inchargePhone']}'),
+            Text('${'employee_name'.tr}: ${employeeData['name']}'),
+            Text('${'employee_phone'.tr}: ${employeeData['phone']}'),
+            Text('${'employee_code'.tr}: ${employeeData['code']}'),
+            Text('${'month'.tr}: ${employeeData['month']}'),
+            Text('${'year'.tr}: ${employeeData['year']}'),
+            Text('${'incharge_name'.tr}: ${employeeData['inchargeName']}'),
+            Text('${'incharge_phone'.tr}: ${employeeData['inchargePhone']}'),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navigate to Daily Report Screen
-                Get.to(() =>  DailyReportScreen(employeeData: employeeData));
+                Get.to(() => DailyReportScreen(employeeData: employeeData));
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 50),
                 backgroundColor: Colors.blue,
               ),
-              child: const Text('Open Daily Report Form'),
+              child: Text('open_daily_report'.tr),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navigate to Daily Report Screen
-                Get.to(() =>  FormScreen());
+                Get.to(() => FormScreen());
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 50),
                 backgroundColor: Colors.blue,
               ),
-              child: const Text('Open Consolidated Report Form'),
+              child: Text('open_consolidated_report'.tr),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Complete the trail and stop location tracking
                 _stopTrackingLocation();
                 print('Trail Completed');
-                // Maybe navigate or show a completion message
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 50),
                 backgroundColor: Colors.green,
               ),
-              child: const Text('Complete Trail'),
+              child: Text('complete_trail'.tr),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Get.to(() => ShiftLogDetailScreen());
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(200, 50),
+                backgroundColor: Colors.blue,
+              ),
+              child: Text('Test Google Translate --> Trail Data'.tr),
             ),
           ],
         ),

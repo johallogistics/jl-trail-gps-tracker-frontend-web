@@ -14,8 +14,24 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Screen'),
+        title: Text('Home Screen'.tr),
         backgroundColor: Colors.lightBlueAccent,
+        actions: [
+          DropdownButton<String>(
+            value: Get.locale?.languageCode,
+            icon: Icon(Icons.language, color: Colors.white),
+            items: [
+              DropdownMenuItem(value: 'en', child: Text('English')),
+              DropdownMenuItem(value: 'ta', child: Text('தமிழ்')),
+              DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
+            ],
+            onChanged: (String? langCode) {
+              if (langCode != null) {
+                Get.updateLocale(Locale(langCode));
+              }
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -30,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                 minimumSize: const Size(200, 50),
                 backgroundColor: Colors.lightBlueAccent,
               ),
-              child: const Text('Start Transit'),
+              child: Text('Start Transit'.tr),
             ),
             const SizedBox(height: 20),
 
@@ -56,8 +72,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Text(
                       trailController.hasActiveTrail.value
-                          ? 'Continue Trail'
-                          : 'Start Trail'),
+                          ? 'Continue Trail'.tr
+                          : 'Start Trail'.tr),
                 );
               }
             }

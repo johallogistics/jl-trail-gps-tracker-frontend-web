@@ -49,20 +49,20 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   void verifyOTP() {
     if (otpCode.length == 6) {
       // TODO: Verify OTP from the backend
-      Get.snackbar('Success', 'OTP Verified Successfully!',
+      Get.snackbar('Success'.tr, 'OTP Verified Successfully!'.tr,
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
 
       // Navigate to Home Screen
       Get.off(() => const HomeScreen());
     } else {
-      Get.snackbar('Error', 'Please enter a valid OTP!',
+      Get.snackbar('Error'.tr, 'Please enter a valid OTP!'.tr,
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
   void resendOTP() {
     // TODO: Trigger OTP resend API
-    Get.snackbar('Info', 'OTP Resent Successfully!',
+    Get.snackbar('Info'.tr, 'OTP Resent Successfully!'.tr,
         snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.blue, colorText: Colors.white);
     startResendCountdown();
   }
@@ -77,8 +77,24 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OTP Verification'),
+        title: Text('OTP Verification'.tr),
         backgroundColor: Colors.lightBlueAccent,
+        actions: [
+          DropdownButton<String>(
+            value: Get.locale?.languageCode,
+            icon: Icon(Icons.language, color: Colors.white),
+            items: [
+              DropdownMenuItem(value: 'en', child: Text('English')),
+              DropdownMenuItem(value: 'ta', child: Text('தமிழ்')),
+              DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
+            ],
+            onChanged: (String? langCode) {
+              if (langCode != null) {
+                Get.updateLocale(Locale(langCode));
+              }
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -86,8 +102,8 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            const Text(
-              'Enter the OTP sent to your mobile number',
+            Text(
+              'Enter the OTP sent to your mobile number'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18, color: Colors.black54),
             ),
@@ -110,12 +126,12 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
                 minimumSize: const Size(double.infinity, 50),
                 backgroundColor: Colors.lightBlueAccent,
               ),
-              child: const Text('Verify OTP'),
+              child: Text('Verify OTP'.tr),
             ),
             const SizedBox(height: 20),
             TextButton(
               onPressed: isResendEnabled ? resendOTP : null,
-              child: Text(isResendEnabled ? 'Resend OTP' : 'Resend in $resendCountdown s'),
+              child: Text(isResendEnabled ? 'Resend OTP'.tr : 'Resend in $resendCountdown s'.tr),
             ),
           ],
         ),
