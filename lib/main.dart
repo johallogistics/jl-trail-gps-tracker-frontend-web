@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:trail_tracker/utils/app_translations.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:get/get.dart';
 import 'views/splash_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init();
   runApp(MyApp());
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:sms_autofill/sms_autofill.dart';
 
 import 'home_screen.dart';
@@ -15,6 +16,8 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   String otpCode = "";
   bool isResendEnabled = false;
   int resendCountdown = 30;
+
+  final box = GetStorage();
 
   @override
   void initState() {
@@ -91,6 +94,10 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
             onChanged: (String? langCode) {
               if (langCode != null) {
                 Get.updateLocale(Locale(langCode));
+              }
+              if (langCode != null) {
+                box.write('selectedLanguage', langCode); // Save selected language globally
+                print("Language changed to: $langCode.... ${box.read('selectedLanguage')}");
               }
             },
           ),

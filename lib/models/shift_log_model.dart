@@ -59,14 +59,25 @@ class ShiftLog {
 
   /// Factory method to create an instance from JSON
   factory ShiftLog.fromJson(Map<String, dynamic> json) {
+    DateTime? tryParseDate(String? dateString) {
+      try {
+        if (dateString == null || dateString.trim().isEmpty) return null;
+        String cleanedDate = dateString.replaceAll(' ', ''); // Remove spaces
+        return DateTime.parse(cleanedDate).toLocal();
+      } catch (e) {
+        print("Error parsing date: $dateString - $e");
+        return null;
+      }
+    }
+
     return ShiftLog(
       id: json['id'],
       shift: json['shift'],
       otHours: json['otHours'],
       vehicleModel: json['vehicleModel'],
       regNo: json['regNo'],
-      inTime: DateTime.parse(json['inTime']),
-      outTime: DateTime.parse(json['outTime']),
+      inTime: tryParseDate(json['inTime']) ?? DateTime.now(), // Handle invalid/null date
+      outTime: tryParseDate(json['outTime']) ?? DateTime.now(),
       workingHours: json['workingHours'],
       startingKm: json['startingKm'],
       endingKm: json['endingKm'],
@@ -84,8 +95,8 @@ class ShiftLog {
       dicvInchargeName: json['dicvInchargeName'],
       dicvInchargePhoneNo: json['dicvInchargePhoneNo'],
       trailId: json['trailId'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: tryParseDate(json['createdAt']) ?? DateTime.now(),
+      updatedAt: tryParseDate(json['updatedAt']) ?? DateTime.now(),
     );
   }
 
