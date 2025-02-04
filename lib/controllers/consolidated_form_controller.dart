@@ -26,51 +26,48 @@ class FormController extends GetxController {
     // Initialize vehicle details
     addVehicleDetail();
     // Initialize competitor details by copying the vehicle details
-    addCompetitorData();
+    initializeCompetitorData();
   }
 
   void addVehicleDetail() {
     var newVehicle = VehicleDetail(
-      vehicleRegNo: TextEditingController(text: ''),
-      brand: TextEditingController(text: ''),
-      chassisNo: TextEditingController(text: ''),
-      vehicleModel: TextEditingController(text: ''),
-      wheelBase: TextEditingController(text: ''),
-      atsType: TextEditingController(text: ''),
-      emission: TextEditingController(text: ''),
-      tyreBrand: TextEditingController(text: ''),
-      application: TextEditingController(text: ''),
-      gvwCarried: TextEditingController(text: ''),
-      tripStartDate: TextEditingController(text: ''),
-      startOdo: TextEditingController(text: ''),
-      tripFinishDate: TextEditingController(text: ''),
-      endOdo: TextEditingController(text: ''),
-      startPlace: TextEditingController(text: ''),
-      endPlace: TextEditingController(text: ''),
-      totalTrailKms: TextEditingController(text: ''),
-      fuelConsumed: TextEditingController(text: ''),
-      adBlueConsumedCluster: TextEditingController(text: ''),
+      vehicleRegNo: TextEditingController(),
+      brand: TextEditingController(),
+      chassisNo: TextEditingController(),
+      vehicleModel: TextEditingController(),
+      wheelBase: TextEditingController(),
+      atsType: TextEditingController(),
+      emission: TextEditingController(),
+      tyreBrand: TextEditingController(),
+      application: TextEditingController(),
+      gvwCarried: TextEditingController(),
+      tripStartDate: TextEditingController(),
+      startOdo: TextEditingController(),
+      tripFinishDate: TextEditingController(),
+      endOdo: TextEditingController(),
+      startPlace: TextEditingController(),
+      endPlace: TextEditingController(),
+      totalTrailKms: TextEditingController(),
+      fuelConsumed: TextEditingController(),
+      adBlueConsumedCluster: TextEditingController(),
       didRegenerationHappen: false.obs,
-      leadDistance: TextEditingController(text: ''),
-      drivingSpeed: TextEditingController(text: ''),
-      actualFeInBB: TextEditingController(text: ''),
+      leadDistance: TextEditingController(),
+      drivingSpeed: TextEditingController(),
+      actualFeInBB: TextEditingController(),
     );
     vehicleDetails.add(newVehicle);
   }
 
-  void addCompetitorData() {
-    if (vehicleDetails.isNotEmpty) {
-      var competitorVehicle = vehicleDetails.first;
-
-      // Add competitor data based on the first vehicle
-      competitorData.add(competitorVehicle);
-    }
+  void initializeCompetitorData() {
+    competitorData.assignAll(vehicleDetails.map((v) => v.copy()).toList());
   }
 
   void toggleFieldCopy(String field, TextEditingController competitorController, TextEditingController originalController) {
     if (selectedFieldsForCompetitor[field] == true) {
       competitorController.text = originalController.text;
-      competitorController.value = competitorController.value.copyWith(selection: TextSelection.collapsed(offset: competitorController.text.length));
+      competitorController.value = competitorController.value.copyWith(
+        selection: TextSelection.collapsed(offset: competitorController.text.length),
+      );
     } else {
       competitorController.clear();
     }
@@ -94,19 +91,16 @@ class FormController extends GetxController {
         competitorData: competitorData.toList(),
       );
 
-      // Assuming your FormRepository is set up for API calls
+      // Submit form
       bool success = await _repository.submitForm(formData);
 
       if (success) {
         print("Form submitted successfully");
-        // Optionally show a success message to the user or navigate to a new screen
       } else {
         print("Form submission failed");
-        // Optionally show an error message to the user
       }
     } catch (e) {
       print("Error submitting form: $e");
-      // Optionally handle the error (show a message or retry)
     } finally {
       isLoading(false);
     }

@@ -120,20 +120,20 @@ class FormScreen extends StatelessWidget {
   }
 
   Widget buildCopyCheckbox(String fieldName, TextEditingController competitorController, TextEditingController vehicleController) {
+    RxBool isChecked = false.obs;
+
     return Obx(() => Row(
       children: [
         Checkbox(
-          value: competitorController.text.isEmpty ? false : true,
+          value: isChecked.value,
           onChanged: (val) {
-            if (val == true) {
-              competitorController.text = vehicleController.text;
-            } else {
-              competitorController.clear();
-            }
+            isChecked.value = val ?? false;
+            competitorController.text = isChecked.value ? vehicleController.text : '';
           },
         ),
-        Expanded(child: buildTextField(fieldName.tr, competitorController, readOnly: competitorController.text.isNotEmpty)),
+        Expanded(child: buildTextField(fieldName.tr, competitorController, readOnly: isChecked.value)),
       ],
     ));
   }
+
 }

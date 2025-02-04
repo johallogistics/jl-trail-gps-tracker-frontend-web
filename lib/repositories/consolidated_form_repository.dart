@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import '../models/consolidated_form_submission_model.dart';
 
 class FormRepository {
@@ -10,6 +9,7 @@ class FormRepository {
     try {
       // Convert formData to JSON
       var jsonData = formData.toJson();
+      print("Submitting Form Data: ${json.encode(jsonData)}"); // Debugging log
 
       // Send POST request to the API
       final response = await http.post(
@@ -20,15 +20,17 @@ class FormRepository {
         body: json.encode(jsonData),
       );
 
-      // Check if the response is successful
+      // Check API response
       if (response.statusCode == 200) {
+        print("Form submitted successfully!");
         return true;
       } else {
-        print('Error: ${response.statusCode}');
+        print("Failed to submit form. Status Code: ${response.statusCode}");
+        print("Response Body: ${response.body}");
         return false;
       }
     } catch (e) {
-      print("Error in API call: $e");
+      print("Error during API call: $e");
       return false;
     }
   }

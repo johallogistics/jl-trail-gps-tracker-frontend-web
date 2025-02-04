@@ -1,7 +1,5 @@
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
-
 import 'package:flutter/material.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:get/get.dart';
 
 class VehicleDetail {
   TextEditingController vehicleRegNo;
@@ -54,7 +52,7 @@ class VehicleDetail {
     required this.actualFeInBB,
   });
 
-  // Factory method for creating an instance of VehicleDetail from JSON
+  /// ✅ Convert JSON to `VehicleDetail`
   factory VehicleDetail.fromJson(Map<String, dynamic> json) {
     return VehicleDetail(
       vehicleRegNo: TextEditingController(text: json['vehicleRegNo']),
@@ -83,6 +81,7 @@ class VehicleDetail {
     );
   }
 
+  /// ✅ Convert `VehicleDetail` to JSON
   Map<String, dynamic> toJson() {
     return {
       'vehicleRegNo': vehicleRegNo.text,
@@ -110,9 +109,35 @@ class VehicleDetail {
       'actualFeInBB': actualFeInBB.text,
     };
   }
+
+  VehicleDetail copy() {
+    return VehicleDetail(
+      vehicleRegNo: TextEditingController(text: vehicleRegNo.text),
+      brand: TextEditingController(text: brand.text),
+      chassisNo: TextEditingController(text: chassisNo.text),
+      vehicleModel: TextEditingController(text: vehicleModel.text),
+      wheelBase: TextEditingController(text: wheelBase.text),
+      atsType: TextEditingController(text: atsType.text),
+      emission: TextEditingController(text: emission.text),
+      tyreBrand: TextEditingController(text: tyreBrand.text),
+      application: TextEditingController(text: application.text),
+      gvwCarried: TextEditingController(text: gvwCarried.text),
+      tripStartDate: TextEditingController(text: tripStartDate.text),
+      startOdo: TextEditingController(text: startOdo.text),
+      tripFinishDate: TextEditingController(text: tripFinishDate.text),
+      endOdo: TextEditingController(text: endOdo.text),
+      startPlace: TextEditingController(text: startPlace.text),
+      endPlace: TextEditingController(text: endPlace.text),
+      totalTrailKms: TextEditingController(text: totalTrailKms.text),
+      fuelConsumed: TextEditingController(text: fuelConsumed.text),
+      adBlueConsumedCluster: TextEditingController(text: adBlueConsumedCluster.text),
+      didRegenerationHappen: didRegenerationHappen.value.obs,
+      leadDistance: TextEditingController(text: leadDistance.text),
+      drivingSpeed: TextEditingController(text: drivingSpeed.text),
+      actualFeInBB: TextEditingController(text: actualFeInBB.text),
+    );
+  }
 }
-
-
 
 
 class FormSubmissionModel {
@@ -140,6 +165,27 @@ class FormSubmissionModel {
     required this.competitorData,
   });
 
+
+  factory FormSubmissionModel.fromJson(Map<String, dynamic> json) {
+    return FormSubmissionModel(
+      location: json['location'],
+      date: json['date'],
+      masterDriverName: json['masterDriverName'],
+      empCode: json['empCode'],
+      mobileNo: json['mobileNo'],
+      customerDriverName: json['customerDriverName'],
+      customerMobileNo: json['customerMobileNo'],
+      licenseNo: json['licenseNo'],
+      vehicleDetails: (json['vehicleDetails'] as List)
+          .map((item) => VehicleDetail.fromJson(item))
+          .toList(),
+      competitorData: (json['competitorData'] as List)
+          .map((item) => VehicleDetail.fromJson(item))
+          .toList(),
+    );
+  }
+
+  /// ✅ **Fix: Add this method to convert the model to JSON**
   Map<String, dynamic> toJson() {
     return {
       'location': location,
@@ -155,3 +201,4 @@ class FormSubmissionModel {
     };
   }
 }
+
