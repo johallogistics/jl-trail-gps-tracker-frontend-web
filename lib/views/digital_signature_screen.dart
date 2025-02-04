@@ -14,8 +14,9 @@ class DigitalSignatureScreen extends StatefulWidget {
 
 class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
   final SignatureController _signatureController = SignatureController(
-    penStrokeWidth: 2,
+    penStrokeWidth: 5,
     penColor: Colors.black,
+    exportBackgroundColor: Colors.white
   );
 
   @override
@@ -61,9 +62,16 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey),
             ),
-            child: Signature(
-              controller: _signatureController,
-              backgroundColor: Colors.white,
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                _signatureController.addPoint(Point(Offset(details.localPosition.dx, details.localPosition.dy), PointType.move));
+              },
+              onPanEnd: (details) {
+              },
+              child: Signature(
+                controller: _signatureController,
+                backgroundColor: Colors.white,
+              ),
             ),
           ),
 

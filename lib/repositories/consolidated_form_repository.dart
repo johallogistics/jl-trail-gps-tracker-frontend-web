@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../api/api_manager.dart';
 import '../models/consolidated_form_submission_model.dart';
 
 class FormRepository {
-  static const String apiUrl = "https://your-api-url.com/submitForm"; // Replace with actual API endpoint
+  static const String apiUrl = "form-submissions"; // API endpoint is relative to base URL
 
   Future<bool> submitForm(FormSubmissionModel formData) async {
     try {
@@ -11,14 +11,8 @@ class FormRepository {
       var jsonData = formData.toJson();
       print("Submitting Form Data: ${json.encode(jsonData)}"); // Debugging log
 
-      // Send POST request to the API
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(jsonData),
-      );
+      // Send POST request to the API using ApiManager
+      final response = await ApiManager.post(apiUrl, jsonData);
 
       // Check API response
       if (response.statusCode == 200) {

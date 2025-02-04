@@ -91,6 +91,7 @@ class FormController extends GetxController {
         competitorData: competitorData.toList(),
       );
 
+      print("FORM DATA::: ${formData}");
       // Submit form
       bool success = await _repository.submitForm(formData);
 
