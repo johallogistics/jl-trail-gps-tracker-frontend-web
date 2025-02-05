@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import 'daily_report_review_screen.dart';
+
 class DailyReportController extends GetxController {
   final shiftController = TextEditingController();
   final otHoursController = TextEditingController();
@@ -68,9 +70,9 @@ class DailyReportScreen extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                print("Form Submitted");
+                Get.to(() => DailyReportReviewScreen(employeeData: employeeData,));
               },
-              child: Text('submit_report'.tr),
+              child: Text('review'.tr),
             ),
           ],
         ),

@@ -4,11 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:typed_data';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_pdf/pdf.dart';
+
 
 class DigitalSignatureScreen extends StatefulWidget {
   const DigitalSignatureScreen({super.key});
@@ -33,27 +29,16 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
       body: Column(
         children: [
           // Placeholder for the report
-          const Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Report Title',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'This is the content of the report. Please review the details below and provide your signature.',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 20),
-                  // Add more report content here
-                ],
-              ),
-            ),
+          const Text(
+            'Report Title',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(height: 10),
+          const Text(
+            'This is the content of the report. Please review the details below and provide your signature.',
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 20),
           const Divider(),
 
           // Signature Pad
@@ -61,23 +46,11 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
             'Customer Signature:',
             style: TextStyle(fontSize: 18),
           ),
-          Container(
+          Signature(
+            width: 500,
             height: 150,
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-            ),
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                _signatureController.addPoint(Point(Offset(details.localPosition.dx, details.localPosition.dy), PointType.move));
-              },
-              onPanEnd: (details) {
-              },
-              child: Signature(
-                controller: _signatureController,
-                backgroundColor: Colors.white,
-              ),
-            ),
+            controller: _signatureController,
+            backgroundColor: Colors.blue.shade50,
           ),
 
           // Buttons

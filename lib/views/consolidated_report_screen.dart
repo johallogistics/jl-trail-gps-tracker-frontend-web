@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:trail_tracker/views/review_consolidated_report_screen.dart';
 import '../controllers/consolidated_form_controller.dart';
 
 class FormScreen extends StatelessWidget {
@@ -98,7 +99,9 @@ class FormScreen extends StatelessWidget {
               )),
 
               ElevatedButton(
-                onPressed: controller.submitForm,
+                onPressed: (){
+                  Get.to(() => ReviewFormScreen());
+                },
                 child: Text('Submit Form'),
               ),
             ],
