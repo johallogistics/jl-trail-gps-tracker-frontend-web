@@ -2,7 +2,12 @@ import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class DigitalSignatureScreen extends StatefulWidget {
@@ -96,8 +101,9 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
     );
   }
 
+
+
   Future<void> _saveReportWithSignature() async {
-    // Check if the user signed
     if (_signatureController.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please provide a signature.')),
@@ -107,13 +113,10 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
 
     // Capture the signature as an image
     final Uint8List? signature = await _signatureController.toPngBytes();
-
     if (signature == null) return;
 
     // Create the PDF document
     final PdfDocument document = PdfDocument();
-
-    // Add a page
     final PdfPage page = document.pages.add();
 
     // Add report content
@@ -138,12 +141,20 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
 
     // Save the PDF file
     final List<int> bytes = await document.save();
-
     document.dispose();
-    final Uint8List uint8ListBytes = Uint8List.fromList(bytes);
-    // Save to device storage
-    final directory = await getApplicationDocumentsDirectory();
-    final path = '${directory.path}/SignedReport.pdf';
+
+    // Ask user to choose save location
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+
+    if (selectedDirectory == null) {
+      // User canceled the picker
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Save canceled')),
+      );
+      return;
+    }
+
+    final path = '$selectedDirectory/SignedReport.pdf';
     final file = File(path);
     await file.writeAsBytes(bytes);
 
