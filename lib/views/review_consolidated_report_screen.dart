@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-
 import '../controllers/consolidated_form_controller.dart';
-import '../models/consolidated_form_submission_model.dart';
+import 'dart:typed_data' as td;
+
 
 class ReviewFormScreen extends StatelessWidget {
   final FormController controller = Get.find<FormController>();
+  final td.Uint8List? signature;
+
+  ReviewFormScreen({super.key, this.signature});
 
   // Function to generate the PDF
   Future<void> generatePdf(Map<String, dynamic> formData) async {
@@ -66,6 +68,14 @@ class ReviewFormScreen extends StatelessWidget {
                   ],
                 );
               }).toList(),
+              if (signature != null)
+                pw.Column(
+                  children: [
+                    pw.Text("Signature:"),
+                    pw.SizedBox(height: 10),
+                    pw.Image(pw.MemoryImage(signature!), width: 100, height: 50),
+                  ],
+                ),
             ],
           );
         },
@@ -234,14 +244,22 @@ class ReviewFormScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              if (signature != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('In-charge Signature:', style: TextStyle(fontSize: 18)),
+                    SizedBox(height: 10),
+                    Image.memory(signature!, width: 200, height: 100),
+                    const SizedBox(height: 20),
+                  ],
+                ) else
+                Text("Signature Not Available"),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  // Generate PDF
                   await generatePdf(formData);
-                  // You can also submit the data to your API here
-                  // controller.submitForm();
+                  await controller.submitForm();
                   ScaffoldMessenger.of(context)
                       .showSnackBar(SnackBar(content: Text('Form submitted!')));
                 },

@@ -1,3 +1,4 @@
+import 'dart:typed_data' as td;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -8,8 +9,9 @@ import 'daily_report_screen.dart';
 class DailyReportReviewScreen extends StatelessWidget {
   final Map<String, String> employeeData;
   final DailyReportController controller = Get.find<DailyReportController>();
+  final td.Uint8List? signature;
 
-  DailyReportReviewScreen({super.key, required this.employeeData});
+  DailyReportReviewScreen({super.key, required this.employeeData, this.signature});
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +22,17 @@ class DailyReportReviewScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${'employee_name'.tr}: ${employeeData['name']}'),
-            Text('${'employee_phone'.tr}: ${employeeData['phone']}'),
-            Text('${'employee_code'.tr}: ${employeeData['code']}'),
-            Text('${'month'.tr}: ${employeeData['month']}'),
-            Text('${'year'.tr}: ${employeeData['year']}'),
-            Text('${'incharge_name'.tr}: ${employeeData['inchargeName']}'),
-            Text('${'incharge_phone'.tr}: ${employeeData['inchargePhone']}'),
-            SizedBox(height: 20),
+            // Displaying Employee Details
+            buildReviewRow('employee_name'.tr, employeeData['name'] ?? ''),
+            buildReviewRow('employee_phone'.tr, employeeData['phone'] ?? ''),
+            buildReviewRow('employee_code'.tr, employeeData['code'] ?? ''),
+            buildReviewRow('month'.tr, employeeData['month'] ?? ''),
+            buildReviewRow('year'.tr, employeeData['year'] ?? ''),
+            buildReviewRow('incharge_name'.tr, employeeData['inchargeName'] ?? ''),
+            buildReviewRow('incharge_phone'.tr, employeeData['inchargePhone'] ?? ''),
+            const SizedBox(height: 20),
+
+            // Displaying Form Data
             buildReviewRow('date'.tr, controller.date),
             buildReviewRow('shift'.tr, controller.shiftController.text),
             buildReviewRow('ot_hours'.tr, controller.otHoursController.text),
@@ -44,8 +49,22 @@ class DailyReportReviewScreen extends StatelessWidget {
             buildReviewRow('fuel_avg'.tr, controller.fuelAvgController.text),
             buildReviewRow('co_driver_name'.tr, controller.coDriverNameController.text),
             buildReviewRow('co_driver_phone'.tr, controller.coDriverPhoneController.text),
-            buildReviewRow('incharge_sign'.tr, controller.inchargeSignController.text),
-            SizedBox(height: 20),
+
+            const SizedBox(height: 20),
+
+            // Display Signature Preview
+            if (signature != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('In-charge Signature:', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 10),
+                  Image.memory(signature!, width: 200, height: 100),
+                  const SizedBox(height: 20),
+                ],
+              ) else
+              Text("Signature Not Available"),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -57,7 +76,7 @@ class DailyReportReviewScreen extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    PdfService.generatePdf(controller, employeeData);
+                    PdfService.generatePdf(controller, employeeData, signature);
                   },
                   child: Text('generate_pdf'.tr),
                 ),
@@ -80,9 +99,18 @@ class DailyReportReviewScreen extends StatelessWidget {
       ),
     );
   }
-
   void submitData() async {
-    final url = Uri.parse("https://yourbackend.com/api/dailyReport");
+    final url = Uri.parse("http://localhost:3000/dailyReport");
+
+    final employeeData = {
+      'name': 'John Doe',
+      'phone': '123-456-7890',
+      'code': 'EMP123',
+      'month': 'January',
+      'year': '2025',
+      'inchargeName': 'Jane Smith',
+      'inchargePhone': '987-654-3210',
+    };
 
     final response = await http.post(
       url,
@@ -90,28 +118,37 @@ class DailyReportReviewScreen extends StatelessWidget {
       body: jsonEncode({
         "date": controller.date,
         "shift": controller.shiftController.text,
-        "ot_hours": controller.otHoursController.text,
-        "vehicle_model": controller.vehicleModelController.text,
-        "vehicle_reg_no": controller.regNoController.text,
-        "in_time": controller.inTimeController.text,
-        "out_time": controller.outTimeController.text,
-        "working_hours": controller.workingHoursController.text,
-        "starting_km": controller.startingKmController.text,
-        "ending_km": controller.endingKmController.text,
-        "total_km": controller.totalKmController.text,
-        "from_place": controller.fromPlaceController.text,
-        "to_place": controller.toPlaceController.text,
-        "fuel_avg": controller.fuelAvgController.text,
-        "co_driver_name": controller.coDriverNameController.text,
-        "co_driver_phone": controller.coDriverPhoneController.text,
-        "incharge_sign": controller.inchargeSignController.text,
+        "otHours": controller.otHoursController.text,
+        "vehicleModel": controller.vehicleModelController.text,
+        "regNo": controller.regNoController.text,
+        "inTime": controller.inTimeController.text,
+        "outTime": controller.outTimeController.text,
+        "workingHours": controller.workingHoursController.text,
+        "startingKm": controller.startingKmController.text,
+        "endingKm": controller.endingKmController.text,
+        "totalKm": controller.totalKmController.text,
+        "fromPlace": controller.fromPlaceController.text,
+        "toPlace": controller.toPlaceController.text,
+        "fuelAvg": controller.fuelAvgController.text,
+        "coDriverName": controller.coDriverNameController.text,
+        "coDriverPhoneNo": controller.coDriverPhoneController.text,
+        "employeeName": "emp name",
+        "employeePhoneNo": "emp phone",
+        "employeeCode": "code",
+        "monthYear": "feb",
+        "dicvInchargeName": "icharger",
+        "dicvInchargePhoneNo": "phone",
+        "trailId": "T1",
       }),
+
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       Get.snackbar("Success", "Report submitted successfully");
     } else {
       Get.snackbar("Error", "Failed to submit report");
     }
   }
+
 }
+

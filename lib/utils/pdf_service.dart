@@ -1,56 +1,74 @@
+import 'dart:typed_data';
 import 'dart:io';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
+import 'dart:ui';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:file_picker/file_picker.dart';
+
 import '../views/daily_report_screen.dart';
 
 class PdfService {
-  static Future<void> generatePdf(DailyReportController controller, Map<String, String> employeeData) async {
-    final pdf = pw.Document();
+  static Future<void> generatePdf(DailyReportController controller, Map<String, String> employeeData, Uint8List? signature) async {
+    final PdfDocument document = PdfDocument();
+    final PdfPage page = document.pages.add();
+    final PdfGraphics graphics = page.graphics;
+    const double pageWidth = 500;
 
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Daily Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 20),
-              pw.Text('Employee Name: ${employeeData['name']}'),
-              pw.Text('Employee Phone: ${employeeData['phone']}'),
-              pw.Text('Employee Code: ${employeeData['code']}'),
-              pw.Text('Month: ${employeeData['month']}'),
-              pw.Text('Year: ${employeeData['year']}'),
-              pw.Text('Incharge Name: ${employeeData['inchargeName']}'),
-              pw.Text('Incharge Phone: ${employeeData['inchargePhone']}'),
-              pw.SizedBox(height: 20),
-              pw.Text('Date: ${controller.date}'),
-              pw.Text('Shift: ${controller.shiftController.text}'),
-              pw.Text('OT Hours: ${controller.otHoursController.text}'),
-              pw.Text('Vehicle Model: ${controller.vehicleModelController.text}'),
-              pw.Text('Reg No: ${controller.regNoController.text}'),
-              pw.Text('In Time: ${controller.inTimeController.text}'),
-              pw.Text('Out Time: ${controller.outTimeController.text}'),
-              pw.Text('Working Hours: ${controller.workingHoursController.text}'),
-              pw.Text('Starting KM: ${controller.startingKmController.text}'),
-              pw.Text('Ending KM: ${controller.endingKmController.text}'),
-              pw.Text('Total KM: ${controller.totalKmController.text}'),
-              pw.Text('From Place: ${controller.fromPlaceController.text}'),
-              pw.Text('To Place: ${controller.toPlaceController.text}'),
-              pw.Text('Fuel Avg: ${controller.fuelAvgController.text}'),
-              pw.Text('Co-Driver Name: ${controller.coDriverNameController.text}'),
-              pw.Text('Co-Driver Phone: ${controller.coDriverPhoneController.text}'),
-              pw.Text('Incharge Sign: ${controller.inchargeSignController.text}'),
-            ],
-          );
-        },
-      ),
+    // Header
+    graphics.drawString(
+      'Daily Report',
+      PdfStandardFont(PdfFontFamily.helvetica, 20),
+      bounds: const Rect.fromLTWH(0, 0, pageWidth, 30),
     );
 
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/daily_report.pdf');
-    await file.writeAsBytes(await pdf.save());
+    // Report Details
+    double yOffset = 40;
+    final PdfFont font = PdfStandardFont(PdfFontFamily.helvetica, 12);
 
-    print('PDF saved at: ${file.path}');
+    void addText(String text) {
+      graphics.drawString(text, font, bounds: Rect.fromLTWH(0, yOffset, pageWidth, 20));
+      yOffset += 20;
+    }
+
+    addText('Employee Name: ${employeeData['name']}');
+    addText('Phone: ${employeeData['phone']}');
+    addText('Code: ${employeeData['code']}');
+    addText('Month: ${employeeData['month']}');
+    addText('Year: ${employeeData['year']}');
+    addText('Incharge Name: ${employeeData['inchargeName']}');
+    addText('Incharge Phone: ${employeeData['inchargePhone']}');
+    addText('Shift: ${controller.shiftController.text}');
+    addText('OT Hours: ${controller.otHoursController.text}');
+    addText('Vehicle Model: ${controller.vehicleModelController.text}');
+    addText('Reg No: ${controller.regNoController.text}');
+    addText('In Time: ${controller.inTimeController.text}');
+    addText('Out Time: ${controller.outTimeController.text}');
+    addText('Working Hours: ${controller.workingHoursController.text}');
+    addText('Starting KM: ${controller.startingKmController.text}');
+    addText('Ending KM: ${controller.endingKmController.text}');
+    addText('Total KM: ${controller.totalKmController.text}');
+    addText('From: ${controller.fromPlaceController.text}');
+    addText('To: ${controller.toPlaceController.text}');
+    addText('Fuel Avg: ${controller.fuelAvgController.text}');
+    addText('Co-Driver: ${controller.coDriverNameController.text}');
+    addText('Co-Driver Phone: ${controller.coDriverPhoneController.text}');
+
+    // Add Signature if Available
+    if (signature != null) {
+      final PdfBitmap signatureImage = PdfBitmap(signature);
+      graphics.drawImage(signatureImage, Rect.fromLTWH(0, yOffset + 20, 200, 100));
+    }
+
+    // Save PDF
+    final List<int> bytes = await document.save();
+    document.dispose();
+
+    // Ask user to choose save location
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    if (selectedDirectory == null) {
+      return;
+    }
+
+    final file = File('$selectedDirectory/DailyReport.pdf');
+    await file.writeAsBytes(bytes);
   }
 }

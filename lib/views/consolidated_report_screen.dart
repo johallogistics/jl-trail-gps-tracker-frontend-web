@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:signature/signature.dart';
 import 'package:trail_tracker/views/review_consolidated_report_screen.dart';
 import '../controllers/consolidated_form_controller.dart';
+import 'dart:typed_data' as td;
 
 class FormScreen extends StatelessWidget {
   final FormController controller = Get.put(FormController());
-
+  final SignatureController _signatureController = SignatureController(
+      penStrokeWidth: 5,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,12 +102,24 @@ class FormScreen extends StatelessWidget {
                   );
                 }).toList(),
               )),
+              const Divider(),
+              // Signature Pad
+              const Text(
+                'Customer Signature:',
+                style: TextStyle(fontSize: 18),
+              ),
+              Signature(
+                width: 500,
+                height: 150,
+                controller: _signatureController,
+                backgroundColor: Colors.blue.shade50,
+              ),
+              SizedBox(height: 20),
+              const Divider(),
 
               ElevatedButton(
-                onPressed: (){
-                  Get.to(() => ReviewFormScreen());
-                },
-                child: Text('Submit Form'),
+                onPressed: () => _saveReportWithSignature(context),
+                child: Text('Review Form'),
               ),
             ],
           ),
@@ -138,5 +155,24 @@ class FormScreen extends StatelessWidget {
       ],
     ));
   }
+
+  void _saveReportWithSignature(BuildContext context) async {
+    if (_signatureController.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please provide a signature.')),
+      );
+      return;
+    }
+
+    final td.Uint8List? signature = await _signatureController.toPngBytes();
+    if (signature == null) return;
+
+    // Navigate to review screen with the signature
+    Get.to(() => ReviewFormScreen(
+      signature: signature, // Pass the signature image
+    ));
+  }
+
+
 
 }

@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:workmanager/workmanager.dart';
+
+import '../views/widgets/map_usecase_code.dart';
 
 class TrailController extends GetxController {
   // Assuming you have a way to get the current driver ID (e.g., from authentication)
-  final String currentDriverId = 'driver123'; // Replace with actual driver ID
+  final String currentDriverId = '1'; // Replace with actual driver ID
 
   // Observable RxBool to track active trail status
   var hasActiveTrail = false.obs;
@@ -12,6 +15,7 @@ class TrailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
     _checkActiveTrail();
   }
 
