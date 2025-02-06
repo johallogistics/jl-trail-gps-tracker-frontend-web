@@ -5,7 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../controllers/consolidated_form_controller.dart';
 import 'dart:typed_data' as td;
-
+import 'dart:typed_data';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ReviewFormScreen extends StatelessWidget {
   final FormController controller = Get.find<FormController>();
@@ -258,12 +260,20 @@ class ReviewFormScreen extends StatelessWidget {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  await generatePdf(formData);
                   await controller.submitForm();
                   ScaffoldMessenger.of(context)
                       .showSnackBar(SnackBar(content: Text('Form submitted!')));
                 },
-                child: Text('Submit Form and Generate PDF'),
+                child: Text('Submit Form'),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  PdfServiceConsolidatedForm.generatePdf(formData,signature);
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text('PDF Generated!')));
+                },
+                child: Text('Generate PDF'),
               ),
             ],
           ),
@@ -272,3 +282,96 @@ class ReviewFormScreen extends StatelessWidget {
     );
   }
 }
+
+class PdfServiceConsolidatedForm {
+  static Future<void> generatePdf(Map<String, dynamic> formData, Uint8List? signature) async {
+    final PdfDocument document = PdfDocument();
+    final PdfPage page = document.pages.add();
+    final PdfGraphics graphics = page.graphics;
+    const double pageWidth = 500;
+    double yOffset = 20;
+
+    final PdfFont titleFont = PdfStandardFont(PdfFontFamily.helvetica, 20, style: PdfFontStyle.bold);
+    final PdfFont font = PdfStandardFont(PdfFontFamily.helvetica, 12);
+
+    void addText(String text, {bool isTitle = false}) {
+      graphics.drawString(text, isTitle ? titleFont : font, bounds: Rect.fromLTWH(0, yOffset, pageWidth, 20));
+      yOffset += isTitle ? 30 : 20; // Increase spacing for title
+    }
+
+    // Header
+    addText('Form Review', isTitle: true);
+
+    addText('Location: ${formData['location']}');
+    addText('Date: ${formData['date']}');
+    addText('Master Driver Name: ${formData['master_driver_name']}');
+    addText('Employee Code: ${formData['emp_code']}');
+    addText('Mobile Number: ${formData['mobile_no']}');
+    addText('Customer Driver Name: ${formData['customer_driver_name']}');
+    addText('Customer Mobile No: ${formData['customer_mobile_no']}');
+    addText('License No: ${formData['license_no']}');
+
+    yOffset += 10;
+
+    // Create Table for Vehicle Details & Competitor Data
+    final PdfGrid grid = PdfGrid();
+    grid.columns.add(count: 2);
+    grid.headers.add(1);
+
+    final PdfGridRow headerRow = grid.headers[0];
+    headerRow.cells[0].value = 'Vehicle Details';
+    headerRow.cells[1].value = 'Competitor Data';
+    headerRow.style = PdfGridCellStyle(
+      backgroundBrush: PdfBrushes.lightGray,
+      font: PdfStandardFont(PdfFontFamily.helvetica, 14, style: PdfFontStyle.bold),
+    );
+
+    final Map<String, dynamic> vehicleDetails = formData['vehicle_details'];
+    final Map<String, dynamic> competitorData = formData['competitor_data'];
+
+    int maxLength = vehicleDetails.length > competitorData.length
+        ? vehicleDetails.length
+        : competitorData.length;
+
+    for (int i = 0; i < maxLength; i++) {
+      final PdfGridRow row = grid.rows.add();
+      row.cells[0].value = i < vehicleDetails.length
+          ? '${vehicleDetails.keys.elementAt(i)}: ${vehicleDetails.values.elementAt(i)}'
+          : '';
+      row.cells[1].value = i < competitorData.length
+          ? '${competitorData.keys.elementAt(i)}: ${competitorData.values.elementAt(i)}'
+          : '';
+    }
+
+    // Draw table on page
+    final PdfLayoutResult? result = grid.draw(
+      page: page,
+      bounds: Rect.fromLTWH(0, yOffset, pageWidth, 0), // Height will be calculated dynamically
+    );
+
+    if (result != null) {
+      yOffset = result.bounds.bottom + 20; // Update yOffset based on the table's actual height
+    }
+    // Add Signature if Available
+    if (signature != null) {
+      graphics.drawString("Signature:", font, bounds: Rect.fromLTWH(0, yOffset, pageWidth, 20));
+      yOffset += 20;
+      final PdfBitmap signatureImage = PdfBitmap(signature);
+      graphics.drawImage(signatureImage, Rect.fromLTWH(0, yOffset, 200, 100));
+    }
+
+    // Save PDF
+    final List<int> bytes = await document.save();
+    document.dispose();
+
+    // Ask user to choose save location
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    if (selectedDirectory != null) {
+      final file = File('$selectedDirectory/FormReview.pdf');
+      await file.writeAsBytes(bytes);
+      print('PDF saved at: ${file.path}');
+    }
+  }
+}
+
+
