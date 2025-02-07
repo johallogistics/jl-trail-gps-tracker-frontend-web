@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:trail_tracker/views/phone_number_screen.dart';
 import 'digital_signature_screen.dart';
 import 'login_screen.dart';
 
@@ -9,7 +10,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future.delayed(const Duration(seconds: 3), () {
-      Get.off(() => LoginScreen());
+      Get.off(() => PhoneNumberScreen());
     });
 
     return const Scaffold(

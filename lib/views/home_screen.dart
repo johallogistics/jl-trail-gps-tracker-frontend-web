@@ -13,23 +13,30 @@ class HomeScreen extends StatelessWidget {
     final TrailController trailController = Get.put(TrailController());
 
     return Scaffold(
+      backgroundColor: Colors.blue[50], // ✅ Light blue background
       appBar: AppBar(
         title: Text('Home Screen'.tr),
-        backgroundColor: Colors.lightBlueAccent,
+        backgroundColor: Colors.blueAccent[700], // ✅ Deep blue AppBar
+        elevation: 0,
         actions: [
-          DropdownButton<String>(
-            value: Get.locale?.languageCode,
-            icon: Icon(Icons.language, color: Colors.white),
-            items: [
-              DropdownMenuItem(value: 'en', child: Text('English')),
-              DropdownMenuItem(value: 'ta', child: Text('தமிழ்')),
-              DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
-            ],
-            onChanged: (String? langCode) {
-              if (langCode != null) {
-                Get.updateLocale(Locale(langCode));
-              }
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: DropdownButton<String>(
+              value: Get.locale?.languageCode,
+              dropdownColor: Colors.white,
+              icon: const Icon(Icons.language, color: Colors.white),
+              underline: const SizedBox(),
+              items: [
+                DropdownMenuItem(value: 'en', child: Text('English', style: TextStyle(color: Colors.blueAccent[700]))),
+                DropdownMenuItem(value: 'ta', child: Text('தமிழ்', style: TextStyle(color: Colors.blueAccent[700]))),
+                DropdownMenuItem(value: 'hi', child: Text('हिन्दी', style: TextStyle(color: Colors.blueAccent[700]))),
+              ],
+              onChanged: (String? langCode) {
+                if (langCode != null) {
+                  Get.updateLocale(Locale(langCode));
+                }
+              },
+            ),
           ),
         ],
       ),
@@ -43,17 +50,19 @@ class HomeScreen extends StatelessWidget {
                 print('Start Transit Clicked');
               },
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(200, 50),
-                backgroundColor: Colors.lightBlueAccent,
+                backgroundColor: Colors.blueAccent[700], // ✅ Deep blue button
+                foregroundColor: Colors.white,
+                minimumSize: const Size(220, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('Start Transit'.tr),
+              child: Text('Start Transit'.tr, style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 20),
 
             // Use Obx to reactively update the button based on the active trail status
             Obx(() {
               if (trailController.hasActiveTrail.value == null) {
-                return const CircularProgressIndicator(); // Show loading
+                return const CircularProgressIndicator();
               } else {
                 return ElevatedButton(
                   onPressed: () {
@@ -65,19 +74,22 @@ class HomeScreen extends StatelessWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(200, 50),
                     backgroundColor: trailController.hasActiveTrail.value
-                        ? Colors.orange
-                        : Colors.green,
+                        ? Colors.orange[700]
+                        : Colors.green[600],
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(220, 50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Text(
-                      trailController.hasActiveTrail.value
-                          ? 'Continue Trail'.tr
-                          : 'Start Trail'.tr),
+                    trailController.hasActiveTrail.value
+                        ? 'Continue Trail'.tr
+                        : 'Start Trail'.tr,
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 );
               }
-            }
-            ),
+            }),
           ],
         ),
       ),

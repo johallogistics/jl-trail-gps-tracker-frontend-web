@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:sms_autofill/sms_autofill.dart';
-
+import '../api/api_manager.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  String? phoneNumber;
+  LoginScreen({super.key, phoneNumber});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -16,8 +18,8 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   String otpCode = "";
   bool isResendEnabled = false;
   int resendCountdown = 30;
-
   final box = GetStorage();
+  final String phoneNumber = "918925450309"; // Replace with actual phone number
 
   @override
   void initState() {
@@ -36,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   void startResendCountdown() {
     setState(() => isResendEnabled = false);
     resendCountdown = 30;
-
     Future.doWhile(() async {
       if (resendCountdown > 0) {
         await Future.delayed(const Duration(seconds: 1));
@@ -49,25 +50,55 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
     });
   }
 
-  void verifyOTP() {
+  Future<void> verifyOTP() async {
     if (otpCode.length == 6) {
-      // TODO: Verify OTP from the backend
-      Get.snackbar('Success'.tr, 'OTP Verified Successfully!'.tr,
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      try {
+        var response = await ApiManager.post('verify-otp', {'phone': phoneNumber, 'otp': otpCode});
 
-      // Navigate to Home Screen
-      Get.off(() => const HomeScreen());
+        // Decode the response body from JSON
+        var data = jsonDecode(response.body);
+
+        // Check if 'success' is an integer (or boolean, depending on your API)
+        if (data['success'] == true || data['success'] == 1) { // Adjust based on your API
+          // checkDriverExistence();  // todo integration yet to complete
+          Get.off(() => const HomeScreen());
+        } else {
+          Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
+              snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+        }
+      } catch (e) {
+        Get.snackbar('Error', 'OTP verification failed!',
+            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      }
     } else {
-      Get.snackbar('Error'.tr, 'Please enter a valid OTP!'.tr,
+      Get.snackbar('Error', 'Please enter a valid OTP!',
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
-  void resendOTP() {
-    // TODO: Trigger OTP resend API
-    Get.snackbar('Info'.tr, 'OTP Resent Successfully!'.tr,
-        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.blue, colorText: Colors.white);
-    startResendCountdown();
+
+  Future<void> checkDriverExistence() async {
+    try {
+      var response = await ApiManager.get('/check-driver?phone=$phoneNumber');
+      var data = jsonDecode(response.body);
+      if (data['exists']) {
+        Get.off(() => const HomeScreen());
+      } else {
+        Get.snackbar('Info', 'Driver not found. Please contact support.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to check driver existence.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  void resendOTP() async {
+    try {
+      await ApiManager.post('resend-otp', {'phone': phoneNumber});
+      Get.snackbar('Info', 'OTP Resent Successfully!', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.blue, colorText: Colors.white);
+      startResendCountdown();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to resend OTP!', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 
   @override
@@ -79,66 +110,52 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.blue[50], // ✅ Light blue background
       appBar: AppBar(
-        title: Text('OTP Verification'.tr),
-        backgroundColor: Colors.lightBlueAccent,
-        actions: [
-          DropdownButton<String>(
-            value: Get.locale?.languageCode,
-            icon: Icon(Icons.language, color: Colors.white),
-            items: [
-              DropdownMenuItem(value: 'en', child: Text('English')),
-              DropdownMenuItem(value: 'ta', child: Text('தமிழ்')),
-              DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
-            ],
-            onChanged: (String? langCode) {
-              if (langCode != null) {
-                Get.updateLocale(Locale(langCode));
-              }
-              if (langCode != null) {
-                box.write('selectedLanguage', langCode); // Save selected language globally
-                print("Language changed to: $langCode.... ${box.read('selectedLanguage')}");
-              }
-            },
-          ),
-        ],
+        title: const Text('OTP Verification'),
+        backgroundColor: Colors.blueAccent[700], // ✅ Deep blue AppBar
+        elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
             Text(
-              'Enter the OTP sent to your mobile number'.tr,
+              'Enter the OTP sent to your mobile number',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, color: Colors.black54),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.blueGrey[800]),
             ),
             const SizedBox(height: 20),
             PinFieldAutoFill(
               codeLength: 6,
               currentCode: otpCode,
-              decoration: UnderlineDecoration(
-                colorBuilder: const FixedColorBuilder(Colors.grey),
-                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              decoration: BoxLooseDecoration(
+                strokeColorBuilder: FixedColorBuilder(Colors.blueAccent[700]!),
+                bgColorBuilder: FixedColorBuilder(Colors.white),
+                radius: Radius.circular(12),
               ),
-              onCodeChanged: (code) {
-                setState(() => otpCode = code ?? '');
-              },
+              onCodeChanged: (code) => setState(() => otpCode = code ?? ''),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: verifyOTP,
               style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent[700], // ✅ Blue button
+                foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
-                backgroundColor: Colors.lightBlueAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('Verify OTP'.tr),
+              child: const Text('Verify OTP', style: TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 20),
             TextButton(
               onPressed: isResendEnabled ? resendOTP : null,
-              child: Text(isResendEnabled ? 'Resend OTP'.tr : 'Resend in $resendCountdown s'.tr),
+              child: Text(
+                isResendEnabled ? 'Resend OTP' : 'Resend in $resendCountdown s',
+                style: TextStyle(color: Colors.blueAccent[700], fontSize: 16),
+              ),
             ),
           ],
         ),
