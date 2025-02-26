@@ -63,6 +63,9 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
+            Container(
+
+            ),
             Text(
               'Enter your phone number to receive an OTP',
               textAlign: TextAlign.center,

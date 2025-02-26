@@ -7,18 +7,45 @@ class FormController extends GetxController {
   var isLoading = false.obs;
   final FormRepository _repository = FormRepository();
 
-  final locationController = TextEditingController();
-  final dateController = TextEditingController();
-  final masterDriverNameController = TextEditingController();
-  final empCodeController = TextEditingController();
-  final mobileNoController = TextEditingController();
-  final customerDriverNameController = TextEditingController();
-  final customerMobileNoController = TextEditingController();
-  final licenseNoController = TextEditingController();
+    final locationController = TextEditingController();
+    final dateController = TextEditingController();
+    final masterDriverNameController = TextEditingController();
+    final empCodeController = TextEditingController();
+    final mobileNoController = TextEditingController();
+    final customerDriverNameController = TextEditingController();
+    final customerMobileNoController = TextEditingController();
+    final licenseNoController = TextEditingController();
 
-  var vehicleDetails = <VehicleDetail>[].obs;
-  var competitorData = <VehicleDetail>[].obs;
-  var selectedFieldsForCompetitor = <String, bool>{}.obs;
+    var vehicleDetails = <VehicleDetail>[].obs;
+    var competitorData = <VehicleDetail>[].obs;
+    var selectedFieldsForCompetitor = <String, bool>{}.obs;
+
+    RxBool sunVisor = false.obs;
+    RxBool bumperCorner = false.obs;
+    RxBool bumperSpoiler = false.obs;
+    RxBool bumperFootMesh = false.obs;
+    RxBool windDeflector = false.obs;
+    RxBool competitorSunVisor = false.obs;
+    RxBool competitorBumperCorner = false.obs;
+    RxBool competitorBumperSpoiler = false.obs;
+    RxBool competitorBumperFootMesh = false.obs;
+    RxBool competitorWindDeflector = false.obs;
+
+  final expectedFeByCustomer = TextEditingController();
+  final feAdvDisadv = TextEditingController();
+  final referenceFeCustomerFleet = TextEditingController();
+
+  RxBool dealerDriverAccompanied = false.obs;
+  RxBool customerDriverAccompanied = false.obs;
+  RxBool cruiseControlUsed = false.obs;
+
+  final highwayPercentage = TextEditingController();
+  final ghatRoadPercentage = TextEditingController();
+  final singleRoadPercentage = TextEditingController();
+  final trafficRoadPercentage = TextEditingController();
+  final poorRoadPercentage = TextEditingController();
+  final noRoadPercentage = TextEditingController();
+
 
   @override
   void onInit() {
@@ -62,16 +89,16 @@ class FormController extends GetxController {
     competitorData.assignAll(vehicleDetails.map((v) => v.copy()).toList());
   }
 
-  void toggleFieldCopy(String field, TextEditingController competitorController, TextEditingController originalController) {
-    if (selectedFieldsForCompetitor[field] == true) {
-      competitorController.text = originalController.text;
-      competitorController.value = competitorController.value.copyWith(
-        selection: TextSelection.collapsed(offset: competitorController.text.length),
-      );
-    } else {
-      competitorController.clear();
-    }
-  }
+  // void toggleFieldCopy(String field, TextEditingController competitorController, TextEditingController originalController) {
+  //   if (selectedFieldsForCompetitor[field] == true) {
+  //     competitorController.text = originalController.text;
+  //     competitorController.value = competitorController.value.copyWith(
+  //       selection: TextSelection.collapsed(offset: competitorController.text.length),
+  //     );
+  //   } else {
+  //     competitorController.clear();
+  //   }
+  // }
 
   Future<void> submitForm() async {
     try {

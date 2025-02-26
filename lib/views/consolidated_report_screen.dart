@@ -98,7 +98,40 @@ class FormScreen extends StatelessWidget {
                 buildCopyCheckbox('actualFeInBB', competitorVehicle.actualFeInBB, controller.vehicleDetails[0].actualFeInBB),
               ])).toList(),
             )),
-
+            _buildSectionHeader('Aero Kit Available'),
+            _buildCard([
+              buildToggleButton('Sun Visor', controller.sunVisor),
+              buildToggleButton('Bumper Corner', controller.bumperCorner),
+              buildToggleButton('Bumper Spoiler', controller.bumperSpoiler),
+              buildToggleButton('Bumper Foot Mesh', controller.bumperFootMesh),
+              buildToggleButton('Wind Deflector', controller.windDeflector),
+            ]),
+            _buildSectionHeader('Competitor Aero Kit'),
+            _buildCard([
+              buildToggleButton('Sun Visor', controller.competitorSunVisor),
+              buildToggleButton('Bumper Corner', controller.competitorBumperCorner),
+              buildToggleButton('Bumper Spoiler', controller.competitorBumperSpoiler),
+              buildToggleButton('Bumper Foot Mesh', controller.competitorBumperFootMesh),
+              buildToggleButton('Wind Deflector', controller.competitorWindDeflector),
+            ]),
+            _buildSectionHeader('BB'),
+            _buildCard([
+              buildTextField('Expected FE by customer', controller.expectedFeByCustomer),
+              buildTextField('FE adv/disadv', controller.feAdvDisadv),
+              buildTextField('Reference FE in customer fleet for same model/route/GVW', controller.referenceFeCustomerFleet),
+              buildToggleButton('Dealer driver accompanied?', controller.dealerDriverAccompanied),
+              buildToggleButton('Customer driver accompanied?', controller.customerDriverAccompanied),
+              buildToggleButton('Was cruise control used?', controller.cruiseControlUsed),
+            ]),
+            _buildSectionHeader('Terrain split'),
+            _buildCard([
+              buildTextField('Highway%', controller.highwayPercentage),
+              buildTextField('Ghat Road %', controller.ghatRoadPercentage),
+              buildTextField('Single Road %', controller.singleRoadPercentage),
+              buildTextField('Traffic roads %', controller.trafficRoadPercentage),
+              buildTextField('Poor road%', controller.poorRoadPercentage),
+              buildTextField('No roads %', controller.noRoadPercentage),
+            ]),
             _buildSectionHeader('Customer Signature'),
             _buildSignatureBox(),
 
@@ -185,6 +218,15 @@ class FormScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget buildToggleButton(String label, RxBool toggleValue) {
+    return Obx(() => SwitchListTile(
+      title: Text(label),
+      value: toggleValue.value,
+      onChanged: (val) => toggleValue.value = val,
+      activeColor: Colors.blueAccent,
+    ));
   }
 
   void _saveReportWithSignature(BuildContext context) async {
