@@ -2,21 +2,23 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import '../../models/admin/driver_model.dart';
+import '../../models/trials_model.dart';
 
 class AdminController extends GetxController {
-  var driversResponse = DriversResponse(success: false, message: "", payload: Payload(drivers: [])).obs;
+  var driversResponse = DriversResponse(
+      success: false, message: "", payload: Payload(drivers: [])).obs;
   var selectedDriverLocation = Rx<LatLng?>(null);
   var selectedDriverId = ''.obs;
 
   void fetchDriverLocation(String driverId) {
     selectedDriverId.value = driverId;
 
-    final driver = driversResponse.value.payload.drivers.firstWhere((d) => d.id == driverId);
+    final driver = driversResponse.value.payload.drivers
+        .firstWhere((d) => d.id == driverId);
     selectedDriverLocation.value = LatLng(driver.latitude, driver.longitude);
   }
 
-
-  String response = '''
+  String driverResponse = '''
   {
     "success": true,
     "message": "Drivers fetched successfully",
@@ -53,10 +55,11 @@ class AdminController extends GetxController {
   void onInit() {
     super.onInit();
     fetchDrivers();
+    fetchTrails();
   }
 
   void fetchDrivers() {
-    var decodedData = json.decode(response);
+    var decodedData = json.decode(driverResponse);
     driversResponse.value = DriversResponse.fromJson(decodedData);
   }
 
@@ -68,6 +71,104 @@ class AdminController extends GetxController {
 
   void editDriver(String id) {
     print("Edit Driver: $id");
+    // Add edit functionality here
+  }
+
+  String trailsData = '''{
+  "success": true,
+  "message": "Drivers fetched successfully",
+  "payload": {
+    "trails": [
+      {
+        "id": "1",
+        "vehicleRegNo": "TN01AB1234",
+        "vehicleModel": "Model X",
+        "brand": "Tesla",
+        "startOdo": "12000",
+        "endOdo": "12500",
+        "startPlace": "Chennai",
+        "endPlace": "Bangalore",
+        "fuelConsumed": "50",
+        "tripStartDate": "2025-03-01",
+        "tripFinishDate": "2025-03-02",
+        "location": "Chennai Warehouse",
+        "date": "2025-03-01",
+        "masterDriverName": "Rajesh Kumar",
+        "empCode": "EMP1001",
+        "mobileNo": "9876543210",
+        "customerDriverName": "Arun Sharma",
+        "customerMobileNo": "9876501234"
+      },
+      {
+        "id": "2",
+        "vehicleRegNo": "KA05CD5678",
+        "vehicleModel": "Swift Dzire",
+        "brand": "Maruti Suzuki",
+        "startOdo": "50000",
+        "endOdo": "50550",
+        "startPlace": "Bangalore",
+        "endPlace": "Hyderabad",
+        "fuelConsumed": "35",
+        "tripStartDate": "2025-03-03",
+        "tripFinishDate": "2025-03-04",
+        "location": "Bangalore Depot",
+        "date": "2025-03-03",
+        "masterDriverName": "Vinay Reddy",
+        "empCode": "EMP2002",
+        "mobileNo": "9876543222",
+        "customerDriverName": "Sandeep Verma",
+        "customerMobileNo": "9876505678"
+      }
+    ]
+  }
+}''';
+
+
+
+  Rx<TrailResponse> trailsResponse = TrailResponse(
+      success: false, message: "", payload: TrailPayload(trails: [])).obs;
+  var selectedTrailId = ''.obs;
+
+  var selectedTrail = Rxn<Trail>(); // Stores the selected trail
+  var isEditing = false.obs; // Toggle editing mode
+
+  void setTrails(List<Trail> trails) {
+    trailsResponse.value = TrailResponse(
+      success: true,
+      message: "Trails updated",
+      payload: TrailPayload(trails: trails),
+    );
+  }
+
+  void viewTrail(Trail trail) {
+    selectedTrail.value = trail;
+    isEditing.value = false;
+  }
+
+  void enableEditing() {
+    isEditing.value = true;
+  }
+
+  void saveChanges() {
+    isEditing.value = false;
+    Get.back(); // Close popup after saving
+  }
+
+
+  void fetchTrails() {
+    var decodedData = json.decode(trailsData);  // Convert String to Map
+    trailsResponse.value = TrailResponse.fromMap(decodedData); // Use fromMap instead of fromJson
+  }
+
+
+  void deleteTrail(String id) {
+    trailsResponse.update((val) {
+      val?.payload.trails.removeWhere((trail) => trail.id == id);
+    });
+  }
+
+  void editTrail(String id) {
+    print("Edit Trail: $id");
     // Add edit functionality here
   }
 }

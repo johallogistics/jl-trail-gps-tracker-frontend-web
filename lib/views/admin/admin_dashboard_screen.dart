@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
 
+import 'daily_report_screen.dart';
 import 'driver_manageement_screen.dart';
 
 class DashboardController extends GetxController {
@@ -17,6 +19,8 @@ class DashboardScreen extends StatelessWidget {
   final List<Widget> pages = [
     Center(child: Text('Dashboard Home', style: TextStyle(fontSize: 24))),
     DriverManagementScreen(), // Driver Management with Live Location Tab
+    VehicleManagementScreen(),
+    DailyReportManagement(),
     Center(child: Text('Users Management', style: TextStyle(fontSize: 24))),
     Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
   ];
@@ -58,9 +62,11 @@ class DashboardScreen extends StatelessWidget {
           Text('Admin Panel', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           Divider(),
           _drawerItem(Icons.dashboard, 'Dashboard', 0),
-          _drawerItem(Icons.local_shipping, 'Driver Management', 1),
-          _drawerItem(Icons.people, 'Users', 2),
-          _drawerItem(Icons.settings, 'Settings', 3),
+          _drawerItem(Icons.supervisor_account, 'Driver Management', 1),
+          _drawerItem(Icons.local_shipping, 'Trails', 2),
+          _drawerItem(Icons.description, 'Daily Reports', 3),
+          _drawerItem(Icons.people, 'Clients', 4),
+          _drawerItem(Icons.settings, 'Settings', 5),
         ],
       ),
     );
