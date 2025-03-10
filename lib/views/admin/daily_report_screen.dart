@@ -9,7 +9,7 @@ class DailyReportManagement extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Daily Report Management')),
+      appBar: AppBar(title: Text('Daily Report Management - Page')),
       body: Column(
         children: [
           Padding(
