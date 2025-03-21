@@ -17,11 +17,19 @@ class TrailScreen extends StatefulWidget {
 class _TrailScreenState extends State<TrailScreen> {
   Position? _currentPosition;
   bool _isTracking = true;
+  String _driverId = "0";
+
+
+  String get driverId => _driverId;
+
+  set driverId(String value) {
+    _driverId = value;
+  }
 
   @override
   void initState() {
     super.initState();
-    // _startTrackingLocation();
+    _startTrackingLocation();
   }
 
   void _startTrackingLocation() {
@@ -45,13 +53,14 @@ class _TrailScreenState extends State<TrailScreen> {
   }
 
   void _sendLocationToServer(double latitude, double longitude) async {
-    final String apiUrl = 'http://localhost:3000/update-location';
+    final String apiUrl = 'http://localhost:3000/location';
     final response = await http.post(
       Uri.parse(apiUrl),
       body: {
-        'driverId': 'driver123',
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
+        "driverId": 6,
+        "latitude": latitude,
+        "longitude": longitude,
+        "isIdle": false
       },
     );
 

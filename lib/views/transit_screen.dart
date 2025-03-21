@@ -26,7 +26,6 @@ class _TransitScreenState extends State<TransitScreen> {
         throw Exception('Location permissions are denied');
       }
     }
-
     if (permission == LocationPermission.deniedForever) {
       throw Exception('Location permissions are permanently denied');
     }

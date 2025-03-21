@@ -13,10 +13,10 @@ class HomeScreen extends StatelessWidget {
     final TrailController trailController = Get.put(TrailController());
 
     return Scaffold(
-      backgroundColor: Colors.blue[50], // ✅ Light blue background
+      backgroundColor: Colors.blue[50],
       appBar: AppBar(
         title: Text('Home Screen'.tr),
-        backgroundColor: Colors.blueAccent[700], // ✅ Deep blue AppBar
+        backgroundColor: Colors.blueAccent[700],
         elevation: 0,
         actions: [
           Padding(
@@ -47,7 +47,6 @@ class HomeScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 Get.to(() => TransitScreen());
-                print('Start Transit Clicked');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent[700], // ✅ Deep blue button
@@ -58,8 +57,6 @@ class HomeScreen extends StatelessWidget {
               child: Text('Start Transit'.tr, style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 20),
-
-            // Use Obx to reactively update the button based on the active trail status
             Obx(() {
               if (trailController.hasActiveTrail.value == null) {
                 return const CircularProgressIndicator();
