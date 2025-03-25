@@ -102,7 +102,7 @@ class _DriverLiveLocationScreenState extends State<DriverLiveLocationScreen> {
   @override
   void dispose() {
     // ✅ Destroy the map when leaving the screen
-    // MapService.destroyMap();
+    MapService.destroyMap();
     super.dispose();
   }
 }
