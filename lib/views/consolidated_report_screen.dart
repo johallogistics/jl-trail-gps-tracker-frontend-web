@@ -26,48 +26,48 @@ class FormScreen extends StatelessWidget {
           children: [
             _buildSectionHeader('Personal Details'),
             _buildCard([
-              buildTextField('location'.tr, controller.locationController),
-              buildTextField('date'.tr, controller.dateController),
-              buildTextField('master_driver_name'.tr, controller.masterDriverNameController),
-              buildTextField('emp_code'.tr, controller.empCodeController),
-              buildTextField('mobile_no'.tr, controller.mobileNoController),
-              buildTextField('customer_driver_name'.tr, controller.customerDriverNameController),
-              buildTextField('customer_mobile_no'.tr, controller.customerMobileNoController),
-              buildTextField('license_no'.tr, controller.licenseNoController),
+              buildTextField('location', controller.locationController),
+              buildTextField('date', controller.dateController),
+              buildTextField('master_driver_name', controller.masterDriverNameController),
+              buildTextField('emp_code', controller.empCodeController),
+              buildTextField('mobile_no', controller.mobileNoController),
+              buildTextField('customer_driver_name', controller.customerDriverNameController),
+              buildTextField('customer_mobile_no', controller.customerMobileNoController),
+              buildTextField('license_no', controller.licenseNoController),
             ]),
 
             _buildSectionHeader('Vehicle Details'),
             Obx(() => Column(
               children: controller.vehicleDetails.map((vehicle) => _buildCard([
-                buildTextField('vehicleRegNo'.tr, vehicle.vehicleRegNo),
-                buildTextField('brand'.tr, vehicle.brand),
-                buildTextField('chassisNo'.tr, vehicle.chassisNo),
-                buildTextField('vehicleModel'.tr, vehicle.vehicleModel),
-                buildTextField('wheelBase'.tr, vehicle.wheelBase),
-                buildTextField('atsType'.tr, vehicle.atsType),
-                buildTextField('emission'.tr, vehicle.emission),
-                buildTextField('tyreBrand'.tr, vehicle.tyreBrand),
-                buildTextField('application'.tr, vehicle.application),
-                buildTextField('gvwCarried'.tr, vehicle.gvwCarried),
-                buildTextField('tripStartDate'.tr, vehicle.tripStartDate),
-                buildTextField('startOdo'.tr, vehicle.startOdo),
-                buildTextField('tripFinishDate'.tr, vehicle.tripFinishDate),
-                buildTextField('endOdo'.tr, vehicle.endOdo),
-                buildTextField('startPlace'.tr, vehicle.startPlace),
-                buildTextField('endPlace'.tr, vehicle.endPlace),
-                buildTextField('totalTrailKms'.tr, vehicle.totalTrailKms),
-                buildTextField('fuelConsumed'.tr, vehicle.fuelConsumed),
-                buildTextField('adBlueConsumedCluster'.tr, vehicle.adBlueConsumedCluster),
+                buildTextField('vehicleRegNo', vehicle.vehicleRegNo),
+                buildTextField('brand', vehicle.brand),
+                buildTextField('chassisNo', vehicle.chassisNo),
+                buildTextField('vehicleModel', vehicle.vehicleModel),
+                buildTextField('wheelBase', vehicle.wheelBase),
+                buildTextField('atsType', vehicle.atsType),
+                buildTextField('emission', vehicle.emission),
+                buildTextField('tyreBrand', vehicle.tyreBrand),
+                buildTextField('application', vehicle.application),
+                buildTextField('gvwCarried', vehicle.gvwCarried),
+                buildTextField('tripStartDate', vehicle.tripStartDate),
+                buildTextField('startOdo', vehicle.startOdo),
+                buildTextField('tripFinishDate', vehicle.tripFinishDate),
+                buildTextField('endOdo', vehicle.endOdo),
+                buildTextField('startPlace', vehicle.startPlace),
+                buildTextField('endPlace', vehicle.endPlace),
+                buildTextField('totalTrailKms', vehicle.totalTrailKms),
+                buildTextField('fuelConsumed', vehicle.fuelConsumed),
+                buildTextField('adBlueConsumedCluster', vehicle.adBlueConsumedCluster),
                 Obx(() => CheckboxListTile(
-                  title: Text('did_regeneration'.tr),
+                  title: Text('did_regeneration'),
                   value: vehicle.didRegenerationHappen.value,
                   onChanged: (val) => vehicle.didRegenerationHappen.value = val ?? false,
                   activeColor: Colors.blue,
                   checkColor: Colors.white,
                 )),
-                buildTextField('leadDistance'.tr, vehicle.leadDistance),
-                buildTextField('drivingSpeed'.tr, vehicle.drivingSpeed),
-                buildTextField('actualFeInBB'.tr, vehicle.actualFeInBB),
+                buildTextField('leadDistance', vehicle.leadDistance),
+                buildTextField('drivingSpeed', vehicle.drivingSpeed),
+                buildTextField('actualFeInBB', vehicle.actualFeInBB),
               ])).toList(),
             )),
 
@@ -98,15 +98,15 @@ class FormScreen extends StatelessWidget {
                 buildCopyCheckbox('actualFeInBB', competitorVehicle.actualFeInBB, controller.vehicleDetails[0].actualFeInBB),
               ])).toList(),
             )),
-            _buildSectionHeader('Aero Kit Available'),
+            _buildSectionHeader('aero_kit_available'),
             _buildCard([
-              buildToggleButton('Sun Visor', controller.sunVisor),
+              buildToggleButton('sunVisor', controller.sunVisor),
               buildToggleButton('Bumper Corner', controller.bumperCorner),
               buildToggleButton('Bumper Spoiler', controller.bumperSpoiler),
               buildToggleButton('Bumper Foot Mesh', controller.bumperFootMesh),
               buildToggleButton('Wind Deflector', controller.windDeflector),
             ]),
-            _buildSectionHeader('Competitor Aero Kit'),
+            _buildSectionHeader('Competitor Aero Kit'.tr),
             _buildCard([
               buildToggleButton('Sun Visor', controller.competitorSunVisor),
               buildToggleButton('Bumper Corner', controller.competitorBumperCorner),
@@ -114,16 +114,16 @@ class FormScreen extends StatelessWidget {
               buildToggleButton('Bumper Foot Mesh', controller.competitorBumperFootMesh),
               buildToggleButton('Wind Deflector', controller.competitorWindDeflector),
             ]),
-            _buildSectionHeader('BB'),
+            _buildSectionHeader('BB'.tr),
             _buildCard([
-              buildTextField('Expected FE by customer', controller.expectedFeByCustomer),
+              buildTextField('expected_fe_by_customer', controller.expectedFeByCustomer),
               buildTextField('FE adv/disadv', controller.feAdvDisadv),
               buildTextField('Reference FE in customer fleet for same model/route/GVW', controller.referenceFeCustomerFleet),
               buildToggleButton('Dealer driver accompanied?', controller.dealerDriverAccompanied),
               buildToggleButton('Customer driver accompanied?', controller.customerDriverAccompanied),
               buildToggleButton('Was cruise control used?', controller.cruiseControlUsed),
             ]),
-            _buildSectionHeader('Terrain split'),
+            _buildSectionHeader('Terrain split'.tr),
             _buildCard([
               buildTextField('Highway%', controller.highwayPercentage),
               buildTextField('Ghat Road %', controller.ghatRoadPercentage),
@@ -147,7 +147,7 @@ class FormScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Text(
-        title,
+        title.tr,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueAccent),
       ),
     );
@@ -176,7 +176,7 @@ class FormScreen extends StatelessWidget {
       ),
       TextButton(
         onPressed: () => _signatureController.clear(),
-        child: const Text('Clear Signature', style: TextStyle(color: Colors.red)),
+        child: Text('Clear Signature'.tr, style: TextStyle(color: Colors.red)),
       )
     ]);
   }
@@ -189,7 +189,7 @@ class FormScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      child: const Text('Review Form', style: TextStyle(color: Colors.white, fontSize: 16)),
+      child: Text('Review Form'.tr, style: TextStyle(color: Colors.white, fontSize: 16)),
     );
   }
 
@@ -202,7 +202,7 @@ class FormScreen extends StatelessWidget {
         style: TextStyle(color: Colors.blueAccent[700], fontSize: 16),
         cursorColor: Colors.blueAccent,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: label.tr,
           labelStyle: TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
           filled: true,
           fillColor: Colors.blue[50],
@@ -222,7 +222,7 @@ class FormScreen extends StatelessWidget {
 
   Widget buildToggleButton(String label, RxBool toggleValue) {
     return Obx(() => SwitchListTile(
-      title: Text(label),
+      title: Text(label.tr),
       value: toggleValue.value,
       onChanged: (val) => toggleValue.value = val,
       activeColor: Colors.blueAccent,
@@ -231,7 +231,7 @@ class FormScreen extends StatelessWidget {
 
   void _saveReportWithSignature(BuildContext context) async {
     if (_signatureController.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please provide a signature.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please provide a signature.'.tr)));
       return;
     }
     final td.Uint8List? signature = await _signatureController.toPngBytes();

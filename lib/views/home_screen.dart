@@ -30,6 +30,9 @@ class HomeScreen extends StatelessWidget {
                 DropdownMenuItem(value: 'en', child: Text('English', style: TextStyle(color: Colors.blueAccent[700]))),
                 DropdownMenuItem(value: 'ta', child: Text('தமிழ்', style: TextStyle(color: Colors.blueAccent[700]))),
                 DropdownMenuItem(value: 'hi', child: Text('हिन्दी', style: TextStyle(color: Colors.blueAccent[700]))),
+                DropdownMenuItem(value: 'te', child: Text('తెలుగు', style: TextStyle(color: Colors.blueAccent[700]))),
+                DropdownMenuItem(value: 'ml', child: Text('മലയാളം', style: TextStyle(color: Colors.blueAccent[700]))),
+                DropdownMenuItem(value: 'kn', child: Text('ಕನ್ನಡ', style: TextStyle(color: Colors.blueAccent[700]))),
               ],
               onChanged: (String? langCode) {
                 if (langCode != null) {

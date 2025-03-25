@@ -34,6 +34,7 @@ dependencies:
   webview_flutter: ^4.8.0
   webview_flutter_web: ^0.2.3+4
   mapmyindia_flutter: ^1.0.7
+  js: ^0.6.7
 dev_dependencies:
   flutter_test:
     sdk: flutter
