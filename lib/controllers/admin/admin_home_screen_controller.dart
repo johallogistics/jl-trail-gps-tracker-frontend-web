@@ -10,12 +10,17 @@ class AdminController extends GetxController {
   var selectedDriverLocation = Rx<LatLng?>(null);
   var selectedDriverId = ''.obs;
 
-  void fetchDriverLocation(String driverId) {
-    selectedDriverId.value = driverId;
+  // void fetchDriverLocation(String driverId) {
+  //   selectedDriverId.value = driverId;
+  //
+  //   final driver = driversResponse.value.payload.drivers
+  //       .firstWhere((d) => d.id == driverId);
+  //   selectedDriverLocation.value = LatLng(driver.latitude, driver.longitude);
+  // }
 
-    final driver = driversResponse.value.payload.drivers
-        .firstWhere((d) => d.id == driverId);
-    selectedDriverLocation.value = LatLng(driver.latitude, driver.longitude);
+  setDriverLocation(double latitude, double longitude) {
+    selectedDriverLocation.value = LatLng(latitude, longitude);
+    selectedDriverLocation.refresh();
   }
 
   String driverResponse = '''
