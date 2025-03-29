@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../controllers/admin/driver_management_controller.dart';
+import 'driver/driver_add_screen.dart';
+import 'driver/driver_edit_screen.dart';
 import 'driver_live_location_screen.dart';
 import '../../controllers/admin/admin_home_screen_controller.dart';
 
-class DriverManagementScreen extends StatelessWidget {
-  final AdminController controller = Get.put(AdminController());
+class DriverManagementScreen extends StatefulWidget {
 
   DriverManagementScreen({super.key});
+
+  @override
+  State<DriverManagementScreen> createState() => _DriverManagementScreenState();
+}
+
+class _DriverManagementScreenState extends State<DriverManagementScreen> {
+  final DriverController driverController = Get.put(DriverController());
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    driverController.fetchDrivers();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +30,18 @@ class DriverManagementScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Driver Management"),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Driver Management"),
+              ElevatedButton(
+                onPressed: () {
+                  Get.dialog(DriverAddPopup());
+                },
+                child: const Text("Add Driver"),
+              ),
+            ],
+          ),
           bottom: TabBar(
             tabs: [
               Tab(text: "Driver List"),
@@ -36,7 +63,7 @@ class DriverManagementScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Obx(() {
-        var drivers = controller.driversResponse.value.payload.drivers;
+        var drivers = driverController.drivers;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
@@ -51,7 +78,7 @@ class DriverManagementScreen extends StatelessWidget {
             ],
             rows: drivers.map((driver) {
               return DataRow(cells: [
-                DataCell(Text(driver.id)),
+                DataCell(Text(driver.id ?? "N/A")),
                 DataCell(Text(driver.name)),
                 DataCell(Text(driver.phone.toString())),
                 DataCell(Text(driver.employeeId)),
@@ -60,11 +87,11 @@ class DriverManagementScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => controller.editDriver(driver.id),
+                      onPressed: () => _showEditPopup(driver),
                     ),
                     IconButton(
                       icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => controller.deleteDriver(driver.id),
+                      onPressed: () => driverController.deleteDriver(driver.id!),
                     ),
                   ],
                 )),
@@ -75,4 +102,17 @@ class DriverManagementScreen extends StatelessWidget {
       }),
     );
   }
+}
+
+/// Show Edit Screen as a Popup Dialog
+void _showEditPopup(driver) {
+  Get.dialog(
+    Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: SizedBox(
+        width: 400, // Adjust as needed
+        child: EditDriverScreen(driver: driver),
+      ),
+    ),
+  );
 }

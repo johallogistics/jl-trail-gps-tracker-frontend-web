@@ -4,6 +4,9 @@ import 'package:trail_tracker/controllers/trail_controller.dart';
 import 'package:trail_tracker/views/trail_screen.dart';
 import 'package:trail_tracker/views/transit_screen.dart';
 
+import '../utils/location_service.dart';
+
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -11,6 +14,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Initialize the TrailController
     final TrailController trailController = Get.put(TrailController());
+    final LocationPostService locationService = LocationPostService();
 
     return Scaffold(
       backgroundColor: Colors.blue[50],
@@ -58,6 +62,14 @@ class HomeScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text('Start Transit'.tr, style: const TextStyle(fontSize: 16)),
+            ),
+            ElevatedButton(
+              onPressed: () => locationService.startTracking("8925450309"),
+              child: Text('Start Tracking'),
+            ),
+            ElevatedButton(
+              onPressed: locationService.stopTracking,
+              child: Text('Stop Tracking'),
             ),
             const SizedBox(height: 20),
             Obx(() {

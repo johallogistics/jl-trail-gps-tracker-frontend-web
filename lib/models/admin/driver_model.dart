@@ -47,37 +47,32 @@ class Payload {
 }
 
 class Driver {
-  final String id;
+  final String? id;
   final String name;
-  final int phone;
+  final String phone;   // Change the type to String to avoid errors
   final String employeeId;
   final String address;
-  final double latitude;
-  final double longitude;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Driver({
-    required this.id,
+    this.id,
     required this.name,
     required this.phone,
     required this.employeeId,
     required this.address,
-    required this.latitude,
-    required this.longitude,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
+  /// ✅ fromJson method with type casting
   factory Driver.fromJson(Map<String, dynamic> json) {
     return Driver(
-      id: json['id'],
-      name: json['name'],
-      phone: json['phone'],
-      employeeId: json['employeeId'],
-      address: json['address'],
-      latitude: json['latitude'].toDouble(),
-      longitude: json['longitude'].toDouble(),
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      phone: json['phone'].toString(),  // Convert to String
+      employeeId: json['employeeId'] ?? '',
+      address: json['address'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
@@ -90,13 +85,18 @@ class Driver {
       'phone': phone,
       'employeeId': employeeId,
       'address': address,
-      'latitude': latitude,
-      'longitude': longitude,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
+
+  /// Override `toString()` to print details
+  @override
+  String toString() {
+    return "Driver(id: $id, name: $name, phone: $phone, employeeId: $employeeId, address: $address)";
+  }
 }
+
 
 // Example usage:
 

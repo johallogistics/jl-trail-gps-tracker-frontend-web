@@ -1,0 +1,98 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+import '../../models/admin/driver_model.dart';
+import '../../models/admin/locations_model.dart';
+
+class DriverRepository {
+  static const String baseUrl =
+      'https://jl-trail-gps-tracker-backend-production.up.railway.app';
+
+  Future<Map<String, dynamic>> addDriver(Map<String, dynamic> driverData) async {
+    final url = Uri.parse('$baseUrl/drivers');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(driverData),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Driver added successfully',
+          'data': jsonDecode(response.body)
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to add driver: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error: $e',
+      };
+    }
+  }
+
+  // ✅ Fetch all drivers
+  Future<List<Driver>> fetchDrivers() async {
+    final response = await http.get(Uri.parse('$baseUrl/drivers'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = json.decode(response.body)['payload'];
+      return jsonData.map((data) => Driver.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load drivers');
+    }
+  }
+
+  // ✅ Fetch location by phone number
+  Future<Location?> fetchDriverLocation(String phone) async {
+    try {
+      final response =
+          await http.get(Uri.parse('$baseUrl/api/driverLocation/$phone'));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic>? jsonResponse =
+            json.decode(response.body)['data'];
+
+        if (jsonResponse != null) {
+          return Location.fromJson(jsonResponse);
+        } else {
+          print("❌ No location data found");
+          return null;
+        }
+      } else {
+        print('❌ Failed to load location: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print("❌ Error: $e");
+      return null;
+    }
+  }
+
+  /// Update Driver
+  Future<bool> updateDriver(String id, Driver driver) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/drivers/$id"),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(driver.toJson()),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  /// Delete Driver
+  Future<bool> deleteDriver(String id) async {
+    final response = await http.delete(Uri.parse("$baseUrl/drivers/$id"));
+
+    return response.statusCode == 200;
+  }
+}

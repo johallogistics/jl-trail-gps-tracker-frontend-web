@@ -37,7 +37,8 @@ class MyApp extends StatelessWidget {
       locale: Locale('en'),
       fallbackLocale: Locale('en'),
       title: 'Splash to OTP Login',
-      home:  DashboardScreen(),
+      home: HomeScreen(),
+      // home:  DashboardScreen(),
     );
   }
 }
