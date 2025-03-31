@@ -26,7 +26,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     setState(() => isLoading = true);
 
     try {
-      var url = Uri.parse("http://localhost:3000/send-otp");
+      var url = Uri.parse("https://jl-trail-gps-tracker-backend-production.up.railway.app/send-otp");
 
       var response = await http.post(
         url,

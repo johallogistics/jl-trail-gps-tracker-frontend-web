@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:workmanager/workmanager.dart';
 
-const String backendUrl = "http://localhost:3000/location";
+const String backendUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app/location";
 
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {

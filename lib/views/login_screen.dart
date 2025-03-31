@@ -7,8 +7,8 @@ import '../api/api_manager.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  String? phoneNumber;
-  LoginScreen({super.key, phoneNumber});
+  String phoneNumber;
+  LoginScreen({super.key, required this.phoneNumber});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -19,10 +19,11 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   bool isResendEnabled = false;
   int resendCountdown = 30;
   final box = GetStorage();
-  final String phoneNumber = "918925450309"; // Replace with actual phone number
+  late String phoneNumber; // Replace with actual phone number
 
   @override
   void initState() {
+    phoneNumber = widget.phoneNumber;
     super.initState();
     listenForCode();
     startResendCountdown();
@@ -60,8 +61,8 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
 
         // Check if 'success' is an integer (or boolean, depending on your API)
         if (data['success'] == true || data['success'] == 1) { // Adjust based on your API
-          // checkDriverExistence();  // todo integration yet to complete
-          Get.off(() => const HomeScreen());
+          checkDriverExistence();  // todo integration yet to complete
+          // Get.off(() => const HomeScreen());
         } else {
           Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
               snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
@@ -79,10 +80,10 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
 
   Future<void> checkDriverExistence() async {
     try {
-      var response = await ApiManager.get('/check-driver?phone=$phoneNumber');
+      var response = await ApiManager.get('drivers/verify-phone?phone=$phoneNumber');
       var data = jsonDecode(response.body);
       if (data['exists']) {
-        Get.off(() => const HomeScreen());
+        Get.off(() => HomeScreen(phone:phoneNumber));
       } else {
         Get.snackbar('Info', 'Driver not found. Please contact support.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
       }

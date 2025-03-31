@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import '../../models/admin/driver_model.dart';
 import '../../repositories/admin/driver_repository.dart';
+import 'package:http/http.dart' as http;
 
 class DriverController extends GetxController {
 
@@ -33,23 +36,18 @@ class DriverController extends GetxController {
     isLoading(false);
   }
 
-  /// ✅ Fetch drivers
   Future<void> fetchDrivers() async {
     try {
-      isLoading(true);
-      var result = await service.fetchDrivers();
+      final response = await DriverRepository.fetchDrivers();  // Full JSON response
 
-      if (result.isNotEmpty) {
-        drivers.assignAll(result);
-        selectedDriver.value = result.first;  // Select first driver by default
+      if (response['success'] == true) {
+        var driverResponse = DriversResponse.fromJson(response);
+        drivers.assignAll(driverResponse.drivers);
       } else {
-        errorMessage.value = 'No drivers found.';
+        print('Failed to load drivers');
       }
     } catch (e) {
-      print("❌ Error: $e");
-      errorMessage.value = 'Failed to load drivers.';
-    } finally {
-      isLoading(false);
+      print("Error fetching drivers: $e");
     }
   }
 
@@ -95,6 +93,31 @@ class DriverController extends GetxController {
       errorMessage.value = 'Error deleting driver.';
     } finally {
       isLoading(false);
+    }
+  }
+
+  Future<Map<String, dynamic>> toggleLocation(String phone, bool isEnabled) async {
+    try {
+      final response = await http.put(
+        Uri.parse("https://jl-trail-gps-tracker-backend-production.up.railway.app/drivers/phone/$phone/location"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'locationEnabled': isEnabled}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to update location service'
+        };
+      }
+    } catch (e) {
+      print("Error toggling location: $e");
+      return {
+        'success': false,
+        'message': 'Error occurred'
+      };
     }
   }
 }

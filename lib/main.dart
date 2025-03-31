@@ -8,6 +8,8 @@ import 'package:trail_tracker/views/admin/admin_dashboard_screen.dart';
 import 'package:trail_tracker/views/home_screen.dart';
 import 'dart:html' as html;
 
+import 'package:trail_tracker/views/splash_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.delayed(Duration(milliseconds: 500));
@@ -37,8 +39,9 @@ class MyApp extends StatelessWidget {
       locale: Locale('en'),
       fallbackLocale: Locale('en'),
       title: 'Splash to OTP Login',
-      home: HomeScreen(),
-      // home:  DashboardScreen(),
+      // home: SplashScreen(),
+      // home: HomeScreen(phone: "918925450309"),
+      home:  DashboardScreen(),
     );
   }
 }

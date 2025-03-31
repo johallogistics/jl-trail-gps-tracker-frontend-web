@@ -39,7 +39,7 @@ class EditDriverScreen extends StatelessWidget {
                   name: nameController.text,
                   phone: phoneController.text,
                   employeeId: employeeIdController.text,
-                  address: addressController.text,
+                  address: addressController.text, locationEnabled: false,
                 );
                 print("Driver Data:: $updatedDriver");
                 controller.updateDriver(driver.id!, updatedDriver);

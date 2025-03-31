@@ -8,7 +8,10 @@ import '../utils/location_service.dart';
 
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+
+  String phone;
+
+  HomeScreen({super.key, required this.phone});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +67,7 @@ class HomeScreen extends StatelessWidget {
               child: Text('Start Transit'.tr, style: const TextStyle(fontSize: 16)),
             ),
             ElevatedButton(
-              onPressed: () => locationService.startTracking("8925450309"),
+              onPressed: () => locationService.startTracking(phone),
               child: Text('Start Tracking'),
             ),
             ElevatedButton(

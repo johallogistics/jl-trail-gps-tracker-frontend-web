@@ -6,7 +6,7 @@ import '../../models/trials_model.dart';
 
 class AdminController extends GetxController {
   var driversResponse = DriversResponse(
-      success: false, message: "", payload: Payload(drivers: [])).obs;
+      success: false, drivers: []).obs;
   var selectedDriverLocation = Rx<LatLng?>(null);
   var selectedDriverId = ''.obs;
 
@@ -59,18 +59,17 @@ class AdminController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchDrivers();
     fetchTrails();
   }
 
-  void fetchDrivers() {
-    var decodedData = json.decode(driverResponse);
-    driversResponse.value = DriversResponse.fromJson(decodedData);
-  }
+  // void fetchDrivers() {
+  //   var decodedData = json.decode(driverResponse);
+  //   driversResponse.value = DriversResponse.fromJson(decodedData);
+  // }
 
   void deleteDriver(String id) {
     driversResponse.update((val) {
-      val?.payload.drivers.removeWhere((driver) => driver.id == id);
+      val?.drivers.removeWhere((driver) => driver.id == id);
     });
   }
 

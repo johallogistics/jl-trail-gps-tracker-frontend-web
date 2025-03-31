@@ -40,13 +40,13 @@ class DriverRepository {
     }
   }
 
-  // ✅ Fetch all drivers
-  Future<List<Driver>> fetchDrivers() async {
-    final response = await http.get(Uri.parse('$baseUrl/drivers'));
+  /// ✅ Fetch drivers API call
+  static Future<Map<String, dynamic>> fetchDrivers() async {
+    final response = await http.get(Uri.parse('$baseUrl/drivers-all'));
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonData = json.decode(response.body)['payload'];
-      return jsonData.map((data) => Driver.fromJson(data)).toList();
+      /// ✅ Return the full JSON object, not just the list
+      return json.decode(response.body);
     } else {
       throw Exception('Failed to load drivers');
     }

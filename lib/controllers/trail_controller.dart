@@ -61,7 +61,7 @@ class TrailController extends GetxController {
   }
 
   void _sendLocationToServer(double latitude, double longitude) async {
-    final String apiUrl = 'http://localhost:3000/location';
+    const String apiUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app/location';
     final response = await http.post(
       Uri.parse(apiUrl),
       body: {
@@ -83,7 +83,7 @@ class TrailController extends GetxController {
   Future<void> _checkActiveTrail() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/check-active-trail/$currentDriverId'),
+        Uri.parse('https://jl-trail-gps-tracker-backend-production.up.railway.app/check-active-trail/$currentDriverId'),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

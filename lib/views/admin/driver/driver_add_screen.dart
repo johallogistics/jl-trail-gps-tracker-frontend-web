@@ -51,7 +51,7 @@ class DriverAddPopup extends StatelessWidget {
               name: nameController.text,
               phone: phoneController.text,
               employeeId: employeeIdController.text,
-              address: addressController.text,
+              address: addressController.text, locationEnabled: false,
             );
             await controller.addDriver(driver);
           },

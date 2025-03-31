@@ -148,7 +148,7 @@ class DailyReportReviewScreen extends StatelessWidget {
 
   // 🔹 Submit Data API Call
   void submitData() async {
-    final url = Uri.parse("http://localhost:3000/dailyReport");
+    final url = Uri.parse("https://jl-trail-gps-tracker-backend-production.up.railway.app/dailyReport");
 
     final response = await http.post(
       url,

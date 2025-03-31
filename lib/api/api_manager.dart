@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiManager {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app';
 
   static Future<http.Response> get(String endpoint) async {
     final url = Uri.parse('$baseUrl/$endpoint');
