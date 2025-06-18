@@ -1,12 +1,10 @@
 import 'dart:convert';
 
 class TrailResponse {
-  final bool success;
   final String message;
   final TrailPayload payload;
 
   TrailResponse({
-    required this.success,
     required this.message,
     required this.payload,
   });
@@ -14,15 +12,12 @@ class TrailResponse {
   factory TrailResponse.fromJson(Map<String, dynamic> json) =>
       TrailResponse.fromMap(json);
 
-
   factory TrailResponse.fromMap(Map<String, dynamic> json) => TrailResponse(
-    success: json["success"] ?? false,
     message: json["message"] ?? "",
-    payload: TrailPayload.fromMap(json["payload"] ?? {}),
+    payload: TrailPayload.fromMap(json["payload"] ?? []), // Correctly parse the payload as a list
   );
 
   Map<String, dynamic> toMap() => {
-    "success": success,
     "message": message,
     "payload": payload.toMap(),
   };
@@ -33,11 +28,10 @@ class TrailPayload {
 
   TrailPayload({required this.trails});
 
-  factory TrailPayload.fromMap(Map<String, dynamic> json) => TrailPayload(
-    trails: (json["trails"] as List<dynamic>?)
-        ?.map((x) => Trail.fromMap(x))
-        .toList() ??
-        [],
+  factory TrailPayload.fromMap(dynamic json) => TrailPayload(
+    trails: (json as List<dynamic>)
+        .map((x) => Trail.fromMap(x))
+        .toList(),
   );
 
   Map<String, dynamic> toMap() => {
@@ -46,7 +40,7 @@ class TrailPayload {
 }
 
 class Trail {
-  final String id;
+  final int id;
   final String vehicleRegNo;
   final String vehicleModel;
   final String brand;
@@ -87,7 +81,7 @@ class Trail {
   });
 
   factory Trail.fromMap(Map<String, dynamic> json) => Trail(
-    id: json["id"] ?? "",
+    id: json["id"] ?? 0,  // Now we handle it as an int
     vehicleRegNo: json["vehicleRegNo"] ?? "",
     vehicleModel: json["vehicleModel"] ?? "",
     brand: json["brand"] ?? "",
@@ -128,3 +122,66 @@ class Trail {
     "customerMobileNo": customerMobileNo,
   };
 }
+
+
+class TrailRequest {
+  final String? vehicleRegNo;
+  final String? vehicleModel;
+  final String? brand;
+  final String? startOdo;
+  final String? endOdo;
+  final String? startPlace;
+  final String? endPlace;
+  final String? fuelConsumed;
+  final String? tripStartDate;
+  final String? tripFinishDate;
+  final String? location;
+  final String? date;
+  final String? masterDriverName;
+  final String? empCode;
+  final String? mobileNo;
+  final String? customerDriverName;
+  final String? customerMobileNo;
+
+  TrailRequest({
+    this.vehicleRegNo,
+    this.vehicleModel,
+    this.brand,
+    this.startOdo,
+    this.endOdo,
+    this.startPlace,
+    this.endPlace,
+    this.fuelConsumed,
+    this.tripStartDate,
+    this.tripFinishDate,
+    this.location,
+    this.date,
+    this.masterDriverName,
+    this.empCode,
+    this.mobileNo,
+    this.customerDriverName,
+    this.customerMobileNo,
+  });
+
+  Map<String, dynamic> toMap() => {
+    "vehicleRegNo": vehicleRegNo,
+    "vehicleModel": vehicleModel,
+    "brand": brand,
+    "startOdo": startOdo,
+    "endOdo": endOdo,
+    "startPlace": startPlace,
+    "endPlace": endPlace,
+    "fuelConsumed": fuelConsumed,
+    "tripStartDate": tripStartDate,
+    "tripFinishDate": tripFinishDate,
+    "location": location,
+    "date": date,
+    "masterDriverName": masterDriverName,
+    "empCode": empCode,
+    "mobileNo": mobileNo,
+    "customerDriverName": customerDriverName,
+    "customerMobileNo": customerMobileNo,
+  };
+}
+
+

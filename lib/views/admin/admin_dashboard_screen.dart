@@ -21,8 +21,8 @@ class DashboardScreen extends StatelessWidget {
     DriverManagementScreen(), // Driver Management with Live Location Tab
     VehicleManagementScreen(),
     DailyReportManagement(),
-    Center(child: Text('Users Management', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
+    // Center(child: Text('Users Management', style: TextStyle(fontSize: 24))),
+    // Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
   ];
 
   DashboardScreen({super.key});
@@ -65,8 +65,8 @@ class DashboardScreen extends StatelessWidget {
           _drawerItem(Icons.supervisor_account, 'Driver Management', 1),
           _drawerItem(Icons.local_shipping, 'Trails', 2),
           _drawerItem(Icons.description, 'Daily Reports', 3),
-          _drawerItem(Icons.people, 'Clients', 4),
-          _drawerItem(Icons.settings, 'Settings', 5),
+          // _drawerItem(Icons.people, 'Clients', 4),
+          // _drawerItem(Icons.settings, 'Settings', 5),
         ],
       ),
     );

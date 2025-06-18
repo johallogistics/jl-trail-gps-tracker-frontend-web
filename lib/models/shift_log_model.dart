@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class ShiftLog {
-  final int id;
+  final int? id;
   final String shift;
   final int otHours;
   final String vehicleModel;
@@ -29,7 +29,7 @@ class ShiftLog {
   final DateTime updatedAt;
 
   ShiftLog({
-    required this.id,
+    this.id,
     required this.shift,
     required this.otHours,
     required this.vehicleModel,
@@ -99,6 +99,36 @@ class ShiftLog {
       updatedAt: tryParseDate(json['updatedAt']) ?? DateTime.now(),
     );
   }
+  Map<String, dynamic> toJsonWithoutId() {
+    return {
+      'shift': shift,
+      'otHours': otHours,
+      'vehicleModel': vehicleModel,
+      'regNo': regNo,
+      'inTime': inTime.toIso8601String(),
+      'outTime': outTime.toIso8601String(),
+      'workingHours': workingHours,
+      'startingKm': startingKm,
+      'endingKm': endingKm,
+      'totalKm': totalKm,
+      'fromPlace': fromPlace,
+      'toPlace': toPlace,
+      'fuelAvg': fuelAvg,
+      'coDriverName': coDriverName,
+      'coDriverPhoneNo': coDriverPhoneNo,
+      'inchargeSign': inchargeSign,
+      'employeeName': employeeName,
+      'employeePhoneNo': employeePhoneNo,
+      'employeeCode': employeeCode,
+      'monthYear': monthYear,
+      'dicvInchargeName': dicvInchargeName,
+      'dicvInchargePhoneNo': dicvInchargePhoneNo,
+      'trailId': trailId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
 
   /// Convert the instance to a JSON map
   Map<String, dynamic> toJson() {
@@ -153,4 +183,5 @@ class ShiftLogResponse {
       'payload': payload.toJson(),
     };
   }
+
 }

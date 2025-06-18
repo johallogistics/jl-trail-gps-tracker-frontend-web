@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin/admin_home_screen_controller.dart';
+import '../create_trail_screen.dart';
 import '../widgets/pop_up_widget.dart';
 
 class VehicleManagementScreen extends StatelessWidget {
@@ -45,7 +46,7 @@ class VehicleManagementScreen extends StatelessWidget {
               ],
               rows: controller.trailsResponse.value.payload.trails.map((trail) {
                 return DataRow(cells: [
-                  DataCell(Text(trail.id)),
+                  DataCell(Text(trail.id.toString())),
                   DataCell(Text(trail.location)),
                   DataCell(Text(trail.date)),
                   DataCell(Text(trail.masterDriverName)),
@@ -78,7 +79,7 @@ class VehicleManagementScreen extends StatelessWidget {
                       // ),
                       IconButton(
                         icon: Icon(Icons.delete, color: Colors.red, size: 18,),
-                        onPressed: () => controller.deleteTrail(trail.id),
+                        onPressed: () => controller.deleteTrail(trail.id.toString()),
                       ),
                     ],
                   )),
@@ -87,6 +88,13 @@ class VehicleManagementScreen extends StatelessWidget {
             ),
           );
         }),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Navigate to the Create Trail Screen
+          Get.to(() => CreateTrailScreen());
+        },
+        child: Icon(Icons.add),
       ),
     );
   }

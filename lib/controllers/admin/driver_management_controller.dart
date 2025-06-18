@@ -42,6 +42,7 @@ class DriverController extends GetxController {
 
       if (response['success'] == true) {
         var driverResponse = DriversResponse.fromJson(response);
+        drivers.value = [];
         drivers.assignAll(driverResponse.drivers);
       } else {
         print('Failed to load drivers');

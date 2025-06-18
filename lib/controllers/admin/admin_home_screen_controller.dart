@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import '../../models/admin/driver_model.dart';
 import '../../models/trials_model.dart';
+import '../../repositories/consolidated_form_repository.dart';
+import 'package:http/http.dart' as http;
+
 
 class AdminController extends GetxController {
   var driversResponse = DriversResponse(
@@ -129,8 +132,7 @@ class AdminController extends GetxController {
 
 
 
-  Rx<TrailResponse> trailsResponse = TrailResponse(
-      success: false, message: "", payload: TrailPayload(trails: [])).obs;
+  Rx<TrailResponse> trailsResponse = TrailResponse(message: "", payload: TrailPayload(trails: [])).obs;
   var selectedTrailId = ''.obs;
 
   var selectedTrail = Rxn<Trail>(); // Stores the selected trail
@@ -138,7 +140,6 @@ class AdminController extends GetxController {
 
   void setTrails(List<Trail> trails) {
     trailsResponse.value = TrailResponse(
-      success: true,
       message: "Trails updated",
       payload: TrailPayload(trails: trails),
     );
@@ -158,17 +159,64 @@ class AdminController extends GetxController {
     Get.back(); // Close popup after saving
   }
 
+  // Fetch API Data using service
 
-  void fetchTrails() {
-    var decodedData = json.decode(trailsData);  // Convert String to Map
-    trailsResponse.value = TrailResponse.fromMap(decodedData); // Use fromMap instead of fromJson
+  var isLoading = false.obs;
+
+  Future<bool> createTrail(TrailRequest trailRequest) async {
+    try {
+      isLoading.value = true;
+      final success = await FormRepository.createTrail(trailRequest);
+      if (success) {
+        fetchTrails(); // Optional: Refresh list after creation
+      }
+      return success;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void fetchTrails() async {
+    try {
+      isLoading.value = true;
+
+      final response = await FormRepository.fetchTrails(); // ✅ call service layer
+      if (response != null) {
+        trailsResponse.value = response;
+        print('✅ Trails fetched successfully');
+      } else {
+        print('❌ Failed to fetch trails from service');
+      }
+    } catch (e) {
+      print('❌ Error in TrailsController: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
 
-  void deleteTrail(String id) {
-    trailsResponse.update((val) {
-      val?.payload.trails.removeWhere((trail) => trail.id == id);
-    });
+  static const String baseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
+
+  void deleteTrail(String id) async {
+    final url = Uri.parse("$baseUrl/form-submissions/$id");
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 200) {
+        // Remove from local state if delete was successful
+        trailsResponse.update((val) {
+          val?.payload.trails.removeWhere((trail) => trail.id == id);
+        });
+        Get.snackbar('Deleted', 'Trail deleted successfully');
+        fetchTrails();
+      } else {
+        Get.snackbar('Error', 'Failed to delete trail: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error deleting trail: $e');
+      Get.snackbar('Error', 'An error occurred while deleting trail');
+    }
   }
 
   void editTrail(String id) {

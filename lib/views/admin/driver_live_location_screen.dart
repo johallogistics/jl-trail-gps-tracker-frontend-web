@@ -49,7 +49,7 @@ class _DriverLiveLocationScreenState extends State<DriverLiveLocationScreen> {
 
     // ✅ Register view factory globally
     registerMapViewFactory();
-
+    // driverController.drivers.value = [];
     driverController.fetchDrivers();
 
     // ✅ Delay initialization to ensure the container is rendered
@@ -98,22 +98,21 @@ class _DriverLiveLocationScreenState extends State<DriverLiveLocationScreen> {
                 return const Center(child: Text("No drivers available"));
               }
 
-              return DropdownButton<Driver>(
+              return DropdownButton<String>(
                 isExpanded: true,
                 hint: const Text("Select Driver"),
-                value: driverController.selectedDriver.value,
+                value: driverController.selectedDriver.value?.id,
                 items: driverController.drivers.map((driver) {
-                  return DropdownMenuItem<Driver>(
-                    value: driver,
+                  return DropdownMenuItem<String>(
+                    value: driver.id, // Use ID
                     child: Text("${driver.name} - ${driver.phone}"),
                   );
                 }).toList(),
-                onChanged: (Driver? newValue) {
-                  if (newValue != null) {
-                    driverController.selectedDriver.value = newValue;
-
-                    // ✅ Fetch location immediately when driver is selected
-                    _fetchDriverLocation(newValue);
+                onChanged: (String? driverId) {
+                  if (driverId != null) {
+                    final matchedDriver = driverController.drivers.firstWhere((d) => d.id == driverId);
+                    driverController.selectedDriver.value = matchedDriver;
+                    _fetchDriverLocation(matchedDriver);
                   }
                 },
               );

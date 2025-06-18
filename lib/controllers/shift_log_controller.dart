@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import '../models/shift_log_model.dart';
-import '../repositories/sift_log_repository.dart';
+import 'admin/daily_report_controller.dart';
 
 class ShiftLogController extends GetxController {
   var shiftLogs = <ShiftLog>[].obs;
@@ -15,9 +15,13 @@ class ShiftLogController extends GetxController {
   }
 
   void fetchShiftLogs() async {
+    print("Inside fetching shift logs");
+
     try {
       isLoading(true);
       var logs = await _repository.fetchShiftLogs();
+      print("Fetched shift logs: $logs");
+
       shiftLogs.assignAll(logs);
     } catch (e) {
       print("Error fetching shift logs: $e");
@@ -31,7 +35,7 @@ class ShiftLogController extends GetxController {
       isLoading(true);
       bool success = await _repository.postShiftLog(shiftLog);
       if (success) {
-        shiftLogs.add(shiftLog);
+        fetchShiftLogs(); // Refresh full list from server
       }
     } catch (e) {
       print("Error adding shift log: $e");
@@ -52,5 +56,32 @@ class ShiftLogController extends GetxController {
       isLoading(false);
     }
   }
+
+  Future<void> editShiftLog(ShiftLog log) async {
+    try {
+      isLoading(true);
+      final success = await _repository.updateShiftLog(log);
+      if (success) {
+        fetchShiftLogs(); // refresh UI with updated list
+      }
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> deleteShiftLog(int id) async {
+    print("Delete Called");
+    try {
+      isLoading(true);
+      final success = await _repository.deleteShiftLog(id);
+      if (success) {
+        print("Delete Success");
+        fetchShiftLogs(); // refresh UI
+      }
+    } finally {
+      isLoading(false);
+    }
+  }
+
 
 }
