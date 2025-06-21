@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin/admin_home_screen_controller.dart';
+import '../../utils/file_download_service.dart';
 import '../consolidated_report_screen.dart';
 import '../create_trail_screen.dart';
 import '../review_consolidated_report_screen.dart';
@@ -46,6 +47,7 @@ class VehicleManagementScreen extends StatelessWidget {
                   DataColumn(label: Text("Fuel Consumed")),
                   DataColumn(label: Text("Trip Start Date")),
                   DataColumn(label: Text("Trip Finish Date")),
+                  DataColumn(label: Text("Media")),
                   DataColumn(label: Text("Actions")),
                 ],
                 rows: controller.trailsResponse.value.payload.map((trail) {
@@ -71,6 +73,18 @@ class VehicleManagementScreen extends StatelessWidget {
                     DataCell(Text(vehicle?.fuelConsumed.text ?? "NA")),
                     DataCell(Text(vehicle?.tripStartDate.text ?? "NA")),
                     DataCell(Text(vehicle?.tripFinishDate.text ?? "NA")),
+                    DataCell(
+                  trail.imageVideoUrls.isEmpty
+                  ? Icon(Icons.insert_drive_file, color: Colors.grey) // empty file symbol
+                      : IconButton(
+                        icon: Icon(Icons.download, color: Colors.blue),
+                        onPressed: () async {
+                          for (var url in trail.imageVideoUrls) {
+                            await downloadFileFromUrl(url);
+                          }
+                        },
+                      ),
+                    ),
                     DataCell(Row(
                       children: [
                         IconButton(
