@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../utils/image_upload_service.dart';
 import '../utils/pdf_service.dart';
 import 'daily_report_screen.dart';
 
@@ -10,6 +11,7 @@ class DailyReportReviewScreen extends StatelessWidget {
   final Map<String, String> employeeData;
   final DailyReportController controller = Get.find<DailyReportController>();
   final td.Uint8List? signature;
+  List<String> urls = [];
 
   DailyReportReviewScreen({super.key, required this.employeeData, this.signature});
 
@@ -70,14 +72,25 @@ class DailyReportReviewScreen extends StatelessWidget {
               const Text("Signature Not Available", style: TextStyle(color: Colors.redAccent, fontSize: 16)),
 
             const SizedBox(height: 20),
-
-            // Action Buttons
+            ElevatedButton(
+              onPressed: () async {
+                urls =  await uploadMultipleMediaAndSendUrls();
+                print(urls);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: Text('Upload Images and Videos', style: TextStyle(color: Colors.white)),
+            ),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+
                 ElevatedButton(
                   onPressed: () {
-                    submitData();
+                    submitData(urls);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -147,9 +160,8 @@ class DailyReportReviewScreen extends StatelessWidget {
   }
 
   // 🔹 Submit Data API Call
-  void submitData() async {
+  void submitData(imageVideoUrls) async {
     final url = Uri.parse("https://jl-trail-gps-tracker-backend-production.up.railway.app/dailyReport");
-
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -170,6 +182,7 @@ class DailyReportReviewScreen extends StatelessWidget {
         "fuelAvg": controller.fuelAvgController.text,
         "coDriverName": controller.coDriverNameController.text,
         "coDriverPhoneNo": controller.coDriverPhoneController.text,
+        "imageVideoUrls" : imageVideoUrls
       }),
     );
 

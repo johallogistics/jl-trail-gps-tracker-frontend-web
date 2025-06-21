@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/admin/admin_home_screen_controller.dart';
+import '../models/consolidated_form_submission_model.dart';
 import '../models/trials_model.dart';
 
 class CreateTrailScreen extends StatelessWidget {
@@ -116,6 +117,19 @@ class CreateTrailScreen extends StatelessWidget {
                   : ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+
+                    //  FormSubmissionModel formData = FormSubmissionModel(
+                    //   location: locationController.text,
+                    //   date: dateController.text,
+                    //   masterDriverName: masterDriverNameController.text,
+                    //   empCode: empCodeController.text,
+                    //   mobileNo: mobileNoController.text,
+                    //   customerDriverName: customerDriverNameController.text,
+                    //   customerMobileNo: customerMobileNoController.text,
+                    //   licenseNo: licenseNoController.text,
+                    //   vehicleDetails: vehicleDetails.toList(),
+                    //   competitorData: competitorData.toList(),
+                    // );
                     final newTrail = TrailRequest(
                       vehicleRegNo: vehicleRegNoController.text,
                       vehicleModel: vehicleModelController.text,

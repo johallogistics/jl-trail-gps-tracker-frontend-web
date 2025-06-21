@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
 
+import '../../utils/image_upload_service.dart';
 import 'daily_report_screen.dart';
 import 'driver_manageement_screen.dart';
 
@@ -33,7 +34,6 @@ class DashboardScreen extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isLargeScreen = constraints.maxWidth > 800;
-
           return Row(
             children: [
               if (isLargeScreen) _buildPersistentDrawer(),

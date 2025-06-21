@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../controllers/admin/admin_home_screen_controller.dart';
+import '../../models/consolidated_form_submission_model.dart';
 import '../../models/trials_model.dart';
 
 class PopUpWidget extends StatelessWidget {
@@ -21,7 +22,7 @@ class PopUpWidget extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Obx(() {
         if (controller.selectedTrail.value == null) return SizedBox();
-        Trail trail = controller.selectedTrail.value!;
+        FormSubmissionModel trail = controller.selectedTrail.value!;
         return Container(
           width: 500,
           padding: EdgeInsets.all(16),
@@ -60,17 +61,21 @@ class PopUpWidget extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildTextFields(Trail trail) {
+  List<Widget> _buildTextFields(FormSubmissionModel trail) {
+    final hasVehicle = trail.vehicleDetails.isNotEmpty;
+    final vehicle = hasVehicle ? trail.vehicleDetails[0] : null;
+
     return [
-      _buildTextField("Vehicle Reg No", trail.vehicleRegNo),
-      _buildTextField("Vehicle Model", trail.vehicleModel),
-      _buildTextField("Brand", trail.brand),
-      _buildTextField("Start Odo", trail.startOdo),
-      _buildTextField("End Odo", trail.endOdo),
+      _buildTextField("Vehicle Reg No", vehicle?.vehicleRegNo.text ?? "NA"),
+      _buildTextField("Vehicle Model", vehicle?.vehicleModel.text ?? "NA"),
+      _buildTextField("Brand", vehicle?.brand.text ?? "NA"),
+      _buildTextField("Start Odo", vehicle?.startOdo.text ?? "NA"),
+      _buildTextField("End Odo", vehicle?.endOdo.text ?? "NA"),
       _buildTextField("Location", trail.location),
       _buildTextField("Master Driver", trail.masterDriverName),
     ];
   }
+
 
   Widget _buildTextField(String label, String value) {
     return Obx(() =>

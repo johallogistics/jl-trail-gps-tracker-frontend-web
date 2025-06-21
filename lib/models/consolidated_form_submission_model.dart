@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 class VehicleDetail {
   TextEditingController vehicleRegNo;
   TextEditingController brand;
@@ -52,36 +55,38 @@ class VehicleDetail {
     required this.actualFeInBB,
   });
 
-  /// ✅ Convert JSON to `VehicleDetail`
   factory VehicleDetail.fromJson(Map<String, dynamic> json) {
     return VehicleDetail(
-      vehicleRegNo: TextEditingController(text: json['vehicleRegNo']),
-      brand: TextEditingController(text: json['brand']),
-      chassisNo: TextEditingController(text: json['chassisNo']),
-      vehicleModel: TextEditingController(text: json['vehicleModel']),
-      wheelBase: TextEditingController(text: json['wheelBase']),
-      atsType: TextEditingController(text: json['atsType']),
-      emission: TextEditingController(text: json['emission']),
-      tyreBrand: TextEditingController(text: json['tyreBrand']),
-      application: TextEditingController(text: json['application']),
-      gvwCarried: TextEditingController(text: json['gvwCarried']),
-      tripStartDate: TextEditingController(text: json['tripStartDate']),
-      startOdo: TextEditingController(text: json['startOdo']),
-      tripFinishDate: TextEditingController(text: json['tripFinishDate']),
-      endOdo: TextEditingController(text: json['endOdo']),
-      startPlace: TextEditingController(text: json['startPlace']),
-      endPlace: TextEditingController(text: json['endPlace']),
-      totalTrailKms: TextEditingController(text: json['totalTrailKms']),
-      fuelConsumed: TextEditingController(text: json['fuelConsumed']),
-      adBlueConsumedCluster: TextEditingController(text: json['adBlueConsumedCluster']),
-      didRegenerationHappen: (json['didRegenerationHappen'] ?? false).obs,
-      leadDistance: TextEditingController(text: json['leadDistance']),
-      drivingSpeed: TextEditingController(text: json['drivingSpeed']),
-      actualFeInBB: TextEditingController(text: json['actualFeInBB']),
+      vehicleRegNo: TextEditingController(text: json['vehicleRegNo'] ?? ""),
+      brand: TextEditingController(text: json['brand'] ?? ""),
+      chassisNo: TextEditingController(text: json['chassisNo'] ?? ""),
+      vehicleModel: TextEditingController(text: json['vehicleModel'] ?? ""),
+      wheelBase: TextEditingController(text: json['wheelBase'] ?? ""),
+      atsType: TextEditingController(text: json['atsType'] ?? ""),
+      emission: TextEditingController(text: json['emission'] ?? ""),
+      tyreBrand: TextEditingController(text: json['tyreBrand'] ?? ""),
+      application: TextEditingController(text: json['application'] ?? ""),
+      gvwCarried: TextEditingController(text: json['gvwCarried'] ?? ""),
+      tripStartDate: TextEditingController(text: json['tripStartDate'] ?? ""),
+      startOdo: TextEditingController(text: json['startOdo'] ?? ""),
+      tripFinishDate: TextEditingController(text: json['tripFinishDate'] ?? ""),
+      endOdo: TextEditingController(text: json['endOdo'] ?? ""),
+      startPlace: TextEditingController(text: json['startPlace'] ?? ""),
+      endPlace: TextEditingController(text: json['endPlace'] ?? ""),
+      totalTrailKms: TextEditingController(text: json['totalTrailKms'] ?? ""),
+      fuelConsumed: TextEditingController(text: json['fuelConsumed'] ?? ""),
+      adBlueConsumedCluster:
+          TextEditingController(text: json['adBlueConsumedCluster'] ?? ""),
+      didRegenerationHappen:
+          (json['didRegenerationHappen'] ?? false).toString() == 'true'
+              ? true.obs
+              : false.obs,
+      leadDistance: TextEditingController(text: json['leadDistance'] ?? ""),
+      drivingSpeed: TextEditingController(text: json['drivingSpeed'] ?? ""),
+      actualFeInBB: TextEditingController(text: json['actualFeInBB'] ?? ""),
     );
   }
 
-  /// ✅ Convert `VehicleDetail` to JSON
   Map<String, dynamic> toJson() {
     return {
       'vehicleRegNo': vehicleRegNo.text,
@@ -130,7 +135,8 @@ class VehicleDetail {
       endPlace: TextEditingController(text: endPlace.text),
       totalTrailKms: TextEditingController(text: totalTrailKms.text),
       fuelConsumed: TextEditingController(text: fuelConsumed.text),
-      adBlueConsumedCluster: TextEditingController(text: adBlueConsumedCluster.text),
+      adBlueConsumedCluster:
+          TextEditingController(text: adBlueConsumedCluster.text),
       didRegenerationHappen: didRegenerationHappen.value.obs,
       leadDistance: TextEditingController(text: leadDistance.text),
       drivingSpeed: TextEditingController(text: drivingSpeed.text),
@@ -139,8 +145,8 @@ class VehicleDetail {
   }
 }
 
-
 class FormSubmissionModel {
+  int? id;
   String location;
   String date;
   String masterDriverName;
@@ -151,54 +157,58 @@ class FormSubmissionModel {
   String licenseNo;
   List<VehicleDetail> vehicleDetails;
   List<VehicleDetail> competitorData;
+  List<String> imageVideoUrls;
 
-  FormSubmissionModel({
-    required this.location,
-    required this.date,
-    required this.masterDriverName,
-    required this.empCode,
-    required this.mobileNo,
-    required this.customerDriverName,
-    required this.customerMobileNo,
-    required this.licenseNo,
-    required this.vehicleDetails,
-    required this.competitorData,
-  });
+  FormSubmissionModel(
+      {this.id,
+      required this.location,
+      required this.date,
+      required this.masterDriverName,
+      required this.empCode,
+      required this.mobileNo,
+      required this.customerDriverName,
+      required this.customerMobileNo,
+      required this.licenseNo,
+      required this.vehicleDetails,
+      required this.competitorData,
+      required this.imageVideoUrls});
 
+  factory FormSubmissionModel.fromJson(Map<String, dynamic> json) =>
+      FormSubmissionModel(
+        id: json['id'] ?? 0,
+        location: json['location'] ?? "",
+        date: json['date'] ?? "",
+        masterDriverName: json['masterDriverName'] ?? "",
+        empCode: json['empCode'] ?? "",
+        mobileNo: json['mobileNo'] ?? "",
+        customerDriverName: json['customerDriverName'] ?? "",
+        customerMobileNo: json['customerMobileNo'] ?? "",
+        licenseNo: json['licenseNo'] ?? "",
+        vehicleDetails: (json['vehicleDetails'] as List?)
+                ?.map((item) => VehicleDetail.fromJson(item))
+                .toList() ??
+            [],
+        competitorData: (json['competitorData'] as List?)
+                ?.map((item) => VehicleDetail.fromJson(item))
+                .toList() ??
+            [],
+        imageVideoUrls: (json['imageVideoUrls'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      );
 
-  factory FormSubmissionModel.fromJson(Map<String, dynamic> json) {
-    return FormSubmissionModel(
-      location: json['location'],
-      date: json['date'],
-      masterDriverName: json['masterDriverName'],
-      empCode: json['empCode'],
-      mobileNo: json['mobileNo'],
-      customerDriverName: json['customerDriverName'],
-      customerMobileNo: json['customerMobileNo'],
-      licenseNo: json['licenseNo'],
-      vehicleDetails: (json['vehicleDetails'] as List)
-          .map((item) => VehicleDetail.fromJson(item))
-          .toList(),
-      competitorData: (json['competitorData'] as List)
-          .map((item) => VehicleDetail.fromJson(item))
-          .toList(),
-    );
-  }
-
-  /// ✅ **Fix: Add this method to convert the model to JSON**
-  Map<String, dynamic> toJson() {
-    return {
-      'location': location,
-      'date': date,
-      'masterDriverName': masterDriverName,
-      'empCode': empCode,
-      'mobileNo': mobileNo,
-      'customerDriverName': customerDriverName,
-      'customerMobileNo': customerMobileNo,
-      'licenseNo': licenseNo,
-      'vehicleDetails': vehicleDetails.map((vehicle) => vehicle.toJson()).toList(),
-      'competitorData': competitorData.map((vehicle) => vehicle.toJson()).toList(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'location': location,
+        'date': date,
+        'masterDriverName': masterDriverName,
+        'empCode': empCode,
+        'mobileNo': mobileNo,
+        'customerDriverName': customerDriverName,
+        'customerMobileNo': customerMobileNo,
+        'licenseNo': licenseNo,
+        'vehicleDetails':
+            vehicleDetails.map((vehicle) => vehicle.toJson()).toList(),
+        'competitorData':
+            competitorData.map((vehicle) => vehicle.toJson()).toList(),
+        'imageVideoUrls': imageVideoUrls
+      };
 }
-

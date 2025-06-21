@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import '../../models/admin/driver_model.dart';
+import '../../models/consolidated_form_submission_model.dart';
 import '../../models/trials_model.dart';
 import '../../repositories/consolidated_form_repository.dart';
 import 'package:http/http.dart' as http;
@@ -132,20 +133,20 @@ class AdminController extends GetxController {
 
 
 
-  Rx<TrailResponse> trailsResponse = TrailResponse(message: "", payload: TrailPayload(trails: [])).obs;
+  Rx<TrailResponse> trailsResponse = TrailResponse(message: "", payload: []).obs;
   var selectedTrailId = ''.obs;
 
-  var selectedTrail = Rxn<Trail>(); // Stores the selected trail
+  var selectedTrail = Rxn<FormSubmissionModel>(); // Stores the selected trail
   var isEditing = false.obs; // Toggle editing mode
 
-  void setTrails(List<Trail> trails) {
+  void setTrails(List<FormSubmissionModel> trails) {
     trailsResponse.value = TrailResponse(
       message: "Trails updated",
-      payload: TrailPayload(trails: trails),
+      payload: trails
     );
   }
 
-  void viewTrail(Trail trail) {
+  void viewTrail(FormSubmissionModel trail) {
     selectedTrail.value = trail;
     isEditing.value = false;
   }
@@ -197,7 +198,7 @@ class AdminController extends GetxController {
 
   static const String baseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
 
-  void deleteTrail(String id) async {
+  void deleteTrail(int id) async {
     final url = Uri.parse("$baseUrl/form-submissions/$id");
 
     try {
@@ -206,7 +207,7 @@ class AdminController extends GetxController {
       if (response.statusCode == 200) {
         // Remove from local state if delete was successful
         trailsResponse.update((val) {
-          val?.payload.trails.removeWhere((trail) => trail.id == id);
+          val?.payload.removeWhere((trail) => trail.id == id);
         });
         Get.snackbar('Deleted', 'Trail deleted successfully');
         fetchTrails();

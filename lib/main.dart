@@ -2,6 +2,7 @@ import 'dart:ui_web' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:trail_tracker/utils/app_translations.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:trail_tracker/views/admin/admin_dashboard_screen.dart';
@@ -13,6 +14,10 @@ import 'package:trail_tracker/views/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.delayed(Duration(milliseconds: 500));
+  await Supabase.initialize(
+    url: 'https://bkzkunjuoshokpilksxp.supabase.co', // Replace with your Supabase URL
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJremt1bmp1b3Nob2twaWxrc3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODEwMzAsImV4cCI6MjA2NjA1NzAzMH0.esUaqXN6y88-BroMRW19SyqjVdBNbl_KeI0bJILyS60',                  // Replace with your Supabase anon/public API key
+  );
   loadMapmyIndiaCSS();
   await GetStorage.init();
   runApp(MyApp());

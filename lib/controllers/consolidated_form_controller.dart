@@ -100,11 +100,9 @@ class FormController extends GetxController {
   //   }
   // }
 
-  Future<void> submitForm() async {
+  Future<void> submitForm(List<String> imageUrls) async {
     try {
       isLoading(true);
-
-      // Prepare data for submission
       FormSubmissionModel formData = FormSubmissionModel(
         location: locationController.text,
         date: dateController.text,
@@ -116,8 +114,8 @@ class FormController extends GetxController {
         licenseNo: licenseNoController.text,
         vehicleDetails: vehicleDetails.toList(),
         competitorData: competitorData.toList(),
+        imageVideoUrls: imageUrls,
       );
-
       print("FORM DATA::: ${formData}");
       // Submit form
       bool success = await _repository.submitForm(formData);

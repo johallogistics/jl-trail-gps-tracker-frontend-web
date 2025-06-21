@@ -1,41 +1,43 @@
 import 'dart:convert';
 
+import 'consolidated_form_submission_model.dart';
+
 class TrailResponse {
   final String message;
-  final TrailPayload payload;
+  final List<FormSubmissionModel> payload;
 
   TrailResponse({
     required this.message,
     required this.payload,
   });
 
-  factory TrailResponse.fromJson(Map<String, dynamic> json) =>
-      TrailResponse.fromMap(json);
-
-  factory TrailResponse.fromMap(Map<String, dynamic> json) => TrailResponse(
+  factory TrailResponse.fromJson(Map<String, dynamic> json) => TrailResponse(
     message: json["message"] ?? "",
-    payload: TrailPayload.fromMap(json["payload"] ?? []), // Correctly parse the payload as a list
+    payload: (json["payload"] as List<dynamic>)
+        .map((e) => FormSubmissionModel.fromJson(e))
+        .toList(),
   );
 
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toJson() => {
     "message": message,
-    "payload": payload.toMap(),
+    "payload": payload.map((e) => e.toJson()).toList(),
   };
 }
 
+
 class TrailPayload {
-  final List<Trail> trails;
+  final List<FormSubmissionModel> trails;
 
   TrailPayload({required this.trails});
 
-  factory TrailPayload.fromMap(dynamic json) => TrailPayload(
-    trails: (json as List<dynamic>)
-        .map((x) => Trail.fromMap(x))
+  factory TrailPayload.fromJson(Map<String, dynamic> json) => TrailPayload(
+    trails: (json["trails"] as List<dynamic>)
+        .map((x) => FormSubmissionModel.fromJson(x))
         .toList(),
   );
 
   Map<String, dynamic> toMap() => {
-    "trails": trails.map((x) => x.toMap()).toList(),
+    "trails": trails.map((x) => x.toJson()).toList(),
   };
 }
 

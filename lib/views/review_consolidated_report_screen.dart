@@ -9,8 +9,11 @@ import 'dart:typed_data';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../utils/image_upload_service.dart';
+
 class ReviewFormScreen extends StatelessWidget {
-  final FormController controller = Get.find<FormController>();
+  final FormController controller = Get.put(FormController());
+  // final FormController controller = Get.find<FormController>();
   final td.Uint8List? signature;
 
   ReviewFormScreen({super.key, this.signature});
@@ -18,6 +21,7 @@ class ReviewFormScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formData = _getFormData();
+    List<String> urls = [];
 
     return Scaffold(
       appBar: AppBar(
@@ -60,14 +64,25 @@ class ReviewFormScreen extends StatelessWidget {
               const Text("Signature Not Available", style: TextStyle(color: Colors.redAccent, fontSize: 16)),
 
             const SizedBox(height: 20),
-
-            // Action Buttons
+            ElevatedButton(
+              onPressed: () async {
+                urls =  await uploadMultipleMediaAndSendUrls();
+                print(urls);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: Text('Upload Images and Videos', style: TextStyle(color: Colors.white)),
+            ),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+
                 ElevatedButton(
                   onPressed: () async {
-                    await controller.submitForm();
+                    await controller.submitForm(urls);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Form submitted!')),
                     );
@@ -90,7 +105,7 @@ class ReviewFormScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                   child: Text('Generate PDF', style: TextStyle(color: Colors.white)),
-                ),
+                ), //        uploadMultipleMediaAndSendUrls();
               ],
             ),
           ],
