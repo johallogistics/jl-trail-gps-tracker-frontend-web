@@ -27,6 +27,7 @@ class ShiftLog {
   final String trailId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  List<String> imageVideoUrls;
 
   ShiftLog({
     this.id,
@@ -55,6 +56,7 @@ class ShiftLog {
     required this.trailId,
     required this.createdAt,
     required this.updatedAt,
+    required this.imageVideoUrls
   });
 
   /// Factory method to create an instance from JSON
@@ -95,6 +97,7 @@ class ShiftLog {
       dicvInchargeName: json['dicvInchargeName'],
       dicvInchargePhoneNo: json['dicvInchargePhoneNo'],
       trailId: json['trailId'],
+      imageVideoUrls: (json['imageVideoUrls'] as List?)?.map((e) => e.toString()).toList() ?? [],
       createdAt: tryParseDate(json['createdAt']) ?? DateTime.now(),
       updatedAt: tryParseDate(json['updatedAt']) ?? DateTime.now(),
     );
@@ -124,6 +127,7 @@ class ShiftLog {
       'dicvInchargeName': dicvInchargeName,
       'dicvInchargePhoneNo': dicvInchargePhoneNo,
       'trailId': trailId,
+      'imageVideoUrls': imageVideoUrls,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:trail_tracker/api/api_manager.dart';
 
 import '../../models/admin/driver_model.dart';
 import '../../models/admin/locations_model.dart';
@@ -42,7 +44,9 @@ class DriverRepository {
 
   /// ✅ Fetch drivers API call
   static Future<Map<String, dynamic>> fetchDrivers() async {
-    final response = await http.get(Uri.parse('$baseUrl/drivers-all'));
+    final storage = GetStorage();
+    final token = storage.read('token');
+    final response = await ApiManager.get('drivers-all');
 
     if (response.statusCode == 200) {
       /// ✅ Return the full JSON object, not just the list
@@ -55,9 +59,7 @@ class DriverRepository {
   // ✅ Fetch location by phone number
   Future<Location?> fetchDriverLocation(String phone) async {
     try {
-      final response =
-          await http.get(Uri.parse('$baseUrl/api/driverLocation/$phone'));
-
+      final response = await ApiManager.get('api/driverLocation/$phone');
       if (response.statusCode == 200) {
         final Map<String, dynamic>? jsonResponse =
             json.decode(response.body)['data'];

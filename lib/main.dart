@@ -6,13 +6,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:trail_tracker/utils/app_translations.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:trail_tracker/views/admin/admin_dashboard_screen.dart';
+import 'package:trail_tracker/views/admin/admin_login_screen.dart';
 import 'package:trail_tracker/views/home_screen.dart';
 import 'dart:html' as html;
 
 import 'package:trail_tracker/views/splash_screen.dart';
 
+import 'controllers/admin/admin_login_controller.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Get.lazyPut(() => AdminLoginController());
+
   await Future.delayed(Duration(milliseconds: 500));
   await Supabase.initialize(
     url: 'https://bkzkunjuoshokpilksxp.supabase.co', // Replace with your Supabase URL
@@ -40,13 +45,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
+      initialRoute: '/login', // default initial route
+      getPages: [
+        GetPage(name: '/login', page: () => AdminLoginScreen()),
+        GetPage(name: '/dashboard', page: () => DashboardScreen()),
+        GetPage(name: '/home', page: () => HomeScreen(phone: "918925450309")),
+        GetPage(name: '/splash', page: () => SplashScreen()),
+        // Add more as needed
+      ],
       translations: AppTranslations(),
       locale: Locale('en'),
       fallbackLocale: Locale('en'),
       title: 'Splash to OTP Login',
       // home: SplashScreen(),
       // home: HomeScreen(phone: "918925450309"),
-      home:  DashboardScreen(),
+      home:AdminLoginScreen(),
+      // DashboardScreen(),
     );
   }
 }

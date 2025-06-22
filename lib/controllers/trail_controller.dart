@@ -81,6 +81,7 @@ class TrailController extends GetxController {
 
 
   Future<void> _checkActiveTrail() async {
+
     try {
       final response = await http.get(
         Uri.parse('https://jl-trail-gps-tracker-backend-production.up.railway.app/check-active-trail/$currentDriverId'),

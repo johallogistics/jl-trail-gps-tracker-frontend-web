@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
 
 import '../../utils/image_upload_service.dart';
+import 'admin_login_screen.dart';
 import 'daily_report_screen.dart';
 import 'driver_manageement_screen.dart';
 
 class DashboardController extends GetxController {
   var selectedIndex = 0.obs;
+  final storage = GetStorage();
 
   void changePage(int index) {
     selectedIndex.value = index;
+  }
+
+  void logout() {
+    storage.remove('token'); // Clear token or any session key
+    Get.offAll(() => AdminLoginScreen()); // Redirect to login and clear navigation stack
   }
 }
 
@@ -67,6 +75,24 @@ class DashboardScreen extends StatelessWidget {
           _drawerItem(Icons.description, 'Daily Reports', 3),
           // _drawerItem(Icons.people, 'Clients', 4),
           // _drawerItem(Icons.settings, 'Settings', 5),
+          Spacer(),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.logout, color: Colors.red),
+            title: Text('Logout'),
+            onTap: () {
+              Get.defaultDialog(
+                title: "Confirm Logout",
+                middleText: "Are you sure you want to logout?",
+                textConfirm: "Yes",
+                textCancel: "Cancel",
+                confirmTextColor: Colors.white,
+                onConfirm: () {
+                  Get.back(); // Close dialog
+                  controller.logout();
+                },
+              );
+            },          ),
         ],
       ),
     );

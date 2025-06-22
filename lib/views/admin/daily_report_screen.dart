@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/shift_log_controller.dart';
 import '../../models/shift_log_model.dart';
+import '../../utils/file_download_service.dart';
 
 class DailyReportManagement extends StatelessWidget {
   final ShiftLogController controller = Get.put(ShiftLogController());
@@ -50,6 +51,7 @@ class DailyReportManagement extends StatelessWidget {
                   DataColumn(label: Text('DICV Incharge')),
                   DataColumn(label: Text('DICV Phone')),
                   DataColumn(label: Text('Trail ID')),
+                  DataColumn(label: Text('Media')),
                   DataColumn(label: Text('Actions')),
                 ],
                 rows: controller.shiftLogs.map((log) {
@@ -78,6 +80,18 @@ class DailyReportManagement extends StatelessWidget {
                     DataCell(Text(log.dicvInchargeName)),
                     DataCell(Text(log.dicvInchargePhoneNo)),
                     DataCell(Text(log.trailId)),
+                    DataCell(
+                      log.imageVideoUrls.isEmpty
+                          ? Icon(Icons.insert_drive_file, color: Colors.grey) // empty file symbol
+                          : IconButton(
+                        icon: Icon(Icons.download, color: Colors.blue),
+                        onPressed: () async {
+                          for (var url in log.imageVideoUrls) {
+                            await downloadFileFromUrl(url);
+                          }
+                        },
+                      ),
+                    ),
                     DataCell(Row(
                       children: [
                         IconButton(
@@ -219,7 +233,7 @@ class DailyReportManagement extends StatelessWidget {
                 dicvInchargePhoneNo: dicvInchargePhoneNoController.text,
                 trailId: trailIdController.text,
                 createdAt: existingLog?.createdAt ?? DateTime.now(),
-                updatedAt: DateTime.now(),
+                updatedAt: DateTime.now(), imageVideoUrls: [],
               );
 
               if (isEdit) {
