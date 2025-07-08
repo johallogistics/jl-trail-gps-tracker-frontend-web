@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/admin/driver_management_controller.dart';
 import '../../../models/admin/driver_model.dart';
+import '../../../utils/image_upload_service.dart';
 
 class EditDriverScreen extends StatelessWidget {
   final Driver driver;
   final DriverController controller = Get.put(DriverController());
-
+  List<String>? urls;
   EditDriverScreen({required this.driver});
 
   final nameController = TextEditingController();
@@ -33,13 +34,21 @@ class EditDriverScreen extends StatelessWidget {
             TextField(controller: addressController, decoration: const InputDecoration(labelText: 'Address')),
             const SizedBox(height: 20),
             ElevatedButton(
+              onPressed: () async {
+                urls = await uploadMultipleMediaAndSendUrls();
+                print(urls);
+              },
+              child: const Text('Upload Files'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
               onPressed: () {
                 final updatedDriver = Driver(
                   id: driver.id,
                   name: nameController.text,
                   phone: phoneController.text,
                   employeeId: employeeIdController.text,
-                  address: addressController.text, locationEnabled: false,
+                  address: addressController.text, locationEnabled: false, proofDocs: urls ?? [],
                 );
                 print("Driver Data:: $updatedDriver");
                 controller.updateDriver(driver.id!, updatedDriver);

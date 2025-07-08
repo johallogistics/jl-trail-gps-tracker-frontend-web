@@ -6,9 +6,29 @@ import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
 import '../../utils/image_upload_service.dart';
 import 'admin_login_screen.dart';
 import 'daily_report_screen.dart';
+import 'dashboard_home_screen.dart';
 import 'driver_manageement_screen.dart';
 
 class DashboardController extends GetxController {
+  final driversCount = 0.obs;
+  final clientsCount = 0.obs;
+  final trailsCount = 0.obs;
+  final reportsCount = 0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchDashboardStats();
+  }
+
+  void fetchDashboardStats() async {
+    // Simulate API calls (replace with your own repository calls)
+    // await Future.delayed(Duration(milliseconds: 300));
+    driversCount.value = 22;
+    clientsCount.value = 15;
+    trailsCount.value = 58;
+    reportsCount.value = 40;
+  }
   var selectedIndex = 0.obs;
   final storage = GetStorage();
 
@@ -18,7 +38,7 @@ class DashboardController extends GetxController {
 
   void logout() {
     storage.remove('token'); // Clear token or any session key
-    Get.offAll(() => AdminLoginScreen()); // Redirect to login and clear navigation stack
+    Get.offAllNamed('/login');
   }
 }
 
@@ -26,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
 
   final List<Widget> pages = [
-    Center(child: Text('Dashboard Home', style: TextStyle(fontSize: 24))),
+    DashboardHomeScreen(),
     DriverManagementScreen(), // Driver Management with Live Location Tab
     VehicleManagementScreen(),
     DailyReportManagement(),

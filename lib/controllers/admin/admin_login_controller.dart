@@ -11,11 +11,8 @@ class AdminLoginController extends GetxController {
 
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
 
   void login() async {
-    if (!formKey.currentState!.validate()) return;
-
     final response = await http.post(
       Uri.parse('$baseUrl/api/login'),
       headers: {'Content-Type': 'application/json'},

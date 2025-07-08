@@ -82,4 +82,16 @@ class FormRepository {
     }
   }
 
+  static Future<FormSubmissionModel?> updateTrail(int id, Map<String, dynamic> data) async {
+    final http.Response response = await ApiManager.put('form-submissions/$id', data);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final decoded = jsonDecode(response.body);
+      return FormSubmissionModel.fromJson(decoded);
+    } else {
+      print("❌ Failed to update trail: ${response.statusCode}, ${response.body}");
+      return null;
+    }
+  }
+
 }

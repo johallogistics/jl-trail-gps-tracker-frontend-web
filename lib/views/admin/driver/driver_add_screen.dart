@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/admin/driver_management_controller.dart';
 import '../../../models/admin/driver_model.dart';
+import '../../../utils/image_upload_service.dart';
 
 class DriverAddPopup extends StatelessWidget {
   final DriverController controller = Get.put(DriverController());
@@ -13,6 +14,7 @@ class DriverAddPopup extends StatelessWidget {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController employeeIdController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
+  List<String>? urls;
 
   DriverAddPopup({super.key});
 
@@ -44,14 +46,23 @@ class DriverAddPopup extends StatelessWidget {
           ],
         ),
       ),
+
       actions: [
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: () async {
+            urls = await uploadMultipleMediaAndSendUrls();
+            print("URLS::: $urls");
+          },
+          child: const Text('Upload Files'),
+        ),
         Obx(() => ElevatedButton(
           onPressed: () async {
             final driver = Driver(
               name: nameController.text,
               phone: phoneController.text,
               employeeId: employeeIdController.text,
-              address: addressController.text, locationEnabled: false,
+              address: addressController.text, locationEnabled: false, proofDocs: urls ?? [],
             );
             await controller.addDriver(driver);
           },

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin/driver_management_controller.dart';
+import '../../utils/file_download_service_web.dart';
 import 'driver/driver_add_screen.dart';
 import 'driver/driver_edit_screen.dart';
 import 'driver_live_location_screen.dart';
-import '../../controllers/admin/admin_home_screen_controller.dart';
 
 class DriverManagementScreen extends StatefulWidget {
   DriverManagementScreen({super.key});
@@ -75,6 +75,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
               DataColumn(label: Text("Employee ID")),
               DataColumn(label: Text("Address")),
               DataColumn(label: Text("Location Sharing")),
+              DataColumn(label: Text("Download Files")),
               DataColumn(label: Text("Actions")),
             ],
             rows: drivers.map((driver) {
@@ -91,12 +92,30 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                     scale: 0.7, // ✅ Makes the Switch smaller
                     child: Switch(
                       value: driver.locationEnabled ?? false,
-                      onChanged: (value) => _toggleLocation(driver.phone, value),
-                      activeColor: Colors.blueAccent,      // ✅ Switch color when enabled
-                      inactiveThumbColor: Colors.grey,     // ✅ Thumb color when disabled
-                      inactiveTrackColor: Colors.grey[300],// ✅ Track color when disabled
+                      onChanged: (value) =>
+                          _toggleLocation(driver.phone, value),
+                      activeColor:
+                          Colors.blueAccent, // ✅ Switch color when enabled
+                      inactiveThumbColor:
+                          Colors.grey, // ✅ Thumb color when disabled
+                      inactiveTrackColor:
+                          Colors.grey[300], // ✅ Track color when disabled
                     ),
                   ),
+                ),
+                /// ✅ Download Files Button
+                DataCell(
+                  driver.proofDocs != null && driver.proofDocs.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.download, color: Colors.blue),
+                          onPressed: () async {
+                            for (final url in driver.proofDocs) {
+                              await downloadFileFromUrl(
+                                  url); // ⬅️ Your custom download logic
+                            }
+                          },
+                        )
+                      : Icon(Icons.insert_drive_file, color: Colors.grey),
                 ),
 
                 /// ✅ Edit & Delete Actions
@@ -108,7 +127,8 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                     ),
                     IconButton(
                       icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => driverController.deleteDriver(driver.id!),
+                      onPressed: () =>
+                          driverController.deleteDriver(driver.id!),
                     ),
                   ],
                 )),
@@ -119,6 +139,18 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
       }),
     );
   }
+
+  // ElevatedButton(
+  // onPressed: () async {
+  // urls =  await uploadMultipleMediaAndSendUrls();
+  // print(urls);
+  // },
+  // style: ElevatedButton.styleFrom(
+  // backgroundColor: Colors.blueAccent,
+  // padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+  // ),
+  // child: Text('Upload Images and Videos', style: TextStyle(color: Colors.white)),
+  // ),
 
   /// ✅ Toggle Location Sharing Service
   /// ✅ Toggle Location Sharing Service with Local Update
@@ -137,10 +169,11 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
 
       if (response['success'] == true) {
         // ✅ Update the local state
-        int index = driverController.drivers.indexWhere((d) => d.phone == phone);
+        int index =
+            driverController.drivers.indexWhere((d) => d.phone == phone);
         if (index != -1) {
           driverController.drivers[index].locationEnabled = isEnabled;
-          driverController.drivers.refresh();  // 🔥 Trigger UI refresh
+          driverController.drivers.refresh(); // 🔥 Trigger UI refresh
         }
 
         // ✅ Show success message

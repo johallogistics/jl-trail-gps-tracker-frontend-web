@@ -73,24 +73,21 @@ class ShiftLogRepository {
 
   // Update Shift Log (PUT /dailyReports/:id)
   Future<bool> updateShiftLog(ShiftLog log) async {
-    final url = Uri.parse('$baseUrl/dailyReports/${log.id}');
-    final body = jsonEncode(log.toJson());
-
-    final response = await http.put(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
-
+    final response = await ApiManager.put('dailyReports/${log.id}', log.toJson());
     return response.statusCode == 200;
   }
 
   // Delete Shift Log (DELETE /dailyReports/:id)
   Future<bool> deleteShiftLog(int id) async {
+    final storage = GetStorage();
+    final token = storage.read('token');
     final url = Uri.parse('$baseUrl/dailyReports/$id');
 
     final response = await http.delete(
-      url
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
     );
 
     return response.statusCode == 200;

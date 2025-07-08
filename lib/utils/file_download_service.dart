@@ -1,43 +1,14 @@
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+// lib/utils/file_download_service.dart
 
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
+import '../../models/shift_log_model.dart';
 
-Future<void> downloadFileFromUrl(String url) async {
-  try {
-    final response = await http.get(Uri.parse(url));
-    final blob = html.Blob([response.bodyBytes]);
-    final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+// Conditional import
+import 'file_download_service_stub.dart'
+if (dart.library.html) 'file_download_service_web.dart'
+if (dart.library.io) 'file_download_service_mobile.dart';
 
-    final anchor = html.AnchorElement(href: blobUrl)
-      ..setAttribute("download", url.split('/').last)
-      ..click();
-
-    html.Url.revokeObjectUrl(blobUrl); // Clean up
-  } catch (e) {
-    print("❌ Error downloading file: $e");
-  }
-}
-
-
-
-
-Future<void> downloadFileFromPhoneUrl(String url) async {
-  try {
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final bytes = response.bodyBytes;
-      final dir = await getDownloadsDirectory(); // Desktop Downloads folder
-      final fileName = p.basename(url);
-      final file = File('${dir?.path}/$fileName');
-      await file.writeAsBytes(bytes);
-      print("✅ Downloaded: $fileName");
-    } else {
-      print("❌ Failed to download: $url");
-    }
-  } catch (e) {
-    print("❌ Error downloading file: $e");
-  }
+/// This will route to the correct implementation
+void exportShiftLogsToCsv(List<ShiftLog> logs) {
+  exportShiftLogsToCsvImpl(logs);
 }

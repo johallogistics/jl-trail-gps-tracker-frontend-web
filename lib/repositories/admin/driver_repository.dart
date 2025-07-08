@@ -10,17 +10,12 @@ class DriverRepository {
   static const String baseUrl =
       'https://jl-trail-gps-tracker-backend-production.up.railway.app';
 
-  Future<Map<String, dynamic>> addDriver(Map<String, dynamic> driverData) async {
+  Future<Map<String, dynamic>> addDriver(
+      Map<String, dynamic> driverData) async {
     final url = Uri.parse('$baseUrl/drivers');
-
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(driverData),
-      );
+      print("DRIVER DATA $driverData");
+      final response = await ApiManager.post('drivers', driverData);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return {
@@ -44,10 +39,7 @@ class DriverRepository {
 
   /// ✅ Fetch drivers API call
   static Future<Map<String, dynamic>> fetchDrivers() async {
-    final storage = GetStorage();
-    final token = storage.read('token');
     final response = await ApiManager.get('drivers-all');
-
     if (response.statusCode == 200) {
       /// ✅ Return the full JSON object, not just the list
       return json.decode(response.body);
@@ -58,6 +50,8 @@ class DriverRepository {
 
   // ✅ Fetch location by phone number
   Future<Location?> fetchDriverLocation(String phone) async {
+    // final storage = GetStorage();
+    // final token = storage.read('token');
     try {
       final response = await ApiManager.get('api/driverLocation/$phone');
       if (response.statusCode == 200) {
@@ -82,9 +76,15 @@ class DriverRepository {
 
   /// Update Driver
   Future<bool> updateDriver(String id, Driver driver) async {
+    final storage = GetStorage();
+    final token = storage.read('token');
     final response = await http.put(
       Uri.parse("$baseUrl/drivers/$id"),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
       body: json.encode(driver.toJson()),
     );
 
@@ -93,7 +93,12 @@ class DriverRepository {
 
   /// Delete Driver
   Future<bool> deleteDriver(String id) async {
-    final response = await http.delete(Uri.parse("$baseUrl/drivers/$id"));
+    final storage = GetStorage();
+    final token = storage.read('token');
+    final response =
+        await http.delete(Uri.parse("$baseUrl/drivers/$id"), headers: {
+      'Authorization': 'Bearer $token'
+    });
 
     return response.statusCode == 200;
   }

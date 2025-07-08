@@ -32,15 +32,16 @@ class Driver {
   String employeeId;
   String address;
   bool locationEnabled;
+  List<String> proofDocs = [];
 
-  Driver({
-    this.id,
-    required this.name,
-    required this.phone,
-    required this.employeeId,
-    required this.address,
-    required this.locationEnabled,
-  });
+  Driver(
+      {this.id,
+      required this.name,
+      required this.phone,
+      required this.employeeId,
+      required this.address,
+      required this.locationEnabled,
+      required this.proofDocs});
 
   factory Driver.fromJson(Map<String, dynamic> json) {
     return Driver(
@@ -50,6 +51,9 @@ class Driver {
       employeeId: json['employeeId'] ?? "",
       address: json['address'] ?? "",
       locationEnabled: json['locationEnabled'] ?? false,
+      proofDocs: (json['proofDocs'] as List<dynamic>?)
+          ?.map((doc) => doc.toString())
+          .toList() ?? [],
     );
   }
 
@@ -61,6 +65,7 @@ class Driver {
       "employeeId": employeeId,
       "address": address,
       "locationEnabled": locationEnabled,
+      "proofDocs": proofDocs
     };
   }
 }

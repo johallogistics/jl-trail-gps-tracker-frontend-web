@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import '../../models/admin/driver_model.dart';
 import '../../models/consolidated_form_submission_model.dart';
@@ -7,10 +8,8 @@ import '../../models/trials_model.dart';
 import '../../repositories/consolidated_form_repository.dart';
 import 'package:http/http.dart' as http;
 
-
 class AdminController extends GetxController {
-  var driversResponse = DriversResponse(
-      success: false, drivers: []).obs;
+  var driversResponse = DriversResponse(success: false, drivers: []).obs;
   var selectedDriverLocation = Rx<LatLng?>(null);
   var selectedDriverId = ''.obs;
 
@@ -131,19 +130,16 @@ class AdminController extends GetxController {
   }
 }''';
 
-
-
-  Rx<TrailResponse> trailsResponse = TrailResponse(message: "", payload: []).obs;
+  Rx<TrailResponse> trailsResponse =
+      TrailResponse(message: "", payload: []).obs;
   var selectedTrailId = ''.obs;
 
   var selectedTrail = Rxn<FormSubmissionModel>(); // Stores the selected trail
   var isEditing = false.obs; // Toggle editing mode
 
   void setTrails(List<FormSubmissionModel> trails) {
-    trailsResponse.value = TrailResponse(
-      message: "Trails updated",
-      payload: trails
-    );
+    trailsResponse.value =
+        TrailResponse(message: "Trails updated", payload: trails);
   }
 
   void viewTrail(FormSubmissionModel trail) {
@@ -181,7 +177,8 @@ class AdminController extends GetxController {
     try {
       isLoading.value = true;
 
-      final response = await FormRepository.fetchTrails(); // ✅ call service layer
+      final response =
+          await FormRepository.fetchTrails(); // ✅ call service layer
       if (response != null) {
         trailsResponse.value = response;
         print('✅ Trails fetched successfully');
@@ -195,14 +192,18 @@ class AdminController extends GetxController {
     }
   }
 
-
-  static const String baseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
+  static const String baseUrl =
+      "https://jl-trail-gps-tracker-backend-production.up.railway.app";
 
   void deleteTrail(int id) async {
+    final storage = GetStorage();
+    final token = storage.read('token');
     final url = Uri.parse("$baseUrl/form-submissions/$id");
 
     try {
-      final response = await http.delete(url);
+      final response = await http.delete(url, headers: {
+        'Authorization': 'Bearer $token',
+      });
 
       if (response.statusCode == 200) {
         // Remove from local state if delete was successful

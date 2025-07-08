@@ -35,4 +35,20 @@ class ApiManager {
       body: jsonEncode(body), // ✅ Convert body to JSON
     );
   }
+
+  static Future<http.Response> put(String endpoint, Map<String, dynamic> body) async {
+    final storage = GetStorage();
+    final token = storage.read('token');
+    final url = Uri.parse('$baseUrl/$endpoint');
+    return await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+  }
+
 }
