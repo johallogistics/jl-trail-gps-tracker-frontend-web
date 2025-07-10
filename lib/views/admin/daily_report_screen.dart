@@ -263,7 +263,8 @@ class DailyReportManagement extends StatelessWidget {
     final purposeOfTrialController = TextEditingController(text: existingLog?.purposeOfTrial ?? '');
     final reasonController = TextEditingController(text: existingLog?.reason ?? '');
     final dateOfSaleController = TextEditingController(text: existingLog?.dateOfSale ?? '');
-
+    final selectedVehicleType = RxnString(existingLog?.capitalizedVehicleOrCustomerVehicle);
+    final selectedPurposeOfTrial = RxnString(existingLog?.purposeOfTrial);
 
     showDialog(
       context: context,
@@ -279,6 +280,80 @@ class DailyReportManagement extends StatelessWidget {
               children: [
                 Text(isEdit ? 'Edit Shift Log' : 'Add Shift Log', style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Obx(() => DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Capitalized Vehicle/Customer Vehicle',
+                      labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
+                      filled: true,
+                      fillColor: Colors.blue[50],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
+                      ),
+                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
+                    value: selectedVehicleType.value,
+                    items: [
+                      'Customer Vehicle',
+                      'Capitalized Vehicle',
+                    ].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+                    onChanged: (val) {
+                      selectedVehicleType.value = val;
+                      selectedPurposeOfTrial.value = null; // Reset purpose when type changes
+                    },
+                  )),
+                ),
+
+                const SizedBox(height: 12),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Obx(() {
+                    final type = selectedVehicleType.value;
+                    List<String> purposes = [];
+                    if (type == 'Customer Vehicle') {
+                      purposes = [
+                        'Post Sale Live Training (Familiarization with product)',
+                        'Post Sale FE Trial',
+                        'Low Fuel Mileage issue',
+                      ];
+                    } else if (type == 'Capitalized Vehicle') {
+                      purposes = [
+                        'Demo',
+                        'Pre Sale FE Trial',
+                      ];
+                    }
+                    return DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'Purpose of Trial',
+                        labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
+                        filled: true,
+                        fillColor: Colors.blue[50],
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
+                      value: selectedPurposeOfTrial.value,
+                      items: purposes.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                      onChanged: (val) => selectedPurposeOfTrial.value = val,
+                    );
+                  }),
+                ),
+
                 _buildStyledTextField(controller: shiftController, label: 'Shift'),
                 _buildStyledTextField(controller: otHoursController, label: 'OT Hours', keyboardType: TextInputType.number),
                 _buildStyledTextField(controller: vehicleController, label: 'Vehicle Model'),
@@ -327,7 +402,6 @@ class DailyReportManagement extends StatelessWidget {
                 _buildStyledTextField(controller: reasonController, label: 'Reason'),
                 _buildStyledTextField(controller: dateOfSaleController, label: 'Date of Sale'),
                 _buildStyledTextField(controller: trailIdController, label: 'Trail ID'),
-
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -345,8 +419,8 @@ class DailyReportManagement extends StatelessWidget {
                           chassisNo: chassisNoController.text,
                           gvw: double.tryParse(gvwController.text) ?? 0.0,
                           payload: double.tryParse(payloadController.text) ?? 0.0,
-                          inTime: DateTime.now(), // Replace with actual selected DateTime
-                          outTime: DateTime.now(), // Replace with actual selected DateTime
+                          inTime: DateTime.now(),
+                          outTime: DateTime.now(),
                           workingHours: int.tryParse(workingHoursController.text) ?? 0,
                           startingKm: int.tryParse(startingKmController.text) ?? 0,
                           endingKm: int.tryParse(endingKmController.text) ?? 0,
@@ -379,12 +453,12 @@ class DailyReportManagement extends StatelessWidget {
                           customerName: customerNameController.text,
                           customerDriverName: customerDriverNameController.text,
                           customerDriverNo: customerDriverNoController.text,
-                          capitalizedVehicleOrCustomerVehicle: capitalizedVehicleOrCustomerVehicleController.text,
+                          capitalizedVehicleOrCustomerVehicle: selectedVehicleType.value ?? '',
                           customerVehicle: customerVehicleController.text,
                           capitalizedVehicle: capitalizedVehicleController.text,
                           vehicleNo: vehicleNoController.text,
                           driverStatus: driverStatusController.text,
-                          purposeOfTrial: purposeOfTrialController.text,
+                          purposeOfTrial: selectedPurposeOfTrial.value ?? '',
                           reason: reasonController.text,
                           dateOfSale: dateOfSaleController.text,
                           trailId: trailIdController.text,
