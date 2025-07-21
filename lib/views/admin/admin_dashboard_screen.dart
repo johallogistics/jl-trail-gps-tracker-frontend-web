@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:trail_tracker/views/admin/trail_form_table_screen.dart';
 import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
 
 import '../../utils/image_upload_service.dart';
+import '../new_trail_form/trial_form_stepper.dart';
 import 'admin_login_screen.dart';
 import 'daily_report_screen.dart';
 import 'dashboard_home_screen.dart';
@@ -45,17 +47,20 @@ class DashboardController extends GetxController {
 class DashboardScreen extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
 
-  final List<Widget> pages = [
-    DashboardHomeScreen(),
-    DriverManagementScreen(), // Driver Management with Live Location Tab
-    VehicleManagementScreen(),
-    DailyReportManagement(),
-    // Center(child: Text('Users Management', style: TextStyle(fontSize: 24))),
-    // Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
+  final List<Widget Function()> pageBuilders = [
+        () => DashboardHomeScreen(),
+        () => DriverManagementScreen(),
+        () => TrialFormTableScreen(),
+        () => DailyReportManagement(),
   ];
 
-  DashboardScreen({super.key});
-
+  DashboardScreen({super.key}) {
+    // Read argument for default page index if passed
+    final int? initialIndex = Get.arguments;
+    if (initialIndex != null) {
+      controller.selectedIndex.value = initialIndex;
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +73,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: Obx(() => Container(
                   padding: EdgeInsets.all(10),
-                  child: pages[controller.selectedIndex.value],
+                  child: pageBuilders[controller.selectedIndex.value](),
                 )),
               ),
             ],
