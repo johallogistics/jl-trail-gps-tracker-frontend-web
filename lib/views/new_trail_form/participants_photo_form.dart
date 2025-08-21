@@ -82,7 +82,7 @@ class ParticipantsPhotosForm extends StatelessWidget {
     final existing = controller.form.value.participants
         ?.firstWhereOrNull((p) => p.role == role);
 
-    final participant = Participant(
+    final participant = ParticipantOld(
       role: role,
       name: name ?? existing?.name ?? '',
       sign: sign ?? existing?.sign ?? '',

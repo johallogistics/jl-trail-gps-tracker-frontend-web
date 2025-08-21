@@ -16,7 +16,7 @@ class TrialForm {
   DateTime? vehicleCheckDate;
   String? customerRemarks;
 
-  List<Participant>? participants;
+  List<ParticipantOld>? participants;
   List<Trip>? trips;
   List<Photo>? photos;
 
@@ -60,7 +60,7 @@ class TrialForm {
     vehicleCheckDate: json["vehicle_check_date"] != null ? DateTime.parse(json["vehicle_check_date"]) : null,
     customerRemarks: json["customer_remarks"],
     participants: (json["participants"] as List<dynamic>?)
-        ?.map((e) => Participant.fromJson(e))
+        ?.map((e) => ParticipantOld.fromJson(e))
         .toList(),
     trips: (json["trips"] as List<dynamic>?)
         ?.map((e) => Trip.fromJson(e))
@@ -109,7 +109,7 @@ class TrialForm {
     String? roadType,
     DateTime? vehicleCheckDate,
     String? customerRemarks,
-    List<Participant>? participants,
+    List<ParticipantOld>? participants,
     List<Trip>? trips,
     List<Photo>? photos,
   }) {
@@ -138,14 +138,14 @@ class TrialForm {
 
 }
 
-class Participant {
+class ParticipantOld {
   int? id;
   int? trialFormId;
   String? role;
   String? name;
   String? sign;
 
-  Participant({
+  ParticipantOld({
     this.id,
     this.trialFormId,
     this.role,
@@ -153,7 +153,7 @@ class Participant {
     this.sign,
   });
 
-  factory Participant.fromJson(Map<String, dynamic> json) => Participant(
+  factory ParticipantOld.fromJson(Map<String, dynamic> json) => ParticipantOld(
     id: json["id"],
     trialFormId: json["trial_form_id"],
     role: json["role"],

@@ -31,10 +31,38 @@
 
   <title>trail_tracker</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://apis.mappls.com/advancedmaps/api/c3a84b3348cc7861088428534d704753/map_sdk?layer=vector&v=3.0"></script>
-  <!--  <script src="https://apis.mappls.com/advancedmaps/v1/c3a84b3348cc7861088428534d704753/map_load?v=1.5"></script>-->
-<!--  <script src="https://apis.mappls.com/advancedmaps/api/c3a84b3348cc7861088428534d704753/map_sdk?layer=vector&v=3.0"></script>-->
-  <script src="https://apis.mappls.com/advancedmaps/v1/c3a84b3348cc7861088428534d704753/map_sdk?layer=vector&v=3.0"></script>
+  <script
+          src="https://apis.mappls.com/advancedmaps/api/c3a84b3348cc7861088428534d704753/map_sdk.js"
+          onload="window.mapplsReady = true; console.log('✅ Mappls SDK loaded');">
+  </script>
+
+  <script>
+    function initMapplsMap(divId, lat, lng, destLat, destLng) {
+      if (!window.mapplsReady || typeof mappls === 'undefined') {
+        console.error("⚠️ Tried calling initMapplsMap before SDK load");
+        return;
+      }
+
+      var map = new mappls.Map(divId, {
+        center: [lat, lng],
+        zoom: 12
+      });
+
+      new mappls.Marker({
+        map: map,
+        position: { lat: lat, lng: lng },
+        popupHtml: "Current Location"
+      });
+
+      new mappls.Marker({
+        map: map,
+        position: { lat: destLat, lng: destLng },
+        popupHtml: "Destination"
+      });
+    }
+  </script>
+
+
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

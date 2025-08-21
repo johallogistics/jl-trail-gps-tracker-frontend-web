@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:mapmyindia_gl/mapmyindia_gl.dart';
+import 'package:mappls_gl/mappls_gl.dart';
 import '../../models/admin/driver_model.dart';
 import '../../models/consolidated_form_submission_model.dart';
 import '../../models/trials_model.dart';

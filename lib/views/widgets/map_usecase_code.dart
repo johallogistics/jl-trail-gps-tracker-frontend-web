@@ -8,8 +8,7 @@ const String backendUrl = "https://jl-trail-gps-tracker-backend-production.up.ra
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     Position position = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.best));
+        desiredAccuracy: LocationAccuracy.best);
 
     if (position.speed > 1.0) {
       await http.post(

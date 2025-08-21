@@ -95,7 +95,7 @@ class TrialFormController extends GetxController {
     }
   }
 
-  void addParticipant(Participant p) {
+  void addParticipant(ParticipantOld p) {
     form.update((f) {
       f?.participants ??= [];
       f!.participants!.add(p);
