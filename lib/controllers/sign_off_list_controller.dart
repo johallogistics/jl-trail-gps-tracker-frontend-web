@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../repositories/sign_off_services.dart';
 
 class SignOffListController extends GetxController {
-  final service = SignOffService(const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000'));
+  final service = SignOffService(const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://jl-trail-gps-tracker-backend-production.up.railway.app'));
   var items = <Map<String, dynamic>>[].obs;
   var page = 1.obs;
   final pageSize = 20;
