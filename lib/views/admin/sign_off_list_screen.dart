@@ -10,24 +10,26 @@ class SignOffListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.put(SignOffListController());
+    c.refreshList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Admin – Sign Offs')),
       body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(children: [
-            SizedBox(
-              width: 260,
-              child: TextField(
-                controller: c.searchCtl,
-                decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by customer name'),
-                onSubmitted: (_) => c.refreshList(),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(onPressed: c.refreshList, child: const Text('Search')),
-          ]),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.all(8.0),
+        //   child: Row(children: [
+        //     SizedBox(
+        //       width: 260,
+        //       child: TextField(
+        //         controller: c.searchCtl,
+        //         decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by customer name'),
+        //         onSubmitted: (_) => c.refreshList(),
+        //       ),
+        //     ),
+        //     const SizedBox(width: 8),
+        //     ElevatedButton(onPressed: c.refreshList, child: const Text('Search')),
+        //   ]),
+        // ),
         Expanded(
           child: Obx(() {
             final items = c.items;
@@ -43,17 +45,18 @@ class SignOffListScreen extends StatelessWidget {
               ], rows: [
                 for (final it in items)
                   DataRow(cells: [
-                    DataCell(Text('${it['id']}')),
-                    DataCell(Text(it['customerName'] ?? '')),
-                    DataCell(Text(it['customerVehicleDetails']?['vehicleNo'] ?? '')),
-                    DataCell(Text(it['customerVehicleDetails']?['saleDate'] ?? '')),
-                    DataCell(Text('${it['afterTrialsFE'] ?? ''}')),
+                    DataCell(Text('${it.id}')),
+                    DataCell(Text(it.customerName ?? '')),
+                    DataCell(Text(it.customerVehicleDetails?.vehicleNo ?? '')),
+                    DataCell(Text(it.customerVehicleDetails?.saleDate ?? '')),
+                    DataCell(Text(it.afterTrialsFE.toString() ?? '')),
                     DataCell(Row(children: [
-                      IconButton(icon: const Icon(Icons.edit), onPressed: () => Get.to(() => SignOffEditScreen(id: it['id']))),
-                      IconButton(icon: const Icon(Icons.delete), onPressed: () => c.deleteItem(it['id'])),
+                      IconButton(icon: const Icon(Icons.edit), onPressed: () => Get.to(() => SignOffEditScreen(id: it.id))),
+                      IconButton(icon: const Icon(Icons.delete), onPressed: () => c.deleteItem(it.id!)),
                     ])),
                   ])
-              ]),
+              ])
+              ,
             );
           }),
         ),

@@ -8,12 +8,21 @@ import 'package:get/get.dart';
 
 class DriverFormScreen extends StatelessWidget {
   DriverFormScreen({super.key});
-  final d = Get.find<SignOffController>();
+  final c = Get.find<SignOffController>();
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Driver – Sign Off Form')),
-      body: const SignOffForm(submitRole: 'DRIVER'),
+    return FutureBuilder(
+      future: c.loadOrCreateDraft(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        return Scaffold(
+          appBar: AppBar(title: const Text('Driver – Sign Off Form')),
+          body: SignOffForm(submitRole: 'DRIVER'),
+        );
+      },
     );
   }
 }

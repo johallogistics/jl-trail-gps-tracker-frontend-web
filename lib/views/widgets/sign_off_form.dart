@@ -27,68 +27,83 @@ class SignOffForm extends StatelessWidget {
       decoration: InputDecoration(labelText: label),
     );
 
-    Widget tripTile(TripDetail td) => ExpansionTile(
-      title: Text('Trip ${td.tripNo == 6 ? 'Overall' : td.tripNo}'),
-      children: [
-        Wrap(spacing: 12, runSpacing: 12, children: [
-          SizedBox(width: 220, child: TextField(
-            decoration: const InputDecoration(labelText: 'Trip Route'),
-            onChanged: (v) => td.tripRoute = v,
-          )),
-          SizedBox(width: 220, child: TextField(
-            decoration: const InputDecoration(labelText: 'Start Date (ISO)'),
-            onChanged: (v) => td.tripStartDate = v,
-          )),
-          SizedBox(width: 220, child: TextField(
-            decoration: const InputDecoration(labelText: 'End Date (ISO)'),
-            onChanged: (v) => td.tripEndDate = v,
-          )),
-          SizedBox(width: 140, child: TextField(
-            decoration: const InputDecoration(labelText: 'Start km'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) => td.startKm = double.tryParse(v),
-          )),
-          SizedBox(width: 140, child: TextField(
-            decoration: const InputDecoration(labelText: 'End km'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) => td.endKm = double.tryParse(v),
-          )),
-          SizedBox(width: 140, child: TextField(
-            decoration: const InputDecoration(labelText: 'Trip km'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) => td.tripKm = double.tryParse(v),
-          )),
-          SizedBox(width: 140, child: TextField(
-            decoration: const InputDecoration(labelText: 'Max speed'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) => td.maxSpeed = double.tryParse(v),
-          )),
-          SizedBox(width: 140, child: TextField(
-            decoration: const InputDecoration(labelText: 'Weight (GVW)'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) => td.weightGVW = double.tryParse(v),
-          )),
-          SizedBox(width: 160, child: TextField(
-            decoration: const InputDecoration(labelText: 'Actual Diesel ltrs'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) => td.actualDieselLtrs = double.tryParse(v),
-          )),
-          if (td.tripNo == 6) ...[
-            SizedBox(width: 160, child: TextField(
-              decoration: const InputDecoration(labelText: 'Total Trip km'),
+    Widget tripTile(TripDetail td) {
+      final tripRouteCtl = TextEditingController(text: td.tripRoute ?? '');
+      final startDateCtl = TextEditingController(text: td.tripStartDate ?? '');
+      final endDateCtl = TextEditingController(text: td.tripEndDate ?? '');
+      final startKmCtl = TextEditingController(text: td.startKm?.toString() ?? '');
+      final endKmCtl = TextEditingController(text: td.endKm?.toString() ?? '');
+      final tripKmCtl = TextEditingController(text: td.tripKm?.toString() ?? '');
+      final maxSpeedCtl = TextEditingController(text: td.maxSpeed?.toString() ?? '');
+      final weightCtl = TextEditingController(text: td.weightGVW?.toString() ?? '');
+      final dieselCtl = TextEditingController(text: td.actualDieselLtrs?.toString() ?? '');
+      final totalKmCtl = TextEditingController(text: td.totalTripKm?.toString() ?? '');
+      final feCtl = TextEditingController(text: td.actualFE?.toString() ?? '');
+
+      // helper builder
+      Widget numField(TextEditingController ctl, String label, void Function(String) onChanged) =>
+          SizedBox(
+            width: 140,
+            child: TextField(
+              controller: ctl,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (v) => td.totalTripKm = double.tryParse(v),
-            )),
-            SizedBox(width: 160, child: TextField(
-              decoration: const InputDecoration(labelText: 'Actual FE (kmpl)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (v) => td.actualFE = double.tryParse(v),
-            )),
-          ],
-        ]),
-        const SizedBox(height: 8),
-      ],
-    );
+              decoration: InputDecoration(labelText: label),
+              onChanged: onChanged,
+            ),
+          );
+
+      return ExpansionTile(
+        title: Text('Trip ${td.tripNo == 6 ? 'Overall' : td.tripNo}'),
+        children: [
+          Wrap(spacing: 12, runSpacing: 12, children: [
+            SizedBox(
+              width: 220,
+              child: TextField(
+                controller: tripRouteCtl,
+                decoration: const InputDecoration(labelText: 'Trip Route'),
+                onChanged: (v) => td.tripRoute = v.isEmpty ? null : v,
+              ),
+            ),
+            SizedBox(
+              width: 220,
+              child: TextField(
+                controller: startDateCtl,
+                decoration: const InputDecoration(labelText: 'Start Date (ISO)'),
+                onChanged: (v) => td.tripStartDate = v.isEmpty ? null : v,
+              ),
+            ),
+            SizedBox(
+              width: 220,
+              child: TextField(
+                controller: endDateCtl,
+                decoration: const InputDecoration(labelText: 'End Date (ISO)'),
+                onChanged: (v) => td.tripEndDate = v.isEmpty ? null : v,
+              ),
+            ),
+            numField(startKmCtl, 'Start km',
+                    (v) => td.startKm = v.isEmpty ? null : double.tryParse(v)),
+            numField(endKmCtl, 'End km',
+                    (v) => td.endKm = v.isEmpty ? null : double.tryParse(v)),
+            numField(tripKmCtl, 'Trip km',
+                    (v) => td.tripKm = v.isEmpty ? null : double.tryParse(v)),
+            numField(maxSpeedCtl, 'Max speed',
+                    (v) => td.maxSpeed = v.isEmpty ? null : double.tryParse(v)),
+            numField(weightCtl, 'Weight (GVW)',
+                    (v) => td.weightGVW = v.isEmpty ? null : double.tryParse(v)),
+            numField(dieselCtl, 'Actual Diesel ltrs',
+                    (v) => td.actualDieselLtrs = v.isEmpty ? null : double.tryParse(v)),
+            if (td.tripNo == 6) ...[
+              numField(totalKmCtl, 'Total Trip km',
+                      (v) => td.totalTripKm = v.isEmpty ? null : double.tryParse(v)),
+              numField(feCtl, 'Actual FE (kmpl)',
+                      (v) => td.actualFE = v.isEmpty ? null : double.tryParse(v)),
+            ],
+          ]),
+          const SizedBox(height: 8),
+        ],
+      );
+    }
+
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -159,8 +174,38 @@ class SignOffForm extends StatelessWidget {
         textField(c.customerRemarks, 'Customer Remarks', maxLines: 3),
         const SizedBox(height: 20),
         Obx(() => ElevatedButton(
-          onPressed: c.isSubmitting.value ? null : () => c.submit(createdByRole: submitRole),
-          child: Text(c.isSubmitting.value ? 'Submitting...' : 'Submit ($submitRole)'),
+          onPressed: c.isSubmitting.value
+              ? null
+              : () async {
+            if (submitRole == 'DRIVER') {
+              // DRIVER → if trip not complete yet, just save progress
+              if (!c.tripDetails.every((t) => t.tripEndDate != null)) {
+                await c.saveProgress();
+                Get.snackbar("Saved", "Progress saved, continue later");
+              } else {
+                // trip complete → submit
+                final result = await c.submit(createdByRole: 'DRIVER');
+                if (result != null) {
+                  Get.snackbar("Submitted", "Trip submitted successfully");
+                }
+              }
+            } else {
+              // ADMIN flow
+              final result = await c.submit(createdByRole: 'ADMIN');
+              if (result != null) {
+                Get.offNamed('/signOffList', arguments: {"refresh": true, "updated": result});
+              }
+            }
+          },
+          child: Text(
+            c.isSubmitting.value
+                ? 'Submitting...'
+                : c.editingId.value == null
+                ? 'Create ($submitRole)'
+                : submitRole == 'DRIVER'
+                ? 'Save / Submit'
+                : 'Update ($submitRole)',
+          ),
         )),
         const SizedBox(height: 60),
       ]),

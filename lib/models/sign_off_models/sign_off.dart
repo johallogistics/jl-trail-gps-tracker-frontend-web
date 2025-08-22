@@ -1,5 +1,4 @@
 // lib/models/sign_off.dart
-
 import 'package:trail_tracker/models/sign_off_models/participant.dart';
 import 'package:trail_tracker/models/sign_off_models/photo.dart';
 import 'package:trail_tracker/models/sign_off_models/trip_details.dart';
@@ -29,22 +28,38 @@ class CustomerVehicleDetails {
     'issuesFoundOnVehicleCheck': issuesFoundOnVehicleCheck,
   };
 
-  static CustomerVehicleDetails fromJson(Map<String, dynamic> j) => CustomerVehicleDetails()
-    ..tripDuration = j['tripDuration']
-    ..vehicleNo = j['vehicleNo']
-    ..saleDate = j['saleDate']
-    ..model = j['model']
-    ..application = j['application']
-    ..customerVerbatim = j['customerVerbatim']
-    ..tripRoute = j['tripRoute']
-    ..roadType = j['roadType']
-    ..vehicleCheckDate = j['vehicleCheckDate']
-    ..issuesFoundOnVehicleCheck = j['issuesFoundOnVehicleCheck'];
+  static CustomerVehicleDetails fromJson(Map<String, dynamic> j) =>
+      CustomerVehicleDetails()
+        ..tripDuration = j['tripDuration']
+        ..vehicleNo = j['vehicleNo']
+        ..saleDate = j['saleDate']
+        ..model = j['model']
+        ..application = j['application']
+        ..customerVerbatim = j['customerVerbatim']
+        ..tripRoute = j['tripRoute']
+        ..roadType = j['roadType']
+        ..vehicleCheckDate = j['vehicleCheckDate']
+        ..issuesFoundOnVehicleCheck = j['issuesFoundOnVehicleCheck'];
+
+  /// Utility to copy values from another object
+  void copyFrom(CustomerVehicleDetails? other) {
+    if (other == null) return;
+    tripDuration = other.tripDuration;
+    vehicleNo = other.vehicleNo;
+    saleDate = other.saleDate;
+    model = other.model;
+    application = other.application;
+    customerVerbatim = other.customerVerbatim;
+    tripRoute = other.tripRoute;
+    roadType = other.roadType;
+    vehicleCheckDate = other.vehicleCheckDate;
+    issuesFoundOnVehicleCheck = other.issuesFoundOnVehicleCheck;
+  }
 }
 
 class SignOff {
   int? id;
-  String customerName;
+  String? customerName; // made nullable (drafts may not have this yet)
   double? customerExpectedFE;
   double? beforeTrialsFE;
   double? afterTrialsFE;
@@ -56,10 +71,11 @@ class SignOff {
   List<TripDetail> tripDetails;
   List<ParticipantSignOff> participants;
   List<Photo> photos;
+  bool? isSubmitted;
 
   SignOff({
     this.id,
-    required this.customerName,
+    this.customerName,
     this.customerExpectedFE,
     this.beforeTrialsFE,
     this.afterTrialsFE,
@@ -71,9 +87,11 @@ class SignOff {
     this.tripDetails = const [],
     this.participants = const [],
     this.photos = const [],
+    this.isSubmitted,
   });
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'customerName': customerName,
     'customerExpectedFE': customerExpectedFE,
     'beforeTrialsFE': beforeTrialsFE,
@@ -86,6 +104,7 @@ class SignOff {
     'tripDetails': tripDetails.map((e) => e.toJson()).toList(),
     'participants': participants.map((e) => e.toJson()).toList(),
     'photos': photos.map((e) => e.toJson()).toList(),
+    'isSubmitted': isSubmitted,
   };
 
   factory SignOff.fromJson(Map<String, dynamic> j) => SignOff(
@@ -94,14 +113,22 @@ class SignOff {
     customerExpectedFE: (j['customerExpectedFE'] as num?)?.toDouble(),
     beforeTrialsFE: (j['beforeTrialsFE'] as num?)?.toDouble(),
     afterTrialsFE: (j['afterTrialsFE'] as num?)?.toDouble(),
-    customerVehicleDetails: j['customerVehicleDetails'] != null ? CustomerVehicleDetails.fromJson(j['customerVehicleDetails']) : null,
+    customerVehicleDetails: j['customerVehicleDetails'] != null
+        ? CustomerVehicleDetails.fromJson(j['customerVehicleDetails'])
+        : null,
     issuesFoundDuringTrial: j['issuesFoundDuringTrial'],
     trialRemarks: j['trialRemarks'],
     customerRemarks: j['customerRemarks'],
     createdByRole: j['createdByRole'],
-    tripDetails: (j['tripDetails'] as List<dynamic>? ?? []).map((e) => TripDetail.fromJson(e)).toList(),
+    tripDetails: (j['tripDetails'] as List<dynamic>? ?? [])
+        .map((e) => TripDetail.fromJson(e))
+        .toList(),
     participants: (j['participants'] as List<dynamic>? ?? [])
         .map((e) => ParticipantSignOff.fromJson(e))
-        .toList(),    photos: (j['photos'] as List<dynamic>? ?? []).map((e) => Photo.fromJson(e)).toList(),
+        .toList(),
+    photos: (j['photos'] as List<dynamic>? ?? [])
+        .map((e) => Photo.fromJson(e))
+        .toList(),
+    isSubmitted: j['isSubmitted'],
   );
 }

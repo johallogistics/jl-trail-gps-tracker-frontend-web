@@ -14,7 +14,7 @@ class SignOffEditScreen extends StatefulWidget {
 }
 
 class _SignOffEditScreenState extends State<SignOffEditScreen> {
-  final service = SignOffService(const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000'));
+  final service = SignOffService(const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://jl-trail-gps-tracker-backend-production.up.railway.app'));
 
   @override
   void initState() {
@@ -29,7 +29,11 @@ class _SignOffEditScreenState extends State<SignOffEditScreen> {
     final c = Get.find<SignOffController>();
     final data = await service.getById(widget.id!);
     final so = SignOff.fromJson(data);
-    c.customerName.text = so.customerName;
+
+    c.editingId.value = so.id;
+
+    // text controllers
+    c.customerName.text = so.customerName ?? '';
     c.customerExpectedFE.text = so.customerExpectedFE?.toString() ?? '';
     c.beforeTrialsFE.text = so.beforeTrialsFE?.toString() ?? '';
     c.afterTrialsFE.text = so.afterTrialsFE?.toString() ?? '';
@@ -37,11 +41,30 @@ class _SignOffEditScreenState extends State<SignOffEditScreen> {
     c.trialRemarks.text = so.trialRemarks ?? '';
     c.customerRemarks.text = so.customerRemarks ?? '';
 
-    // replace lists
-    c.tripDetails.assignAll(so.tripDetails);
-    c.participants.assignAll(so.participants);
-    c.photos.assignAll(so.photos);
+    // vehicle details
+    c.vehicleDetails.tripDuration = so.customerVehicleDetails?.tripDuration ?? '';
+    c.vehicleDetails.vehicleNo = so.customerVehicleDetails?.vehicleNo ?? '';
+    c.vehicleDetails.saleDate = so.customerVehicleDetails?.saleDate ?? '';
+    c.vehicleDetails.model = so.customerVehicleDetails?.model ?? '';
+    c.vehicleDetails.application = so.customerVehicleDetails?.application ?? '';
+    c.vehicleDetails.customerVerbatim = so.customerVehicleDetails?.customerVerbatim ?? '';
+    c.vehicleDetails.tripRoute = so.customerVehicleDetails?.tripRoute ?? '';
+    c.vehicleDetails.roadType = so.customerVehicleDetails?.roadType ?? '';
+    c.vehicleDetails.vehicleCheckDate = so.customerVehicleDetails?.vehicleCheckDate ?? '';
+    c.vehicleDetails.issuesFoundOnVehicleCheck = so.customerVehicleDetails?.issuesFoundOnVehicleCheck ?? '';
+
+    // lists
+    if (so.tripDetails.isNotEmpty) {
+      c.tripDetails.assignAll(so.tripDetails);
+    }
+    if (so.participants.isNotEmpty) {
+      c.participants.assignAll(so.participants);
+    }
+    if (so.photos.isNotEmpty) {
+      c.photos.assignAll(so.photos);
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

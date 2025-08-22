@@ -7,13 +7,14 @@ class SignOffService {
   final String baseUrl; // e.g., https://jl-trail-gps-tracker-backend-production.up.railway.app
   SignOffService(this.baseUrl);
 
-  Future<Map<String, dynamic>> create(SignOff body) async {
-    final res = await http.post(Uri.parse('$baseUrl/signoffs'),
-      headers: { 'Content-Type': 'application/json' },
+  Future<SignOff> create(SignOff body) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/signOffs'),
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body.toJson()),
     );
     if (res.statusCode >= 200 && res.statusCode < 300) {
-      return jsonDecode(res.body);
+      return SignOff.fromJson(jsonDecode(res.body));
     }
     throw Exception('Create failed: ${res.body}');
   }
@@ -34,17 +35,57 @@ class SignOffService {
     throw Exception('Get failed');
   }
 
-  Future<Map<String, dynamic>> update(int id, SignOff body) async {
-    final res = await http.put(Uri.parse('$baseUrl/signoffs/$id'),
-      headers: { 'Content-Type': 'application/json' },
+  Future<SignOff> update(int id, SignOff body) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/signOffs/$id'),
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body.toJson()),
     );
-    if (res.statusCode == 200) return jsonDecode(res.body);
+    if (res.statusCode == 200) {
+      return SignOff.fromJson(jsonDecode(res.body));
+    }
     throw Exception('Update failed: ${res.body}');
   }
+
+
+  Future<SignOff> submit(int id, SignOff body, String role) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/signOffs/$id/submit'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({...body.toJson(), "role": role}),
+    );
+    if (res.statusCode == 200) {
+      return SignOff.fromJson(jsonDecode(res.body));
+    }
+    throw Exception('Submit failed: ${res.body}');
+  }
+
 
   Future<void> remove(int id) async {
     final res = await http.delete(Uri.parse('$baseUrl/signoffs/$id'));
     if (res.statusCode != 204) throw Exception('Delete failed');
   }
+
+  // get draft record for driver
+  Future<SignOff?> getDraftForDriver() async {
+    final res = await http.get(Uri.parse('$baseUrl/signOffs/draft/driver'));
+    if (res.statusCode == 200) {
+      return SignOff.fromJson(jsonDecode(res.body));
+    }
+    return null;
+  }
+
+  // create empty draft for driver
+  Future<SignOff> createDraftForDriver() async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/signOffs/draft/driver'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (res.statusCode == 200) {
+      return SignOff.fromJson(jsonDecode(res.body));
+    }
+    throw Exception("Failed to create draft");
+  }
+
+
 }

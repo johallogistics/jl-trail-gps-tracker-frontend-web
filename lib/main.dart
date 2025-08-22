@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login',
+      initialRoute: '/signOffList',
       getPages: [
         GetPage(name: '/login', page: () => AdminLoginScreen()),
         GetPage(
@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
             name: '/splash', page: () => SplashScreen()), //LiveTrackingWebMap
         GetPage(name: '/test', page: () => TripLocationForm()),
           GetPage(name: '/driver', page: () => DriverFormScreen()),
-          GetPage(name: '/admin', page: () => const SignOffListScreen()),
+          GetPage(name: '/signOffList', page: () => const SignOffListScreen()),
       ],
       translations: AppTranslations(),
       locale: const Locale('en'),
