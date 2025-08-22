@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/driver',
+      initialRoute: '/login',
       getPages: [
         GetPage(name: '/login', page: () => AdminLoginScreen()),
         GetPage(
