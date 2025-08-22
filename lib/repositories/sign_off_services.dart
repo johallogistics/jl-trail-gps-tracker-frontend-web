@@ -4,7 +4,7 @@ import 'dart:convert';
 import '../models/sign_off_models/sign_off.dart';
 
 class SignOffService {
-  final String baseUrl; // e.g., http://localhost:3000
+  final String baseUrl; // e.g., https://jl-trail-gps-tracker-backend-production.up.railway.app
   SignOffService(this.baseUrl);
 
   Future<Map<String, dynamic>> create(SignOff body) async {

@@ -33,7 +33,7 @@ void main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJremt1bmp1b3Nob2twaWxrc3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODEwMzAsImV4cCI6MjA2NjA1NzAzMH0.esUaqXN6y88-BroMRW19SyqjVdBNbl_KeI0bJILyS60',
   );
-  const apiBaseUrl = "http://localhost:3000";
+  const apiBaseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
 
   Get.lazyPut<SignOffService>(() => SignOffService(apiBaseUrl));
   Get.lazyPut<SignOffController>(() => SignOffController(Get.find<SignOffService>()));
