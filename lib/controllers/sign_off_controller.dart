@@ -12,21 +12,21 @@ class SignOffController extends GetxController {
   final SignOffService api;
   SignOffController(this.api);
 
+  /// UI / State
   var isSubmitting = false.obs;
-  var editingId = RxnInt(); // null = new, non-null = update
+  var editingId = RxnInt(); // null = new draft, non-null = existing
 
-  // Form fields
+  /// Form controllers
   final customerName = TextEditingController();
   final customerExpectedFE = TextEditingController();
   final beforeTrialsFE = TextEditingController();
   final afterTrialsFE = TextEditingController();
-
-  final vehicleDetails = CustomerVehicleDetails();
-
   final issuesFoundDuringTrial = TextEditingController();
   final trialRemarks = TextEditingController();
   final customerRemarks = TextEditingController();
 
+  /// Data models
+  final vehicleDetails = CustomerVehicleDetails();
   final participants = <ParticipantSignOff>[
     ParticipantSignOff(role: 'CSM'),
     ParticipantSignOff(role: 'PC'),
@@ -34,11 +34,15 @@ class SignOffController extends GetxController {
     ParticipantSignOff(role: 'CUSTOMER'),
   ].obs;
 
-  final tripDetails = <TripDetail>[for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)].obs; // includes overall
+  final tripDetails = <TripDetail>[
+    for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)
+  ].obs; // last trip = overall
 
   final photos = <Photo>[].obs;
 
-  /// Build payload for saving/updating
+  /// ------------------------
+  /// Payload Builder
+  /// ------------------------
   SignOff buildPayload(String createdByRole, {bool isFinal = false}) {
     return SignOff(
       id: editingId.value,
@@ -47,26 +51,34 @@ class SignOffController extends GetxController {
       beforeTrialsFE: double.tryParse(beforeTrialsFE.text),
       afterTrialsFE: double.tryParse(afterTrialsFE.text),
       customerVehicleDetails: vehicleDetails,
-      issuesFoundDuringTrial:
-      issuesFoundDuringTrial.text.trim().isEmpty ? null : issuesFoundDuringTrial.text.trim(),
-      trialRemarks: trialRemarks.text.trim().isEmpty ? null : trialRemarks.text.trim(),
-      customerRemarks: customerRemarks.text.trim().isEmpty ? null : customerRemarks.text.trim(),
+      issuesFoundDuringTrial: issuesFoundDuringTrial.text.trim().isEmpty
+          ? null
+          : issuesFoundDuringTrial.text.trim(),
+      trialRemarks:
+      trialRemarks.text.trim().isEmpty ? null : trialRemarks.text.trim(),
+      customerRemarks: customerRemarks.text.trim().isEmpty
+          ? null
+          : customerRemarks.text.trim(),
       createdByRole: createdByRole,
       tripDetails: tripDetails,
       participants: participants,
       photos: photos,
       isSubmitted: isFinal,
+      driverId: '1',
     );
   }
 
-  /// Load existing draft or create a new one for DRIVER
+  /// ------------------------
+  /// Load / Create Draft
+  /// ------------------------
   Future<void> loadOrCreateDraft() async {
     try {
-      final draft = await api.getDraftForDriver(); // backend should return active draft or null
+      final draft = await api.getDraftForDriver();
       if (draft != null) {
         _loadFromModel(draft);
       } else {
-        final newDraft = await api.createDraftForDriver();
+        final initial = buildPayload('DRIVER', isFinal: false);
+        final newDraft = await api.createDraftForDriver(initial);
         _loadFromModel(newDraft);
       }
     } catch (e) {
@@ -84,35 +96,92 @@ class SignOffController extends GetxController {
     issuesFoundDuringTrial.text = data.issuesFoundDuringTrial ?? '';
     trialRemarks.text = data.trialRemarks ?? '';
     customerRemarks.text = data.customerRemarks ?? '';
-    tripDetails.assignAll(data.tripDetails ?? [for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)]);
+    tripDetails.assignAll(data.tripDetails ??
+        [for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)]);
     participants.assignAll(data.participants ?? participants);
     photos.assignAll(data.photos ?? []);
   }
 
-  /// Save progress (without submission)
+  /// ------------------------
+  /// Trip Utilities
+  /// ------------------------
+  bool _hasAnyTripData(TripDetail t) {
+    return (t.tripRoute?.isNotEmpty ?? false) ||
+        (t.tripStartDate?.isNotEmpty ?? false) ||
+        (t.tripEndDate?.isNotEmpty ?? false) ||
+        t.startKm != null ||
+        t.endKm != null ||
+        t.tripKm != null ||
+        t.maxSpeed != null ||
+        t.weightGVW != null ||
+        t.actualDieselLtrs != null ||
+        t.totalTripKm != null ||
+        t.actualFE != null;
+  }
+
+  TripDetail? get latestEditedTrip {
+    final edited = tripDetails
+        .where((t) => (t.tripNo ?? 0) != 6 && _hasAnyTripData(t))
+        .toList()
+      ..sort((a, b) => (a.tripNo ?? 0).compareTo(b.tripNo ?? 0));
+    return edited.isEmpty ? null : edited.last;
+  }
+
+  bool _isTripComplete(TripDetail t) {
+    return t.tripRoute?.isNotEmpty == true &&
+        t.tripStartDate?.isNotEmpty == true &&
+        t.tripEndDate?.isNotEmpty == true &&
+        t.startKm != null &&
+        t.endKm != null &&
+        t.tripKm != null;
+  }
+
+  /// Check if DRIVER can submit final trip
+  bool canDriverSubmitNow() {
+    // overall trip (tripNo 6) must be fully completed
+    final overallTrip = tripDetails.firstWhere((t) => t.tripNo == 6);
+    if (!_isTripComplete(overallTrip)) return false;
+
+    // ensure no earlier trip is incomplete
+    for (var t in tripDetails.where((t) => t.tripNo != 6)) {
+      if (_hasAnyTripData(t) && !_isTripComplete(t)) return false;
+    }
+
+    return true;
+  }
+
+  /// ------------------------
+  /// Save / Submit
+  /// ------------------------
   Future<void> saveProgress() async {
-    if (editingId.value == null) return;
     try {
-      final payload = buildPayload('DRIVER', isFinal: false);
-      await api.update(editingId.value!, payload);
+      if (editingId.value == null) {
+        final draft = await api.createDraftForDriver(buildPayload('DRIVER'));
+        editingId.value = draft.id;
+      }
+
+      await api.update(editingId.value!, buildPayload('DRIVER'));
       Get.snackbar('Saved', 'Progress saved successfully');
     } catch (e) {
       Get.snackbar('Error', 'Failed to save: $e');
     }
   }
 
-  /// Submit after completion
   Future<SignOff?> submit({required String createdByRole}) async {
+    if (!canDriverSubmitNow()) {
+      Get.snackbar('Incomplete', 'Please complete all trip data before submitting');
+      return null;
+    }
+
     isSubmitting.value = true;
     try {
-      final payload = buildPayload(createdByRole, isFinal: true); // returns SignOff
-
-      late SignOff result;
       if (editingId.value == null) {
-        result = await api.create(payload);
-      } else {
-        result = await api.submit(editingId.value!, payload, createdByRole);
+        final draft = await api.createDraftForDriver(buildPayload(createdByRole));
+        editingId.value = draft.id;
       }
+
+      final payload = buildPayload(createdByRole, isFinal: true);
+      final result = await api.submit(editingId.value!, payload, createdByRole);
 
       Get.snackbar('Success', 'Trip submitted successfully');
       return result;
@@ -123,5 +192,4 @@ class SignOffController extends GetxController {
       isSubmitting.value = false;
     }
   }
-
 }

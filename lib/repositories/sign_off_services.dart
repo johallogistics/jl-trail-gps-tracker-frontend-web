@@ -37,28 +37,29 @@ class SignOffService {
 
   Future<SignOff> update(int id, SignOff body) async {
     final res = await http.put(
-      Uri.parse('$baseUrl/signOffs/$id'),
+      Uri.parse('$baseUrl/signoffs/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body.toJson()),
     );
     if (res.statusCode == 200) {
       return SignOff.fromJson(jsonDecode(res.body));
     }
-    throw Exception('Update failed: ${res.body}');
+    throw Exception('Update failed: ${res.statusCode} ${res.body}');
   }
 
 
   Future<SignOff> submit(int id, SignOff body, String role) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/signOffs/$id/submit'),
+      Uri.parse('$baseUrl/signoffs/$id/submit'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({...body.toJson(), "role": role}),
+      body: jsonEncode({...body.toJson(), 'role': role}),
     );
     if (res.statusCode == 200) {
       return SignOff.fromJson(jsonDecode(res.body));
     }
-    throw Exception('Submit failed: ${res.body}');
+    throw Exception('Submit failed: ${res.statusCode} ${res.body}');
   }
+
 
 
   Future<void> remove(int id) async {
@@ -67,25 +68,32 @@ class SignOffService {
   }
 
   // get draft record for driver
+  // GET current draft for this driver (backend should read driver from auth or query)
   Future<SignOff?> getDraftForDriver() async {
-    final res = await http.get(Uri.parse('$baseUrl/signOffs/draft/driver'));
+    final res = await http.get(Uri.parse('$baseUrl/signoffs/draft/driver?driverId=1'));
     if (res.statusCode == 200) {
       return SignOff.fromJson(jsonDecode(res.body));
     }
-    return null;
+    if (res.statusCode == 404) return null;
+    throw Exception("getDraftForDriver failed: ${res.statusCode} ${res.body}");
   }
 
-  // create empty draft for driver
-  Future<SignOff> createDraftForDriver() async {
+  Future<SignOff> createDraftForDriver(SignOff? payload) async {
+    final map = payload?.toJson() ?? <String, dynamic>{};
+    map['isSubmitted'] = false;
+
     final res = await http.post(
-      Uri.parse('$baseUrl/signOffs/draft/driver'),
+      Uri.parse('$baseUrl/signoffs/draft/driver'),
       headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(map), // <-- never empty now
     );
-    if (res.statusCode == 200) {
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
       return SignOff.fromJson(jsonDecode(res.body));
     }
-    throw Exception("Failed to create draft");
+    throw Exception("createDraftForDriver failed: ${res.statusCode} ${res.body}");
   }
+
 
 
 }

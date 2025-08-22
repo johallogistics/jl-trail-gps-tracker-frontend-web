@@ -1,4 +1,5 @@
 // lib/models/sign_off.dart
+import 'package:flutter/material.dart';
 import 'package:trail_tracker/models/sign_off_models/participant.dart';
 import 'package:trail_tracker/models/sign_off_models/photo.dart';
 import 'package:trail_tracker/models/sign_off_models/trip_details.dart';
@@ -14,6 +15,13 @@ class CustomerVehicleDetails {
   String? roadType;
   String? vehicleCheckDate; // ISO
   String? issuesFoundOnVehicleCheck;
+  TextEditingController vehicleCheckDateController;
+  TextEditingController saleDateController;
+  CustomerVehicleDetails({
+    this.vehicleCheckDate, this.saleDate
+  }) : vehicleCheckDateController = TextEditingController(text: vehicleCheckDate),
+  saleDateController = TextEditingController(text: saleDate);
+
 
   Map<String, dynamic> toJson() => {
     'tripDuration': tripDuration,
@@ -67,7 +75,10 @@ class SignOff {
   String? issuesFoundDuringTrial;
   String? trialRemarks;
   String? customerRemarks;
+
+  String driverId; // ✅ mandatory
   String createdByRole; // 'DRIVER' | 'ADMIN'
+
   List<TripDetail> tripDetails;
   List<ParticipantSignOff> participants;
   List<Photo> photos;
@@ -83,7 +94,8 @@ class SignOff {
     this.issuesFoundDuringTrial,
     this.trialRemarks,
     this.customerRemarks,
-    required this.createdByRole,
+    required this.driverId,       // ✅ required in constructor
+    required this.createdByRole,  // ✅ required in constructor
     this.tripDetails = const [],
     this.participants = const [],
     this.photos = const [],
@@ -100,6 +112,7 @@ class SignOff {
     'issuesFoundDuringTrial': issuesFoundDuringTrial,
     'trialRemarks': trialRemarks,
     'customerRemarks': customerRemarks,
+    'driverId': driverId,               // ✅ included in JSON
     'createdByRole': createdByRole,
     'tripDetails': tripDetails.map((e) => e.toJson()).toList(),
     'participants': participants.map((e) => e.toJson()).toList(),
@@ -119,6 +132,7 @@ class SignOff {
     issuesFoundDuringTrial: j['issuesFoundDuringTrial'],
     trialRemarks: j['trialRemarks'],
     customerRemarks: j['customerRemarks'],
+    driverId: j['driverId'],                // ✅ parsed from JSON
     createdByRole: j['createdByRole'],
     tripDetails: (j['tripDetails'] as List<dynamic>? ?? [])
         .map((e) => TripDetail.fromJson(e))
@@ -132,3 +146,4 @@ class SignOff {
     isSubmitted: j['isSubmitted'],
   );
 }
+
