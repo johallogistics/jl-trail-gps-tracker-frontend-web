@@ -60,8 +60,8 @@ class TripDetail {
   int? signOffId;
   int tripNo;
   String? tripRoute;
-  String? tripStartDate; // ISO string
-  String? tripEndDate;   // ISO string
+  String? tripStartDate;
+  String? tripEndDate;
   double? startKm;
   double? endKm;
   double? tripKm;
@@ -71,7 +71,6 @@ class TripDetail {
   double? totalTripKm;
   double? actualFE;
 
-  // Optional controllers if needed in UI
   TripControllers? controllers;
 
   TripDetail({
@@ -92,7 +91,6 @@ class TripDetail {
     this.controllers,
   });
 
-  // Convert object to JSON
   Map<String, dynamic> toJson() => {
     'id': id,
     'signOffId': signOffId,
@@ -110,22 +108,23 @@ class TripDetail {
     'actualFE': actualFE,
   };
 
-  // Create object from JSON
-  factory TripDetail.fromJson(Map<String, dynamic> json) => TripDetail(
-    id: json['id'],
-    signOffId: json['signOffId'],
-    tripNo: json['tripNo'] ?? 0,
-    tripRoute: json['tripRoute'],
-    tripStartDate: json['tripStartDate'],
-    tripEndDate: json['tripEndDate'],
-    startKm: (json['startKm'] as num?)?.toDouble(),
-    endKm: (json['endKm'] as num?)?.toDouble(),
-    tripKm: (json['tripKm'] as num?)?.toDouble(),
-    maxSpeed: (json['maxSpeed'] as num?)?.toDouble(),
-    weightGVW: (json['weightGVW'] as num?)?.toDouble(),
-    actualDieselLtrs: (json['actualDieselLtrs'] as num?)?.toDouble(),
-    totalTripKm: (json['totalTripKm'] as num?)?.toDouble(),
-    actualFE: (json['actualFE'] as num?)?.toDouble(),
-  );
+  factory TripDetail.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return TripDetail(tripNo: 0);
+    return TripDetail(
+      id: json['id'] as int?,
+      signOffId: json['signOffId'] as int?,
+      tripNo: json['tripNo'] as int? ?? 0,
+      tripRoute: json['tripRoute'] as String?,
+      tripStartDate: json['tripStartDate'] as String?,
+      tripEndDate: json['tripEndDate'] as String?,
+      startKm: (json['startKm'] as num?)?.toDouble(),
+      endKm: (json['endKm'] as num?)?.toDouble(),
+      tripKm: (json['tripKm'] as num?)?.toDouble(),
+      maxSpeed: (json['maxSpeed'] as num?)?.toDouble(),
+      weightGVW: (json['weightGVW'] as num?)?.toDouble(),
+      actualDieselLtrs: (json['actualDieselLtrs'] as num?)?.toDouble(),
+      totalTripKm: (json['totalTripKm'] as num?)?.toDouble(),
+      actualFE: (json['actualFE'] as num?)?.toDouble(),
+    );
+  }
 }
-

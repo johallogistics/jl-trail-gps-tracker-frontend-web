@@ -13,7 +13,7 @@ class SignOffListController extends GetxController {
   );
 
   var page = 1.obs;
-  final pageSize = 20;
+  final pageSize = 5;
   var total = 0.obs;
   final searchCtl = TextEditingController();
 

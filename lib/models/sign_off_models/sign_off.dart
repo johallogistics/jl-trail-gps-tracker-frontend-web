@@ -15,13 +15,15 @@ class CustomerVehicleDetails {
   String? roadType;
   String? vehicleCheckDate; // ISO
   String? issuesFoundOnVehicleCheck;
-  TextEditingController vehicleCheckDateController;
-  TextEditingController saleDateController;
-  CustomerVehicleDetails({
-    this.vehicleCheckDate, this.saleDate
-  }) : vehicleCheckDateController = TextEditingController(text: vehicleCheckDate),
-  saleDateController = TextEditingController(text: saleDate);
 
+  late TextEditingController vehicleCheckDateController;
+  late TextEditingController saleDateController;
+
+  CustomerVehicleDetails({
+    this.vehicleCheckDate,
+    this.saleDate,
+  })  : vehicleCheckDateController = TextEditingController(text: vehicleCheckDate ?? ''),
+        saleDateController = TextEditingController(text: saleDate ?? '');
 
   Map<String, dynamic> toJson() => {
     'tripDuration': tripDuration,
@@ -36,20 +38,22 @@ class CustomerVehicleDetails {
     'issuesFoundOnVehicleCheck': issuesFoundOnVehicleCheck,
   };
 
-  static CustomerVehicleDetails fromJson(Map<String, dynamic> j) =>
-      CustomerVehicleDetails()
-        ..tripDuration = j['tripDuration']
-        ..vehicleNo = j['vehicleNo']
-        ..saleDate = j['saleDate']
-        ..model = j['model']
-        ..application = j['application']
-        ..customerVerbatim = j['customerVerbatim']
-        ..tripRoute = j['tripRoute']
-        ..roadType = j['roadType']
-        ..vehicleCheckDate = j['vehicleCheckDate']
-        ..issuesFoundOnVehicleCheck = j['issuesFoundOnVehicleCheck'];
+  static CustomerVehicleDetails fromJson(Map<String, dynamic>? j) {
+    if (j == null) return CustomerVehicleDetails();
+    return CustomerVehicleDetails(
+      vehicleCheckDate: j['vehicleCheckDate'] as String?,
+      saleDate: j['saleDate'] as String?,
+    )
+      ..tripDuration = j['tripDuration'] as String?
+      ..vehicleNo = j['vehicleNo'] as String?
+      ..model = j['model'] as String?
+      ..application = j['application'] as String?
+      ..customerVerbatim = j['customerVerbatim'] as String?
+      ..tripRoute = j['tripRoute'] as String?
+      ..roadType = j['roadType'] as String?
+      ..issuesFoundOnVehicleCheck = j['issuesFoundOnVehicleCheck'] as String?;
+  }
 
-  /// Utility to copy values from another object
   void copyFrom(CustomerVehicleDetails? other) {
     if (other == null) return;
     tripDuration = other.tripDuration;
@@ -62,12 +66,15 @@ class CustomerVehicleDetails {
     roadType = other.roadType;
     vehicleCheckDate = other.vehicleCheckDate;
     issuesFoundOnVehicleCheck = other.issuesFoundOnVehicleCheck;
+
+    vehicleCheckDateController.text = vehicleCheckDate ?? '';
+    saleDateController.text = saleDate ?? '';
   }
 }
 
 class SignOff {
   int? id;
-  String? customerName; // made nullable (drafts may not have this yet)
+  String? customerName;
   double? customerExpectedFE;
   double? beforeTrialsFE;
   double? afterTrialsFE;
@@ -76,8 +83,8 @@ class SignOff {
   String? trialRemarks;
   String? customerRemarks;
 
-  String driverId; // ✅ mandatory
-  String createdByRole; // 'DRIVER' | 'ADMIN'
+  String driverId;
+  String createdByRole;
 
   List<TripDetail> tripDetails;
   List<ParticipantSignOff> participants;
@@ -94,8 +101,8 @@ class SignOff {
     this.issuesFoundDuringTrial,
     this.trialRemarks,
     this.customerRemarks,
-    required this.driverId,       // ✅ required in constructor
-    required this.createdByRole,  // ✅ required in constructor
+    required this.driverId,
+    required this.createdByRole,
     this.tripDetails = const [],
     this.participants = const [],
     this.photos = const [],
@@ -112,7 +119,7 @@ class SignOff {
     'issuesFoundDuringTrial': issuesFoundDuringTrial,
     'trialRemarks': trialRemarks,
     'customerRemarks': customerRemarks,
-    'driverId': driverId,               // ✅ included in JSON
+    'driverId': driverId,
     'createdByRole': createdByRole,
     'tripDetails': tripDetails.map((e) => e.toJson()).toList(),
     'participants': participants.map((e) => e.toJson()).toList(),
@@ -121,29 +128,27 @@ class SignOff {
   };
 
   factory SignOff.fromJson(Map<String, dynamic> j) => SignOff(
-    id: j['id'],
-    customerName: j['customerName'],
+    id: j['id'] as int?,
+    customerName: j['customerName'] as String?,
     customerExpectedFE: (j['customerExpectedFE'] as num?)?.toDouble(),
     beforeTrialsFE: (j['beforeTrialsFE'] as num?)?.toDouble(),
     afterTrialsFE: (j['afterTrialsFE'] as num?)?.toDouble(),
-    customerVehicleDetails: j['customerVehicleDetails'] != null
-        ? CustomerVehicleDetails.fromJson(j['customerVehicleDetails'])
-        : null,
-    issuesFoundDuringTrial: j['issuesFoundDuringTrial'],
-    trialRemarks: j['trialRemarks'],
-    customerRemarks: j['customerRemarks'],
-    driverId: j['driverId'],                // ✅ parsed from JSON
-    createdByRole: j['createdByRole'],
+    customerVehicleDetails:
+    CustomerVehicleDetails.fromJson(j['customerVehicleDetails'] as Map<String, dynamic>?),
+    issuesFoundDuringTrial: j['issuesFoundDuringTrial'] as String?,
+    trialRemarks: j['trialRemarks'] as String?,
+    customerRemarks: j['customerRemarks'] as String?,
+    driverId: j['driverId'] as String? ?? '',
+    createdByRole: j['createdByRole'] as String? ?? '',
     tripDetails: (j['tripDetails'] as List<dynamic>? ?? [])
-        .map((e) => TripDetail.fromJson(e))
+        .map((e) => TripDetail.fromJson(e as Map<String, dynamic>))
         .toList(),
     participants: (j['participants'] as List<dynamic>? ?? [])
-        .map((e) => ParticipantSignOff.fromJson(e))
+        .map((e) => ParticipantSignOff.fromJson(e as Map<String, dynamic>))
         .toList(),
     photos: (j['photos'] as List<dynamic>? ?? [])
-        .map((e) => Photo.fromJson(e))
+        .map((e) => Photo.fromJson(e as Map<String, dynamic>))
         .toList(),
-    isSubmitted: j['isSubmitted'],
+    isSubmitted: j['isSubmitted'] as bool?,
   );
 }
-
