@@ -18,9 +18,32 @@ class _TransitScreenState extends State<TransitScreen> {
   LatLng? _endCoords;
   String? _endAddress;
 
+  String? _ongoingTransitId; // Store ongoing transit id
+
   final TransitController controller = Get.put(TransitController());
 
+  @override
+  void initState() {
+    super.initState();
+    _loadOngoingTransit();
+  }
+
+  void _loadOngoingTransit() async {
+    final transit = await controller.getOngoingTransit();
+    if (transit != null) {
+      setState(() {
+        _ongoingTransitId = transit["id"];
+        _startCoords = LatLng(transit["startLatitude"], transit["startLongitude"]);
+        _startAddress = transit["startAddress"];
+        _endCoords = LatLng(transit["endLatitude"], transit["endLongitude"]);
+        _endAddress = transit["endAddress"];
+      });
+    }
+  }
+
+
   void _pickStartLocation() async {
+    if (_ongoingTransitId != null) return; // disable if ongoing
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -37,6 +60,7 @@ class _TransitScreenState extends State<TransitScreen> {
   }
 
   void _pickEndLocation() async {
+    if (_ongoingTransitId != null) return; // disable if ongoing
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -73,6 +97,37 @@ class _TransitScreenState extends State<TransitScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Transit started successfully")),
       );
+
+      _loadOngoingTransit(); // refresh screen
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+  }
+
+  void _completeTransit() async {
+    if (controller.currentTransitId.value == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No ongoing transit to complete")),
+      );
+      return;
+    }
+
+    try {
+      await controller.completeTransit(); // no parameter needed
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Transit completed successfully")),
+      );
+
+      setState(() {
+        _ongoingTransitId = null;
+        _startCoords = null;
+        _startAddress = null;
+        _endCoords = null;
+        _endAddress = null;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -83,6 +138,8 @@ class _TransitScreenState extends State<TransitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isOngoing = _ongoingTransitId != null;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Transit Tracking")),
       body: Padding(
@@ -113,10 +170,20 @@ class _TransitScreenState extends State<TransitScreen> {
               ),
             ),
             const Spacer(),
-            ElevatedButton.icon(
+            isOngoing
+                ? ElevatedButton.icon(
+              onPressed: _completeTransit,
+              icon: const Icon(Icons.check),
+              label: const Text("Complete Transit"),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: Colors.green,
+              ),
+            )
+                : ElevatedButton.icon(
               onPressed: _saveTransit,
               icon: const Icon(Icons.save),
-              label: const Text("Save Transit"),
+              label: const Text("Start Transit"),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),
