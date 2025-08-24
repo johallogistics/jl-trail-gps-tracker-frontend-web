@@ -13,8 +13,22 @@ class TransitController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Load ongoing transit ID if saved
-    currentTransitId.value = storage.read("currentTransitId");
+    // Restore from persistent storage
+    final savedId = storage.read<String>("currentTransitId");
+    if (savedId != null) {
+      currentTransitId.value = savedId;
+
+      // Optional: double check with backend if still ongoing
+      getOngoingTransit().then((transit) {
+        if (transit == null) {
+          // No active transit in backend, cleanup local storage
+          currentTransitId.value = null;
+          storage.remove("currentTransitId");
+        } else {
+          currentTransitId.value = transit["id"].toString();
+        }
+      });
+    }
   }
 
   /// Start a new transit
@@ -28,7 +42,7 @@ class TransitController extends GetxController {
     String? notes,
   }) async {
     try {
-      final driverId = storage.read<String>("driverId");
+      final driverId = "23b1a22b-7f62-4659-9e97-9709f385d8a3" ?? storage.read<String>("driverId");
       if (driverId == null) {
         Get.snackbar("Error", "Driver not logged in");
         return;
@@ -79,9 +93,10 @@ class TransitController extends GetxController {
         return;
       }
 
-      final response = await http.put(
+      final response = await http.post(
         Uri.parse("$baseUrl/transits/$transitId/complete"),
         headers: {"Content-Type": "application/json"},
+        body: jsonEncode({}),
       );
 
       if (response.statusCode == 200) {
@@ -89,16 +104,16 @@ class TransitController extends GetxController {
         storage.remove("currentTransitId");
         Get.snackbar("Success", "Transit completed");
       } else {
-        Get.snackbar("Error", response.body);
+        Get.snackbar("Error::::", response.body);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error222", e.toString());
     }
   }
 
   Future<Map<String, dynamic>?> getOngoingTransit() async {
     try {
-      final driverId = storage.read<String>("driverId");
+      final driverId = "23b1a22b-7f62-4659-9e97-9709f385d8a3" ?? storage.read<String>("driverId");
       if (driverId == null) return null;
 
       final response = await http.get(

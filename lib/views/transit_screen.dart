@@ -32,14 +32,18 @@ class _TransitScreenState extends State<TransitScreen> {
     final transit = await controller.getOngoingTransit();
     if (transit != null) {
       setState(() {
-        _ongoingTransitId = transit["id"];
+        _ongoingTransitId = transit["id"].toString(); // ensure string
         _startCoords = LatLng(transit["startLatitude"], transit["startLongitude"]);
-        _startAddress = transit["startAddress"];
+        _startAddress = transit["startAddress"] ?? "From saved location";
         _endCoords = LatLng(transit["endLatitude"], transit["endLongitude"]);
-        _endAddress = transit["endAddress"];
+        _endAddress = transit["endAddress"] ?? "To saved location";
       });
+
+      // keep controller in sync
+      controller.currentTransitId.value = transit["id"].toString();
     }
   }
+
 
 
   void _pickStartLocation() async {
