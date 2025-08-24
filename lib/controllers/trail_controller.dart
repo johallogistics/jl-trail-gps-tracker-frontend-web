@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:workmanager/workmanager.dart';
@@ -16,8 +17,6 @@ class TrailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _startTrackingLocation();
-    // Only initialize Workmanager on Android/iOS
     if (!kIsWeb) {
       try {
         Workmanager().initialize(
@@ -32,9 +31,6 @@ class TrailController extends GetxController {
       print("Workmanager is not supported on this platform");
     }
   }
-
-  Position? _currentPosition;
-  bool _isTracking = true;
   String _driverId = "0";
 
 
@@ -43,42 +39,6 @@ class TrailController extends GetxController {
   set driverId(String value) {
     _driverId = value;
   }
-
-  void _startTrackingLocation() {
-    Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen((Position position) {
-        _currentPosition = position;
-      _sendLocationToServer(position.latitude, position.longitude);
-    });
-  }
-
-  void _stopTrackingLocation() {
-      _isTracking = false;
-  }
-
-  void _sendLocationToServer(double latitude, double longitude) async {
-    const String apiUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app/location';
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      body: {
-        "driverId": 6,
-        "latitude": latitude,
-        "longitude": longitude,
-        "isIdle": false
-      },
-    );
-
-    if (response.statusCode == 200) {
-      print('Location updated successfully');
-    } else {
-      print('Failed to update location');
-    }
-  }
-
 
   Future<void> _checkActiveTrail() async {
 

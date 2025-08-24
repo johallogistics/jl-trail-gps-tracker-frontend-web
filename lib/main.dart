@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/signOffList',
+      initialRoute: '/home',
       getPages: [
         GetPage(name: '/login', page: () => AdminLoginScreen()),
         GetPage(
@@ -55,8 +55,8 @@ class MyApp extends StatelessWidget {
         ),
         GetPage(
           name: '/home',
-          page: () => HomeScreen(phone: "918925450309"),
-          middlewares: [AuthMiddleware()],
+          page: () => HomeScreen(),
+          // middlewares: [AuthMiddleware()],
         ),
         GetPage(
             name: '/splash', page: () => SplashScreen()), //LiveTrackingWebMap

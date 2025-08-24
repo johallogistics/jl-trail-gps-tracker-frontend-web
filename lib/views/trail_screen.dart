@@ -29,7 +29,7 @@ class _TrailScreenState extends State<TrailScreen> {
   @override
   void initState() {
     super.initState();
-    _startTrackingLocation();
+    // _startTrackingLocation();
   }
 
   void _startTrackingLocation() {
@@ -53,7 +53,7 @@ class _TrailScreenState extends State<TrailScreen> {
   }
 
   void _sendLocationToServer(double latitude, double longitude) async {
-    const String apiUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app/location';
+    const String apiUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app/location.......';
     final response = await http.post(
       Uri.parse(apiUrl),
       body: {

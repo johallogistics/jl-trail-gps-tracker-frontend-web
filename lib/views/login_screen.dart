@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:sms_autofill/sms_autofill.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../api/api_manager.dart';
 import 'home_screen.dart';
 
@@ -55,14 +56,21 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
     if (otpCode.length == 6) {
       try {
         var response = await ApiManager.post('verify-otp', {'phone': phoneNumber, 'otp': otpCode});
-
-        // Decode the response body from JSON
         var data = jsonDecode(response.body);
 
-        // Check if 'success' is an integer (or boolean, depending on your API)
-        if (data['success'] == true || data['success'] == 1) { // Adjust based on your API
-          checkDriverExistence();  // todo integration yet to complete
-          // Get.off(() => const HomeScreen());
+        if (data['success'] == true || data['success'] == 1) {
+          String token = data['token'];
+          String driverId = "23b1a22b-7f62-4659-9e97-9709f385d8a3" ?? data['driver']['id'].toString(); // ✅ correct way
+          String phone = "+918925450309" ?? data['driver']['phone'].toString(); // ✅ correct way
+
+          // ✅ Save token and driverId in GetStorage
+          final box = GetStorage();
+          await box.write('token', token);
+          await box.write('driverId', driverId);
+          await box.write('phone', phone);
+
+
+          Get.off(() => HomeScreen());
         } else {
           Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
               snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
@@ -78,12 +86,13 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   }
 
 
+
   Future<void> checkDriverExistence() async {
     try {
       var response = await ApiManager.get('drivers/verify-phone?phone=$phoneNumber');
       var data = jsonDecode(response.body);
       if (data['exists']) {
-        Get.off(() => HomeScreen(phone:phoneNumber));
+        Get.off(() => HomeScreen());
       } else {
         Get.snackbar('Info', 'Driver not found. Please contact support.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
       }

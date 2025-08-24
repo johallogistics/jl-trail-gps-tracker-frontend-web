@@ -1,32 +1,36 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class LocationPostService {
-  static const String baseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app';  // Replace with your backend API
+  static const String baseUrl =
+      'https://jl-trail-gps-tracker-backend-production.up.railway.app'; // Replace with your backend API
 
   StreamSubscription<Position>? positionStream;
   Timer? timer;
   Position? lastPosition;
 
   // Start tracking location with a timer every 5 seconds
-  Future<void> startTracking(String phone) async {
+  Future<void> startTracking() async {
     LocationSettings locationSettings = const LocationSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 10, // Minimum distance change to trigger updates
     );
 
     // Listen to location stream
-    positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((Position position) {
-      lastPosition = position;  // Store the latest position
+    positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position position) {
+      lastPosition = position; // Store the latest position
     });
 
     // Use a Timer to send location every 5 seconds
     timer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
       if (lastPosition != null) {
-        sendLocationToBackend(phone, lastPosition!.latitude, lastPosition!.longitude);
+        sendLocationToBackend(
+            lastPosition!.latitude, lastPosition!.longitude);
       }
     });
 
@@ -41,24 +45,33 @@ class LocationPostService {
   }
 
   // Send location to backend
-  Future<void> sendLocationToBackend(String phone, double lat, double lng) async {
+  Future<void> sendLocationToBackend(
+      double lat, double lng) async {
     try {
+      final box = GetStorage();
+      String? token = box.read('token'); // ✅ fetch token
+      String? phone = "+918925450309" ?? box.read('phone'); // ✅ fetch token
+
       final response = await http.post(
         Uri.parse('$baseUrl/api/driver-locations'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // ✅ attach token
+        },
         body: jsonEncode({
           'phone': phone,
           'latitude': lat,
           'longitude': lng,
           'timestamp': DateTime.now().toIso8601String(),
-          "isIdle" : false
+          "isIdle": false
         }),
       );
 
       if (response.statusCode == 200) {
         print("📍 Location sent: $lat, $lng");
       } else {
-        print("❌ Failed to send location: ${response.statusCode} - ${response.body}");
+        print(
+            "❌ Failed to send location: ${response.statusCode} - ${response.body}");
       }
     } catch (e) {
       print("⚠️ Error sending location: $e");

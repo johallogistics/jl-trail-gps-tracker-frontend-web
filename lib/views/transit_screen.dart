@@ -1,160 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_place/google_place.dart';
+import 'package:latlong2/latlong.dart';
+import '../controllers/transit_controller.dart';
+import '../utils/location_services/location_picker_widget.dart';
 
 class TransitScreen extends StatefulWidget {
+  const TransitScreen({super.key});
+
   @override
-  _TransitScreenState createState() => _TransitScreenState();
+  State<TransitScreen> createState() => _TransitScreenState();
 }
 
 class _TransitScreenState extends State<TransitScreen> {
-  LatLng? currentLocation;
-  LatLng? destinationLocation;
-  GoogleMapController? mapController;
-  TextEditingController searchController = TextEditingController();
-  final googlePlace = GooglePlace('AIzaSyDNT2-yLg1nS_M5vNLEEbDtNUOgb3sXQt0');
+  LatLng? _startCoords;
+  String? _startAddress;
 
+  LatLng? _endCoords;
+  String? _endAddress;
 
-  Future<void> _checkPermissions() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception('Location permissions are permanently denied');
-    }
-  }
+  final TransitController controller = Get.put(TransitController());
 
-  @override
-  void initState() {
-    super.initState();
-    _checkPermissions().then((_) => _getCurrentLocation());
-  }
-
-  Future<void> _getCurrentLocation() async {
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+  void _pickStartLocation() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPicker(
+          onLocationPicked: (LatLng pos, String address) {
+            setState(() {
+              _startCoords = pos;
+              _startAddress = address;
+            });
+          },
+        ),
+      ),
     );
-    setState(() {
-      currentLocation = LatLng(position.latitude, position.longitude);
-    });
   }
 
-  void _saveTransitDetails() async {
-    if (currentLocation == null || destinationLocation == null) {
-      Get.snackbar('Error', 'Please select both locations',
-          backgroundColor: Colors.red, colorText: Colors.white);
+  void _pickEndLocation() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPicker(
+          onLocationPicked: (LatLng pos, String address) {
+            setState(() {
+              _endCoords = pos;
+              _endAddress = address;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _saveTransit() async {
+    if (_startCoords == null || _endCoords == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select both start and end locations")),
+      );
       return;
     }
 
-    // Save to Firestore
-    await FirebaseFirestore.instance.collection('transits').add({
-      'currentLocation': {
-        'lat': currentLocation!.latitude,
-        'lng': currentLocation!.longitude,
-      },
-      'destinationLocation': {
-        'lat': destinationLocation!.latitude,
-        'lng': destinationLocation!.longitude,
-      },
-      'status': 'In Progress',
-      'timestamp': DateTime.now(),
-    });
+    try {
+      await controller.startTransit(
+        startLat: _startCoords!.latitude,
+        startLng: _startCoords!.longitude,
+        startAddress: _startAddress ?? "",
+        endLat: _endCoords!.latitude,
+        endLng: _endCoords!.longitude,
+        endAddress: _endAddress ?? "",
+      );
 
-    Get.snackbar('Success', 'Transit details saved',
-        backgroundColor: Colors.green, colorText: Colors.white);
-
-    // Navigate or perform other actions
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Transit started successfully")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
   }
 
-  void _onMapTap(LatLng position) {
-    setState(() {
-      destinationLocation = position;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Start Transit'),
-        backgroundColor: Colors.lightBlueAccent,
-      ),
-      body: currentLocation == null
-          ? Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          Expanded(
-            child: GoogleMap(
-              onMapCreated: (controller) => mapController = controller,
-              initialCameraPosition: CameraPosition(
-                target: currentLocation!,
-                zoom: 14,
+      appBar: AppBar(title: const Text("Transit Tracking")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.my_location),
+              title: Text(_startAddress ?? "Pick Start Location"),
+              subtitle: _startCoords != null
+                  ? Text("${_startCoords!.latitude}, ${_startCoords!.longitude}")
+                  : null,
+              trailing: ElevatedButton(
+                onPressed: _pickStartLocation,
+                child: const Text("Select"),
               ),
-              markers: {
-                if (destinationLocation != null)
-                  Marker(
-                    markerId: MarkerId('destination'),
-                    position: destinationLocation!,
-                  ),
-              },
-              onTap: _onMapTap,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search destination',
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.search),
-                      onPressed: () async {
-                        var predictions = await googlePlace.autocomplete.get(
-                          searchController.text,
-                        );
-                        if (predictions != null &&
-                            predictions.predictions != null &&
-                            predictions.predictions!.isNotEmpty) {
-                          var firstPrediction = predictions.predictions!.first;
-                          var details = await googlePlace.details.get(firstPrediction.placeId!);
-                          if (details != null && details.result != null) {
-                            setState(() {
-                              destinationLocation = LatLng(
-                                details.result!.geometry!.location!.lat!,
-                                details.result!.geometry!.location!.lng!,
-                              );
-                              mapController?.animateCamera(
-                                CameraUpdate.newLatLng(destinationLocation!),
-                              );
-                            });
-                          }
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _saveTransitDetails,
-                  child: Text('Save Transit Details'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 50),
-                    backgroundColor: Colors.lightBlueAccent,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.flag),
+              title: Text(_endAddress ?? "Pick End Location"),
+              subtitle: _endCoords != null
+                  ? Text("${_endCoords!.latitude}, ${_endCoords!.longitude}")
+                  : null,
+              trailing: ElevatedButton(
+                onPressed: _pickEndLocation,
+                child: const Text("Select"),
+              ),
             ),
-          ),
-        ],
+            const Spacer(),
+            ElevatedButton.icon(
+              onPressed: _saveTransit,
+              icon: const Icon(Icons.save),
+              label: const Text("Save Transit"),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
