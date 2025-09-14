@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin/driver_management_controller.dart';
-import '../../utils/file_download_service_web.dart';
+import '../../utils/file_download_service.dart'; // <- fixed import
 import 'driver/driver_add_screen.dart';
 import 'driver/driver_edit_screen.dart';
 import 'driver_live_location_screen.dart';
@@ -31,7 +31,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Driver Management"),
+              const Text("Driver Management"),
               ElevatedButton(
                 onPressed: () {
                   Get.dialog(DriverAddPopup());
@@ -40,7 +40,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
               ),
             ],
           ),
-          bottom: TabBar(
+          bottom: const TabBar(
             tabs: [
               Tab(text: "Driver List"),
               Tab(text: "Live Location"),
@@ -50,7 +50,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
         body: TabBarView(
           children: [
             _buildDriverList(),
-            DriverLiveLocationScreen(),
+            const DriverLiveLocationScreen(),
           ],
         ),
       ),
@@ -68,7 +68,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
           scrollDirection: Axis.horizontal,
           child: DataTable(
             columnSpacing: 12,
-            columns: [
+            columns: const [
               DataColumn(label: Text("ID")),
               DataColumn(label: Text("Name")),
               DataColumn(label: Text("Phone")),
@@ -80,11 +80,11 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
             ],
             rows: drivers.map((driver) {
               return DataRow(cells: [
-                DataCell(Text(driver.id ?? "N/A")),
-                DataCell(Text(driver.name)),
-                DataCell(Text(driver.phone.toString())),
-                DataCell(Text(driver.employeeId)),
-                DataCell(Text(driver.address)),
+                DataCell(Text(driver.id?.toString() ?? "N/A")),
+                DataCell(Text(driver.name ?? '')),
+                DataCell(Text(driver.phone?.toString() ?? '')),
+                DataCell(Text(driver.employeeId ?? '')),
+                DataCell(Text(driver.address ?? '')),
 
                 /// ✅ Toggle Switch for Location Sharing
                 DataCell(
@@ -92,43 +92,41 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                     scale: 0.7, // ✅ Makes the Switch smaller
                     child: Switch(
                       value: driver.locationEnabled ?? false,
-                      onChanged: (value) =>
-                          _toggleLocation(driver.phone, value),
+                      onChanged: (value) => _toggleLocation(driver.phone ?? '', value),
                       activeColor:
-                          Colors.blueAccent, // ✅ Switch color when enabled
+                      Colors.blueAccent, // ✅ Switch color when enabled
                       inactiveThumbColor:
-                          Colors.grey, // ✅ Thumb color when disabled
+                      Colors.grey, // ✅ Thumb color when disabled
                       inactiveTrackColor:
-                          Colors.grey[300], // ✅ Track color when disabled
+                      Colors.grey[300], // ✅ Track color when disabled
                     ),
                   ),
                 ),
                 /// ✅ Download Files Button
                 DataCell(
-                  driver.proofDocs != null && driver.proofDocs.isNotEmpty
+                  (driver.proofDocs != null && driver.proofDocs.isNotEmpty)
                       ? IconButton(
-                          icon: Icon(Icons.download, color: Colors.blue),
-                          onPressed: () async {
-                            for (final url in driver.proofDocs) {
-                              await downloadFileFromUrl(
-                                  url); // ⬅️ Your custom download logic
-                            }
-                          },
-                        )
-                      : Icon(Icons.insert_drive_file, color: Colors.grey),
+                    icon: const Icon(Icons.download, color: Colors.blue),
+                    onPressed: () async {
+                      for (final url in driver.proofDocs) {
+                        // platform-safe download; implementation chosen by utils/file_download_service.dart
+                        await downloadFileFromUrl(url);
+                      }
+                    },
+                  )
+                      : const Icon(Icons.insert_drive_file, color: Colors.grey),
                 ),
 
                 /// ✅ Edit & Delete Actions
                 DataCell(Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.edit, color: Colors.blue),
+                      icon: const Icon(Icons.edit, color: Colors.blue),
                       onPressed: () => _showEditPopup(driver),
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () =>
-                          driverController.deleteDriver(driver.id!),
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => driverController.deleteDriver(driver.id!),
                     ),
                   ],
                 )),
@@ -139,18 +137,6 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
       }),
     );
   }
-
-  // ElevatedButton(
-  // onPressed: () async {
-  // urls =  await uploadMultipleMediaAndSendUrls();
-  // print(urls);
-  // },
-  // style: ElevatedButton.styleFrom(
-  // backgroundColor: Colors.blueAccent,
-  // padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-  // ),
-  // child: Text('Upload Images and Videos', style: TextStyle(color: Colors.white)),
-  // ),
 
   /// ✅ Toggle Location Sharing Service
   /// ✅ Toggle Location Sharing Service with Local Update
@@ -169,8 +155,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
 
       if (response['success'] == true) {
         // ✅ Update the local state
-        int index =
-            driverController.drivers.indexWhere((d) => d.phone == phone);
+        int index = driverController.drivers.indexWhere((d) => d.phone == phone);
         if (index != -1) {
           driverController.drivers[index].locationEnabled = isEnabled;
           driverController.drivers.refresh(); // 🔥 Trigger UI refresh
@@ -201,6 +186,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+      // ignore: avoid_print
       print("Error toggling location: $error");
     }
   }

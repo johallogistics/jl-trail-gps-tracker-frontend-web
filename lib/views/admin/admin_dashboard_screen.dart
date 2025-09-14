@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:trail_tracker/views/admin/trail_form_table_screen.dart';
-import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
+import 'package:trail_tracker/views/admin/sign_off_list_screen.dart';
 
 import '../../utils/image_upload_service.dart';
 import '../new_trail_form/trial_form_stepper.dart';
@@ -50,7 +49,7 @@ class DashboardScreen extends StatelessWidget {
   final List<Widget Function()> pageBuilders = [
         () => DashboardHomeScreen(),
         () => DriverManagementScreen(),
-        () => TrialFormTableScreen(),
+        () => SignOffListScreen(),
         () => DailyReportManagement(),
   ];
 

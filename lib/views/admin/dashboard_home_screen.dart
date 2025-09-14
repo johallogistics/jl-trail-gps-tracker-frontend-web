@@ -61,7 +61,7 @@ class DashboardHomeScreen extends StatelessWidget {
   final List<Widget> _screens = [
     DriverManagementScreen(),
     SizedBox(),
-    VehicleManagementScreen(),
+    TrailManagementScreen(),
     DailyReportManagement(),
   ];
 

@@ -1,106 +1,70 @@
+// lib/utils/file_download_service_web.dart
 import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:typed_data';
 import 'package:csv/csv.dart';
-import 'package:http/http.dart' as http;
 
-import '../models/shift_log_model.dart';
+Future<void> downloadFileFromUrl(String url, {String? filename}) async {
+  final req = await html.HttpRequest.request(url, responseType: 'arraybuffer');
+  final buffer = req.response as ByteBuffer;
+  final blob = html.Blob([buffer]);
+  final blobUrl = html.Url.createObjectUrlFromBlob(blob);
 
-Future<void> downloadFileFromUrl(String url) async {
-  try {
-    final response = await http.get(Uri.parse(url));
-    final blob = html.Blob([response.bodyBytes]);
-    final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+  final defaultName = Uri.parse(url).pathSegments.isNotEmpty
+      ? Uri.parse(url).pathSegments.last
+      : 'file';
 
-    final anchor = html.AnchorElement(href: blobUrl)
-      ..setAttribute("download", url.split('/').last)
-      ..click();
+  final anchor = html.AnchorElement(href: blobUrl)
+    ..setAttribute('download', filename ?? defaultName)
+    ..click();
 
-    html.Url.revokeObjectUrl(blobUrl);
-    print("✅ Download started in browser.");
-  } catch (e) {
-    print("❌ Error downloading file on web: $e");
-  }
+  html.Url.revokeObjectUrl(blobUrl);
 }
 
-void exportShiftLogsToCsvImpl(List<ShiftLog> logs) {
-  final headers = [
-    'ID', 'Shift', 'OT Hours', 'Vehicle', 'Reg No', 'Chassis No', 'GVW',
-    'Payload', 'Vehicle No', 'In Time', 'Out Time', 'Working Hours',
-    'Starting KM', 'Ending KM', 'Total KM', 'From', 'To', 'Present Location',
-    'Fuel Avg', 'Prev KMPL', 'Trial KMPL', 'Cluster KMPL', 'Trial KMS',
-    'ODO Start', 'ODO End', 'Sweet Spot HW', 'Sweet Spot NR', 'Sweet Spot Hill',
-    'Trial Allocation', 'Purpose', 'Reason', 'Date of Sale', 'Customer Name',
-    'Customer Driver', 'Customer Driver No', 'Dealer Name', 'VECV Reporting',
-    'Driver Status', 'Customer Vehicle', 'Cap. Vehicle', 'Cap. Cust/Vehicle',
-    'Co-Driver', 'Co-Driver Phone', 'Incharge Sign', 'Employee Name',
-    'Employee Phone', 'Employee Code', 'Month-Year', 'DICV Incharge',
-    'DICV Phone', 'Trail ID'
-  ];
 
-  final rows = [
-    headers,
-    ...logs.map((log) => [
-      log.id ?? '',
-      log.shift,
-      log.otHours.toString(),
-      log.vehicleModel,
-      log.regNo,
-      log.chassisNo,
-      log.gvw.toString(),
-      log.payload.toString(),
-      log.vehicleNo,
-      log.inTime.toString(),
-      log.outTime.toString(),
-      log.workingHours.toString(),
-      log.startingKm.toString(),
-      log.endingKm.toString(),
-      log.totalKm.toString(),
-      log.fromPlace,
-      log.toPlace,
-      log.presentLocation,
-      log.fuelAvg.toString(),
-      log.previousKmpl.toString(),
-      log.trialKMPL,
-      log.clusterKmpl.toString(),
-      log.trialKMS,
-      log.vehicleOdometerStartingReading,
-      log.vehicleOdometerEndingReading,
-      log.highwaySweetSpotPercent.toString(),
-      log.normalRoadSweetSpotPercent.toString(),
-      log.hillsRoadSweetSpotPercent.toString(),
-      log.trialAllocation,
-      log.purposeOfTrial,
-      log.reason,
-      log.dateOfSale,
-      log.customerName,
-      log.customerDriverName,
-      log.customerDriverNo,
-      log.dealerName,
-      log.vecvReportingPerson,
-      log.driverStatus,
-      log.customerVehicle,
-      log.capitalizedVehicle,
-      log.capitalizedVehicleOrCustomerVehicle,
-      log.coDriverName,
-      log.coDriverPhoneNo,
-      log.inchargeSign,
-      log.employeeName,
-      log.employeePhoneNo,
-      log.employeeCode,
-      log.monthYear,
-      log.dicvInchargeName,
-      log.dicvInchargePhoneNo,
-      log.trailId
-    ])
-  ];
-
-  final csvContent = const ListToCsvConverter().convert(rows);
-  final bytes = utf8.encode(csvContent);
+/// Trigger browser download of a CSV string.
+Future<void> downloadCsv(String csvData, {String filename = 'export.csv'}) async {
+  final bytes = utf8.encode(csvData);
   final blob = html.Blob([bytes]);
   final url = html.Url.createObjectUrlFromBlob(blob);
   final anchor = html.AnchorElement(href: url)
-    ..setAttribute('download', 'shift_logs.csv')
+    ..setAttribute('download', filename)
     ..click();
   html.Url.revokeObjectUrl(url);
 }
 
+/// Provide backward-compatible export function. On web this simply triggers download and returns null.
+Future<void> exportShiftLogsToCsvImpl(dynamic  logs, {String filename = 'export.csv'}) async {
+  // If caller gives us already-structured objects, convert to CSV.
+  // Here we assume `logs` is a List<List<dynamic>> or List<Map> — caller can pass csv string instead.
+  // For safety, if it's a string, treat it as csv content.
+  String csv;
+  if (logs is String) {
+    csv = logs;
+  } else {
+    // if logs are List<List<dynamic>> already (rows), use ListToCsvConverter
+    try {
+      if (logs.isNotEmpty && logs[0] is List) {
+        csv = const ListToCsvConverter().convert(List<List<dynamic>>.from(logs));
+      } else {
+        // If logs are objects (maps), try to flatten by keys of first item
+        if (logs.isNotEmpty && logs[0] is Map) {
+          final keys = (logs[0] as Map).keys.toList();
+          final rows = <List<dynamic>>[keys];
+          for (final m in logs) {
+            rows.add(keys.map((k) => (m as Map)[k] ?? '').toList());
+          }
+          csv = const ListToCsvConverter().convert(rows);
+        } else {
+          // fallback: call toString() on each
+          csv = logs.map((e) => e.toString()).join('\n');
+        }
+      }
+    } catch (_) {
+      csv = logs.map((e) => e.toString()).join('\n');
+    }
+  }
+
+  await downloadCsv(csv, filename: filename);
+  return null;
+}

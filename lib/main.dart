@@ -20,11 +20,9 @@ import 'controllers/sign_off_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (kIsWeb) {
     Get.lazyPut(() => AdminLoginController());
     Get.lazyPut(() => DashboardController());
     Get.lazyPut(() => TrialFormController());
-  }
 
   await GetStorage.init();
 
@@ -45,7 +43,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/home',
+      initialRoute: '/splash',
       getPages: [
         GetPage(name: '/login', page: () => AdminLoginScreen()),
         GetPage(

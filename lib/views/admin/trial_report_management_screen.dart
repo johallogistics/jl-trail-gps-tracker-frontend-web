@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/admin/admin_home_screen_controller.dart';
-import '../../models/consolidated_form_submission_model.dart';
-import '../../utils/file_download_service_mobile.dart';
-import '../consolidated_report_screen.dart';
-import 'edit_trail_screen.dart';
-import 'dart:convert';
-import 'dart:html' as html;
 import 'package:csv/csv.dart';
 
-class VehicleManagementScreen extends StatelessWidget {
+import '../../controllers/admin/admin_home_screen_controller.dart';
+import '../../models/consolidated_form_submission_model.dart';
+import '../../utils/file_download_service.dart';
+import '../consolidated_report_screen.dart';
+import 'edit_trail_screen.dart';
+
+class TrailManagementScreen extends StatelessWidget {
   final AdminController controller = Get.put(AdminController());
 
+  TrailManagementScreen({super.key});
 
-
-  void exportTrailDataToCsv(List<FormSubmissionModel> trails) {
+  /// Build CSV and hand off to platform-appropriate download/save helper.
+  Future<void> exportTrailDataToCsv(List<FormSubmissionModel> trails) async {
     final headers = [
       "Trail Id",
       "Location",
@@ -36,21 +36,21 @@ class VehicleManagementScreen extends StatelessWidget {
       "Trip Finish Date"
     ];
 
-    final rows = [
+    final rows = <List<dynamic>>[
       headers,
       ...trails.map((trail) {
-        final hasVehicle = trail.vehicleDetails.isNotEmpty;
-        final vehicle = hasVehicle ? trail.vehicleDetails[0] : null;
+        final hasVehicle = (trail.vehicleDetails ?? []).isNotEmpty;
+        final vehicle = hasVehicle ? trail.vehicleDetails![0] : null;
 
         return [
           trail.id?.toString() ?? "",
-          trail.location,
-          trail.date,
-          trail.masterDriverName,
-          trail.empCode,
-          trail.mobileNo,
-          trail.customerDriverName,
-          trail.customerMobileNo,
+          trail.location ?? "",
+          trail.date ?? "",
+          trail.masterDriverName ?? "",
+          trail.empCode ?? "",
+          trail.mobileNo ?? "",
+          trail.customerDriverName ?? "",
+          trail.customerMobileNo ?? "",
           vehicle?.vehicleRegNo.text ?? "NA",
           vehicle?.vehicleModel.text ?? "NA",
           vehicle?.brand.text ?? "NA",
@@ -62,19 +62,15 @@ class VehicleManagementScreen extends StatelessWidget {
           vehicle?.tripStartDate.text ?? "NA",
           vehicle?.tripFinishDate.text ?? "NA",
         ];
-      }).toList()
+      }),
     ];
 
     final csvData = const ListToCsvConverter().convert(rows);
-    final blob = html.Blob([utf8.encode(csvData)]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute("download", "trail_data.csv")
-      ..click();
-    html.Url.revokeObjectUrl(url);
-  }
 
-  VehicleManagementScreen({super.key});
+    // Use platform-safe helper from utils/file_download_service.dart
+    // make sure your file_download_service.dart exposes `downloadCsv`
+    await downloadCsv(csvData, filename: 'trail_data.csv');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,12 +79,13 @@ class VehicleManagementScreen extends StatelessWidget {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Vehicle Management'),
+            const Text('Vehicle Management'),
             ElevatedButton(
               onPressed: () {
-                exportTrailDataToCsv(controller.trailsResponse.value.payload);
+                final payload = controller.trailsResponse.value.payload ?? <FormSubmissionModel>[];
+                exportTrailDataToCsv(payload);
               },
-              child: Text("Export to CSV"),
+              child: const Text("Export to CSV"),
             ),
           ],
         ),
@@ -96,14 +93,14 @@ class VehicleManagementScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Obx(() {
-          var trails = controller.trailsResponse.value.payload;
+          final trails = controller.trailsResponse.value.payload ?? <FormSubmissionModel>[];
           return SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 columnSpacing: 12,
-                columns: [
+                columns: const [
                   DataColumn(label: Text("Trail Id")),
                   DataColumn(label: Text("Location")),
                   DataColumn(label: Text("Date")),
@@ -125,19 +122,19 @@ class VehicleManagementScreen extends StatelessWidget {
                   DataColumn(label: Text("Media")),
                   DataColumn(label: Text("Actions")),
                 ],
-                rows: controller.trailsResponse.value.payload.map((trail) {
-                  final hasVehicle = trail.vehicleDetails.isNotEmpty;
-                  final vehicle = hasVehicle ? trail.vehicleDetails[0] : null;
+                rows: trails.map((trail) {
+                  final hasVehicle = (trail.vehicleDetails ?? []).isNotEmpty;
+                  final vehicle = hasVehicle ? trail.vehicleDetails![0] : null;
 
                   return DataRow(cells: [
-                    DataCell(Text(trail.id.toString())),
-                    DataCell(Text(trail.location)),
-                    DataCell(Text(trail.date)),
-                    DataCell(Text(trail.masterDriverName)),
-                    DataCell(Text(trail.empCode)),
-                    DataCell(Text(trail.mobileNo)),
-                    DataCell(Text(trail.customerDriverName)),
-                    DataCell(Text(trail.customerMobileNo)),
+                    DataCell(Text(trail.id?.toString() ?? '')),
+                    DataCell(Text(trail.location ?? '')),
+                    DataCell(Text(trail.date ?? '')),
+                    DataCell(Text(trail.masterDriverName ?? '')),
+                    DataCell(Text(trail.empCode ?? '')),
+                    DataCell(Text(trail.mobileNo ?? '')),
+                    DataCell(Text(trail.customerDriverName ?? '')),
+                    DataCell(Text(trail.customerMobileNo ?? '')),
                     DataCell(Text(vehicle?.vehicleRegNo.text ?? "NA")),
                     DataCell(Text(vehicle?.vehicleModel.text ?? "NA")),
                     DataCell(Text(vehicle?.brand.text ?? "NA")),
@@ -149,12 +146,12 @@ class VehicleManagementScreen extends StatelessWidget {
                     DataCell(Text(vehicle?.tripStartDate.text ?? "NA")),
                     DataCell(Text(vehicle?.tripFinishDate.text ?? "NA")),
                     DataCell(
-                  trail.imageVideoUrls.isEmpty
-                  ? Icon(Icons.insert_drive_file, color: Colors.grey) // empty file symbol
-                      : IconButton(
-                        icon: Icon(Icons.download, color: Colors.blue),
+                      trail.imageVideoUrls == null || trail.imageVideoUrls!.isEmpty
+                          ? const Icon(Icons.insert_drive_file, color: Colors.grey)
+                          : IconButton(
+                        icon: const Icon(Icons.download, color: Colors.blue),
                         onPressed: () async {
-                          for (var url in trail.imageVideoUrls) {
+                          for (var url in trail.imageVideoUrls!) {
                             await downloadFileFromUrl(url);
                           }
                         },
@@ -163,15 +160,13 @@ class VehicleManagementScreen extends StatelessWidget {
                     DataCell(Row(
                       children: [
                         IconButton(
-                          icon: Icon(Icons.edit_note, color: Colors.green),
+                          icon: const Icon(Icons.edit_note, color: Colors.green),
                           onPressed: () {
                             Get.to(() => EditTrailScreen(trail: trail));
-                            // controller.viewTrail(trail);
-                            // Get.dialog(PopUpWidget());
                           },
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red, size: 18),
+                          icon: const Icon(Icons.delete, color: Colors.red, size: 18),
                           onPressed: () => controller.deleteTrail(trail.id!),
                         ),
                       ],
@@ -185,12 +180,9 @@ class VehicleManagementScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to the Create Trail Screen
-          // Get.to(() => CreateTrailScreen());
           Get.to(() => FormScreen());
-
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

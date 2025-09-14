@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../controllers/shift_log_controller.dart';
 import '../../models/shift_log_model.dart';
 import '../../utils/file_download_service.dart';
-import '../../utils/file_download_service_web.dart';
 
 
 class DailyReportManagement extends StatelessWidget {
@@ -17,7 +16,7 @@ class DailyReportManagement extends StatelessWidget {
         children: [
           Text('Daily Report Management'),
           ElevatedButton(
-            onPressed: () => exportShiftLogsToCsv(controller.shiftLogs),
+            onPressed: () => exportShiftLogsToCsvImpl(controller.shiftLogs),
             child: Text('Export to CSV'),
           )
         ],
@@ -282,33 +281,35 @@ class DailyReportManagement extends StatelessWidget {
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6.0),
-                  child: Obx(() => DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Capitalized Vehicle/Customer Vehicle',
-                      labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
-                      filled: true,
-                      fillColor: Colors.blue[50],
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
+                  child: Obx(() {
+                    // make sure the value is one of the allowed items or null
+                    final items = ['Customer Vehicle', 'Capitalized Vehicle'];
+                    final currentValue = items.contains(selectedVehicleType.value) ? selectedVehicleType.value : null;
+                    return DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'Capitalized Vehicle/Customer Vehicle',
+                        labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
+                        filled: true,
+                        fillColor: Colors.blue[50],
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
+                        ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
-                      ),
-                    ),
-                    style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
-                    value: selectedVehicleType.value,
-                    items: [
-                      'Customer Vehicle',
-                      'Capitalized Vehicle',
-                    ].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
-                    onChanged: (val) {
-                      selectedVehicleType.value = val;
-                      selectedPurposeOfTrial.value = null; // Reset purpose when type changes
-                    },
-                  )),
+                      style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
+                      value: currentValue,
+                      items: items.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+                      onChanged: (val) {
+                        selectedVehicleType.value = val;
+                        selectedPurposeOfTrial.value = null; // Reset purpose when type changes
+                      },
+                    );
+                  }),
                 ),
 
                 const SizedBox(height: 12),
@@ -330,6 +331,9 @@ class DailyReportManagement extends StatelessWidget {
                         'Pre Sale FE Trial',
                       ];
                     }
+                    // guard selected purpose: must be in current purposes or null
+                    final currentPurpose = purposes.contains(selectedPurposeOfTrial.value) ? selectedPurposeOfTrial.value : null;
+
                     return DropdownButtonFormField<String>(
                       decoration: InputDecoration(
                         labelText: 'Purpose of Trial',
@@ -347,7 +351,7 @@ class DailyReportManagement extends StatelessWidget {
                         ),
                       ),
                       style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
-                      value: selectedPurposeOfTrial.value,
+                      value: currentPurpose,
                       items: purposes.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                       onChanged: (val) => selectedPurposeOfTrial.value = val,
                     );
@@ -485,10 +489,7 @@ class DailyReportManagement extends StatelessWidget {
         ),
       ),
     );
-
-
   }
-
   Widget _buildStyledTextField({
     required TextEditingController controller,
     required String label,
