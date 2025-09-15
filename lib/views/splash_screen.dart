@@ -18,7 +18,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String BACKEND_BASE_URL = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
+  String BACKEND_BASE_URL = "jl-trail-gps-tracker-backend-production.up.railway.app";
   final box = GetStorage();
 
   @override

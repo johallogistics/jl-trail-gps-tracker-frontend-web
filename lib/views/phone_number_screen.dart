@@ -17,7 +17,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   final TextEditingController phoneController = TextEditingController();
   bool isLoading = false;
 
-  String BACKEND_BASE_URL = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
+  String BACKEND_BASE_URL = "jl-trail-gps-tracker-backend-production.up.railway.app";
 
   Future<void> sendOTP() async {
     String phone = phoneController.text.trim();
