@@ -16,6 +16,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
   final MapController _mapController = MapController();
   LatLng liveLocation = LatLng(13.0827, 80.2707); // Default (Chennai)
   Timer? _timer;
+  static const String baseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
 
   @override
   void initState() {
@@ -26,7 +27,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
   Future<void> _fetchLiveLocation() async {
     try {
       // Replace with your API endpoint
-      final response = await http.get(Uri.parse("https://yourapi.com/location"));
+      final response = await http.get(Uri.parse("$baseUrl/location"));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
