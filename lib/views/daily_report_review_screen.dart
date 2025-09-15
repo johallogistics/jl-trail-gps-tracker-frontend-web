@@ -8,16 +8,15 @@ import 'package:http/http.dart' as http;
 import '../models/shift_log_model.dart';
 import '../utils/image_upload_service.dart';
 import '../utils/pdf_service.dart';
+import '../utils/upload_signature.dart';
 import 'daily_report_screen.dart';
 
 class DailyReportReviewScreen extends StatefulWidget {
-  final Map<String, String> employeeData;
   final td.Uint8List? signature;
   final ShiftLog? shiftLog;
 
   DailyReportReviewScreen({
     super.key,
-    required this.employeeData,
     this.signature,
     this.shiftLog,
   });
@@ -159,7 +158,7 @@ class _DailyReportReviewScreenState extends State<DailyReportReviewScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    PdfService.generatePdf(controller, widget.employeeData, widget.signature);
+                    PdfService.generatePdf(controller, widget.signature);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
@@ -214,11 +213,16 @@ class _DailyReportReviewScreenState extends State<DailyReportReviewScreen> {
     final uri = Uri.parse("https://jl-trail-gps-tracker-backend-production.up.railway.app/dailyReport");
 
     Map<String, dynamic> payload;
+    // String? signatureUrl;
+    // if (widget.signature != null) {
+    //   // widget.signature is Uint8List bytes
+    //   signatureUrl = await uploadSignature(widget.signature!);
+    // }
 
     if (widget.shiftLog != null) {
       payload = widget.shiftLog!.toJsonWithoutId();
       if (imageVideoUrls.isNotEmpty) payload['imageVideoUrls'] = imageVideoUrls;
-      if (widget.signature != null) payload['inchargeSign'] = base64Encode(widget.signature!);
+      // if (widget.signature != null) payload['inchargeSign'] = signatureUrl;
     } else {
       payload = {
         'date': controller.date,
@@ -245,7 +249,7 @@ class _DailyReportReviewScreenState extends State<DailyReportReviewScreen> {
         'monthYear': '${controller.monthController.text}-${controller.yearController.text}',
         'imageVideoUrls': imageVideoUrls,
       };
-      if (widget.signature != null) payload['inchargeSign'] = base64Encode(widget.signature!);
+      // if (widget.signature != null) payload['inchargeSign'] = signatureUrl;
     }
 
     try {
@@ -261,9 +265,11 @@ class _DailyReportReviewScreenState extends State<DailyReportReviewScreen> {
           Get.back(result: true);
         });
       } else {
+        print("Error, Failed: ${response.statusCode}\n${response.body}");
         Get.snackbar("Error", "Failed: ${response.statusCode}\n${response.body}", backgroundColor: Colors.red, colorText: Colors.white);
       }
     } catch (e) {
+      print("Network error: $e");
       Get.snackbar("Error", "Network error: $e", backgroundColor: Colors.red, colorText: Colors.white);
     }
   }

@@ -8,6 +8,8 @@ import 'daily_report_review_screen.dart';
 import 'dart:typed_data' as td;
 
 class DailyReportController extends GetxController {
+
+
   // Timing & vehicle fields you already had
   final shiftController = TextEditingController();
   final otHoursController = TextEditingController();
@@ -68,7 +70,6 @@ class DailyReportController extends GetxController {
 }
 
 class DailyReportScreen extends StatelessWidget {
-  final Map<String, String> employeeData;
   final DailyReportController controller = Get.put(DailyReportController());
 
   final SignatureController _signatureController = SignatureController(
@@ -77,16 +78,7 @@ class DailyReportScreen extends StatelessWidget {
     exportBackgroundColor: Colors.white,
   );
 
-  DailyReportScreen({super.key, required this.employeeData}) {
-    // Pre-fill employee fields from the provided employeeData map
-    controller.employeeNameController.text = employeeData['name'] ?? '';
-    controller.employeePhoneController.text = employeeData['phone'] ?? '';
-    controller.employeeCodeController.text = employeeData['code'] ?? '';
-    controller.monthController.text = employeeData['month'] ?? '';
-    controller.yearController.text = employeeData['year'] ?? '';
-    controller.inchargeNameController.text = employeeData['inchargeName'] ?? '';
-    controller.inchargePhoneController.text = employeeData['inchargePhone'] ?? '';
-  }
+  DailyReportScreen({super.key}) {  }
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +339,6 @@ class DailyReportScreen extends StatelessWidget {
     // Navigate to review screen. NOTE: update DailyReportReviewScreen to accept a ShiftLog param if needed.
     Get.to(
           () => DailyReportReviewScreen(
-        employeeData: employeeData,
         signature: signature,
         shiftLog: shiftLog,
       ),

@@ -79,16 +79,6 @@ class _TrailScreenState extends State<TrailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final employeeData = {
-      'name': 'John Doe',
-      'phone': '123-456-7890',
-      'code': 'EMP123',
-      'month': 'January',
-      'year': '2025',
-      'inchargeName': 'Jane Smith',
-      'inchargePhone': '987-654-3210',
-    };
-
     return Scaffold(
       backgroundColor: Colors.blue[50], // ✅ Soft blue background
       appBar: AppBar(
@@ -116,29 +106,9 @@ class _TrailScreenState extends State<TrailScreen> {
                 ),
               ),
             const SizedBox(height: 20),
-            Card(
-              elevation: 3,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    _buildInfoRow('employee_name'.tr, employeeData['name']!),
-                    _buildInfoRow('employee_phone'.tr, employeeData['phone']!),
-                    _buildInfoRow('employee_code'.tr, employeeData['code']!),
-                    _buildInfoRow('month'.tr, employeeData['month']!),
-                    _buildInfoRow('year'.tr, employeeData['year']!),
-                    _buildInfoRow('incharge_name'.tr, employeeData['inchargeName']!),
-                    _buildInfoRow('incharge_phone'.tr, employeeData['inchargePhone']!),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
 
             _buildElevatedButton('open_daily_report'.tr, Colors.blueAccent[700], () {
-              Get.to(() => DailyReportScreen(employeeData: employeeData));
+              Get.to(() => DailyReportScreen());
             }),
 
             _buildElevatedButton('open_consolidated_report'.tr, Colors.blueAccent[700], () {
@@ -148,10 +118,6 @@ class _TrailScreenState extends State<TrailScreen> {
             _buildElevatedButton('complete_trail'.tr, Colors.green[600]!, () {
               _stopTrackingLocation();
               print('Trail Completed');
-            }),
-
-            _buildElevatedButton('Test Google Translate --> Trail Data'.tr, Colors.blueAccent[700], () {
-              Get.to(() => ShiftLogDetailScreen());
             }),
           ],
         ),

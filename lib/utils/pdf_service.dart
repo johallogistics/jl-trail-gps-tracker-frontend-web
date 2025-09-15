@@ -7,7 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import '../views/daily_report_screen.dart';
 
 class PdfService {
-  static Future<void> generatePdf(DailyReportController controller, Map<String, String> employeeData, Uint8List? signature) async {
+  static Future<void> generatePdf(DailyReportController controller, Uint8List? signature) async {
     final PdfDocument document = PdfDocument();
     final PdfPage page = document.pages.add();
     final PdfGraphics graphics = page.graphics;
@@ -29,13 +29,13 @@ class PdfService {
       yOffset += 20;
     }
 
-    addText('Employee Name: ${employeeData['name']}');
-    addText('Phone: ${employeeData['phone']}');
-    addText('Code: ${employeeData['code']}');
-    addText('Month: ${employeeData['month']}');
-    addText('Year: ${employeeData['year']}');
-    addText('Incharge Name: ${employeeData['inchargeName']}');
-    addText('Incharge Phone: ${employeeData['inchargePhone']}');
+    addText('Employee Name: ${controller.employeeNameController.text}');
+    addText('Phone: ${controller.employeePhoneController.text}');
+    addText('Code: ${controller.employeeCodeController.text}');
+    addText('Month: ${controller.monthController.text}');
+    addText('Year: ${controller.yearController.text}');
+    addText('Incharge Name: ${controller.inchargeNameController.text}');
+    addText('Incharge Phone: ${controller.inchargePhoneController.text}');
     addText('Shift: ${controller.shiftController.text}');
     addText('OT Hours: ${controller.otHoursController.text}');
     addText('Vehicle Model: ${controller.vehicleModelController.text}');
