@@ -1,11 +1,14 @@
+// daily_report_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
+import '../models/shift_log_model.dart';
 import 'daily_report_review_screen.dart';
 import 'dart:typed_data' as td;
 
 class DailyReportController extends GetxController {
+  // Timing & vehicle fields you already had
   final shiftController = TextEditingController();
   final otHoursController = TextEditingController();
   final vehicleModelController = TextEditingController();
@@ -22,7 +25,46 @@ class DailyReportController extends GetxController {
   final coDriverNameController = TextEditingController();
   final coDriverPhoneController = TextEditingController();
 
+  // Employee details as form fields (previously read-only)
+  final employeeNameController = TextEditingController();
+  final employeePhoneController = TextEditingController();
+  final employeeCodeController = TextEditingController();
+  final monthController = TextEditingController();
+  final yearController = TextEditingController();
+  final inchargeNameController = TextEditingController();
+  final inchargePhoneController = TextEditingController();
+
+  // Default date string
   final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  @override
+  void onClose() {
+    // dispose controllers if needed
+    shiftController.dispose();
+    otHoursController.dispose();
+    vehicleModelController.dispose();
+    regNoController.dispose();
+    inTimeController.dispose();
+    outTimeController.dispose();
+    workingHoursController.dispose();
+    startingKmController.dispose();
+    endingKmController.dispose();
+    totalKmController.dispose();
+    fromPlaceController.dispose();
+    toPlaceController.dispose();
+    fuelAvgController.dispose();
+    coDriverNameController.dispose();
+    coDriverPhoneController.dispose();
+
+    employeeNameController.dispose();
+    employeePhoneController.dispose();
+    employeeCodeController.dispose();
+    monthController.dispose();
+    yearController.dispose();
+    inchargeNameController.dispose();
+    inchargePhoneController.dispose();
+    super.onClose();
+  }
 }
 
 class DailyReportScreen extends StatelessWidget {
@@ -30,26 +72,36 @@ class DailyReportScreen extends StatelessWidget {
   final DailyReportController controller = Get.put(DailyReportController());
 
   final SignatureController _signatureController = SignatureController(
-    penStrokeWidth: 5,
+    penStrokeWidth: 3,
     penColor: Colors.black,
     exportBackgroundColor: Colors.white,
   );
 
-  DailyReportScreen({super.key, required this.employeeData});
+  DailyReportScreen({super.key, required this.employeeData}) {
+    // Pre-fill employee fields from the provided employeeData map
+    controller.employeeNameController.text = employeeData['name'] ?? '';
+    controller.employeePhoneController.text = employeeData['phone'] ?? '';
+    controller.employeeCodeController.text = employeeData['code'] ?? '';
+    controller.monthController.text = employeeData['month'] ?? '';
+    controller.yearController.text = employeeData['year'] ?? '';
+    controller.inchargeNameController.text = employeeData['inchargeName'] ?? '';
+    controller.inchargePhoneController.text = employeeData['inchargePhone'] ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50], // ✅ Soft blue background
+      backgroundColor: Colors.blue[50], // Soft blue background
       appBar: AppBar(
         title: Text('daily_report_form'.tr),
-        backgroundColor: Colors.blueAccent[700], // ✅ Deep blue AppBar
+        backgroundColor: Colors.blueAccent[700],
         elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Employee details now as editable form
             _buildEmployeeDetailsCard(),
             const SizedBox(height: 20),
             _buildInputFieldsCard(),
@@ -72,13 +124,19 @@ class DailyReportScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildInfoRow('employee_name'.tr, employeeData['name']!),
-            _buildInfoRow('employee_phone'.tr, employeeData['phone']!),
-            _buildInfoRow('employee_code'.tr, employeeData['code']!),
-            _buildInfoRow('month'.tr, employeeData['month']!),
-            _buildInfoRow('year'.tr, employeeData['year']!),
-            _buildInfoRow('incharge_name'.tr, employeeData['inchargeName']!),
-            _buildInfoRow('incharge_phone'.tr, employeeData['inchargePhone']!),
+            // Replace _buildInfoRow with input fields bound to controller
+            buildTextField('employee_name'.tr, controller.employeeNameController),
+            buildTextField('employee_phone'.tr, controller.employeePhoneController),
+            buildTextField('employee_code'.tr, controller.employeeCodeController),
+            Row(
+              children: [
+                Expanded(child: buildTextField('month'.tr, controller.monthController)),
+                const SizedBox(width: 12),
+                Expanded(child: buildTextField('year'.tr, controller.yearController)),
+              ],
+            ),
+            buildTextField('incharge_name'.tr, controller.inchargeNameController),
+            buildTextField('incharge_phone'.tr, controller.inchargePhoneController),
           ],
         ),
       ),
@@ -94,23 +152,36 @@ class DailyReportScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            buildTextField(
-              'date'.tr,
-              TextEditingController(text: controller.date),
-              enabled: false,
-            ),
+            // date readonly
+            buildTextField('date'.tr, TextEditingController(text: controller.date), enabled: false),
             buildTextField('shift'.tr, controller.shiftController),
             buildTextField('ot_hours'.tr, controller.otHoursController),
             buildTextField('vehicle_model'.tr, controller.vehicleModelController),
             buildTextField('vehicle_reg_no'.tr, controller.regNoController),
-            buildTextField('in_time'.tr, controller.inTimeController),
-            buildTextField('out_time'.tr, controller.outTimeController),
+            Row(
+              children: [
+                Expanded(child: buildTextField('in_time'.tr, controller.inTimeController)),
+                const SizedBox(width: 12),
+                Expanded(child: buildTextField('out_time'.tr, controller.outTimeController)),
+              ],
+            ),
             buildTextField('working_hours'.tr, controller.workingHoursController),
-            buildTextField('starting_km'.tr, controller.startingKmController),
-            buildTextField('ending_km'.tr, controller.endingKmController),
-            buildTextField('total_km'.tr, controller.totalKmController),
-            buildTextField('from_place'.tr, controller.fromPlaceController),
-            buildTextField('to_place'.tr, controller.toPlaceController),
+            Row(
+              children: [
+                Expanded(child: buildTextField('starting_km'.tr, controller.startingKmController)),
+                const SizedBox(width: 12),
+                Expanded(child: buildTextField('ending_km'.tr, controller.endingKmController)),
+                const SizedBox(width: 12),
+                Expanded(child: buildTextField('total_km'.tr, controller.totalKmController)),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: buildTextField('from_place'.tr, controller.fromPlaceController)),
+                const SizedBox(width: 12),
+                Expanded(child: buildTextField('to_place'.tr, controller.toPlaceController)),
+              ],
+            ),
             buildTextField('fuel_avg'.tr, controller.fuelAvgController),
             buildTextField('co_driver_name'.tr, controller.coDriverNameController),
             buildTextField('co_driver_phone'.tr, controller.coDriverPhoneController),
@@ -137,7 +208,7 @@ class DailyReportScreen extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(8.0),
           child: Signature(
-            width: 500,
+            width: double.infinity,
             height: 150,
             controller: _signatureController,
             backgroundColor: Colors.white,
@@ -161,7 +232,7 @@ class DailyReportScreen extends StatelessWidget {
     );
   }
 
-  void _saveReportWithSignature(BuildContext context) async {
+  Future<void> _saveReportWithSignature(BuildContext context) async {
     if (_signatureController.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please provide a signature.')),
@@ -172,10 +243,118 @@ class DailyReportScreen extends StatelessWidget {
     final td.Uint8List? signature = await _signatureController.toPngBytes();
     if (signature == null) return;
 
-    Get.to(() => DailyReportReviewScreen(
-      employeeData: employeeData,
-      signature: signature,
-    ));
+    // Build ShiftLog from available fields. For many fields not yet in UI, use sensible defaults.
+    final now = DateTime.now();
+    // parse ints/doubles where appropriate with fallback
+    int _parseInt(String s) {
+      try {
+        return int.parse(s);
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    double _parseDouble(String s) {
+      try {
+        return double.parse(s);
+      } catch (_) {
+        return 0.0;
+      }
+    }
+
+    DateTime _tryParseDateTime(String s) {
+      try {
+        return DateTime.parse(s);
+      } catch (_) {
+        return now;
+      }
+    }
+
+    final shiftLog = ShiftLog(
+      // id
+      id: null,
+      // basic timing
+      shift: controller.shiftController.text.trim(),
+      otHours: _parseInt(controller.otHoursController.text.trim()),
+      inTime: _tryParseDateTime(controller.inTimeController.text.trim()),
+      outTime: _tryParseDateTime(controller.outTimeController.text.trim()),
+      workingHours: _parseInt(controller.workingHoursController.text.trim()),
+      monthYear: '${controller.monthController.text.trim()}-${controller.yearController.text.trim()}',
+      // vehicle
+      vehicleModel: controller.vehicleModelController.text.trim(),
+      regNo: controller.regNoController.text.trim(),
+      chassisNo: '', // TODO: map chassis input if you have it
+      gvw: 0.0,
+      payload: 0.0,
+      startingKm: _parseInt(controller.startingKmController.text.trim()),
+      endingKm: _parseInt(controller.endingKmController.text.trim()),
+      totalKm: _parseInt(controller.totalKmController.text.trim()),
+      fuelAvg: _parseDouble(controller.fuelAvgController.text.trim()),
+      previousKmpl: 0.0,
+      clusterKmpl: 0.0,
+      highwaySweetSpotPercent: 0.0,
+      normalRoadSweetSpotPercent: 0.0,
+      hillsRoadSweetSpotPercent: 0.0,
+      trialKMPL: '',
+      vehicleOdometerStartingReading: '',
+      vehicleOdometerEndingReading: '',
+      trialKMS: '',
+      trialAllocation: '',
+      // trial info
+      purposeOfTrial: '',
+      reason: '',
+      dateOfSale: '',
+      trailId: '',
+      // location
+      fromPlace: controller.fromPlaceController.text.trim(),
+      toPlace: controller.toPlaceController.text.trim(),
+      presentLocation: '',
+      // personnel - map employee inputs here
+      employeeName: controller.employeeNameController.text.trim(),
+      vecvReportingPerson: '',
+      employeePhoneNo: controller.employeePhoneController.text.trim(),
+      employeeCode: controller.employeeCodeController.text.trim(),
+      dicvInchargeName: controller.inchargeNameController.text.trim(),
+      dicvInchargePhoneNo: controller.inchargePhoneController.text.trim(),
+      // customer & dealer
+      dealerName: '',
+      customerName: '',
+      customerDriverName: '',
+      customerDriverNo: '',
+      capitalizedVehicleOrCustomerVehicle: '',
+      customerVehicle: '',
+      capitalizedVehicle: '',
+      vehicleNo: '',
+      // driver
+      coDriverName: controller.coDriverNameController.text.trim(),
+      coDriverPhoneNo: controller.coDriverPhoneController.text.trim(),
+      driverStatus: '',
+      // media
+      imageVideoUrls: const [],
+      inchargeSign: 'embedded_as_base64_or_path_placeholder', // you probably want to upload bytes and store URL
+      // timestamps
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    // For debug: print resulting JSON
+    // ignore: avoid_print
+    print('ShiftLog JSON: ${shiftLog.toJson()}');
+
+    // TODO: Upload signature bytes to server or convert to base64 and include in shiftLog.inchargeSign
+    // Example: final b64 = base64Encode(signature);
+
+    // Navigate to review screen. NOTE: update DailyReportReviewScreen to accept a ShiftLog param if needed.
+    Get.to(
+          () => DailyReportReviewScreen(
+        employeeData: employeeData,
+        signature: signature,
+        shiftLog: shiftLog,
+      ),
+    );
+
+    // Alternatively, if you prefer to send via arguments:
+    // Get.toNamed('/dailyReportReview', arguments: {'employeeData': employeeData, 'signature': signature, 'shiftLog': shiftLog});
   }
 
   Widget _buildElevatedButton(String text, Color? color, VoidCallback onPressed) {
@@ -191,48 +370,34 @@ class DailyReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent[700])),
-          Text(value, style: const TextStyle(fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
   Widget buildTextField(String label, TextEditingController controller, {bool enabled = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
         controller: controller,
         enabled: enabled,
-        style: TextStyle(color: Colors.blueAccent[700], fontSize: 16), // ✅ Blue text
-        cursorColor: Colors.blueAccent, // ✅ Blue cursor
+        style: TextStyle(color: Colors.blueAccent[700], fontSize: 16),
+        cursorColor: Colors.blueAccent,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold), // ✅ Blue label
+          labelStyle: TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
           filled: true,
-          fillColor: enabled ? Colors.blue[50] : Colors.grey[200], // ✅ Light blue bg when enabled
+          fillColor: enabled ? Colors.blue[50] : Colors.grey[200],
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), // ✅ Rounded border
-            borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5), // ✅ Light blue border
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2.0), // ✅ Deep blue border on focus
+            borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0), // ✅ Comfortable padding
+          contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
         ),
       ),
     );
   }
-
 }
