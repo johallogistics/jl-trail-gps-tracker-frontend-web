@@ -64,10 +64,12 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Text('Start Transit'.tr, style: const TextStyle(fontSize: 16)),
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => locationService.startTracking(),
               child: Text('Start Tracking'),
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: locationService.stopTracking,
               child: Text('Stop Tracking'),

@@ -4,6 +4,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:trail_tracker/views/daily_report_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:trail_tracker/views/shift_log_detail_screen.dart';
+import 'package:trail_tracker/views/widgets/sign_off_form.dart';
+import '../bindings/signoff_bindings.dart';
+import '../controllers/sign_off_controller.dart';
 import 'consolidated_report_screen.dart';
 
 class TrailScreen extends StatefulWidget {
@@ -18,7 +21,6 @@ class _TrailScreenState extends State<TrailScreen> {
   Position? _currentPosition;
   bool _isTracking = true;
   String _driverId = "0";
-
 
   String get driverId => _driverId;
 
@@ -53,7 +55,8 @@ class _TrailScreenState extends State<TrailScreen> {
   }
 
   void _sendLocationToServer(double latitude, double longitude) async {
-    const String apiUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app/location.......';
+    const String apiUrl =
+        'https://jl-trail-gps-tracker-backend-production.up.railway.app/location';
     final response = await http.post(
       Uri.parse(apiUrl),
       body: {
@@ -95,26 +98,28 @@ class _TrailScreenState extends State<TrailScreen> {
               Card(
                 elevation: 3,
                 color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     '${'current_location'.tr} \nLat: ${_currentPosition!.latitude}, Lon: ${_currentPosition!.longitude}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
             const SizedBox(height: 20),
-
-            _buildElevatedButton('open_daily_report'.tr, Colors.blueAccent[700], () {
+            _buildElevatedButton('open_daily_report'.tr, Colors.blueAccent[700],
+                () {
               Get.to(() => DailyReportScreen());
             }),
-
-            _buildElevatedButton('open_consolidated_report'.tr, Colors.blueAccent[700], () {
-              Get.to(() => FormScreen());
+            _buildElevatedButton(
+                'open_consolidated_report'.tr, Colors.blueAccent[700], () {
+              Get.to(() => const SignOffForm(submitRole: 'DRIVER'),
+                  binding: SignOffBinding());
             }),
-
             _buildElevatedButton('complete_trail'.tr, Colors.green[600]!, () {
               _stopTrackingLocation();
               print('Trail Completed');
@@ -125,7 +130,8 @@ class _TrailScreenState extends State<TrailScreen> {
     );
   }
 
-  Widget _buildElevatedButton(String text, Color? color, VoidCallback onPressed) {
+  Widget _buildElevatedButton(
+      String text, Color? color, VoidCallback onPressed) {
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: ElevatedButton(
@@ -134,7 +140,8 @@ class _TrailScreenState extends State<TrailScreen> {
           backgroundColor: color,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(text, style: const TextStyle(fontSize: 16)),
       ),
@@ -147,7 +154,11 @@ class _TrailScreenState extends State<TrailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent[700])),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent[700])),
           Text(value, style: const TextStyle(fontSize: 14)),
         ],
       ),

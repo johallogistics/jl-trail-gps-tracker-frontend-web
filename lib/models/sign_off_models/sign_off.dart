@@ -16,14 +16,16 @@ class CustomerVehicleDetails {
   String? vehicleCheckDate; // ISO
   String? issuesFoundOnVehicleCheck;
 
-  late TextEditingController vehicleCheckDateController;
-  late TextEditingController saleDateController;
+  // Make controllers nullable (lazy)
+  TextEditingController? vehicleCheckDateController;
+  TextEditingController? saleDateController;
 
   CustomerVehicleDetails({
     this.vehicleCheckDate,
     this.saleDate,
-  })  : vehicleCheckDateController = TextEditingController(text: vehicleCheckDate ?? ''),
-        saleDateController = TextEditingController(text: saleDate ?? '');
+  }) {
+    // do NOT create controllers eagerly; keep them null for lazy init
+  }
 
   Map<String, dynamic> toJson() => {
     'tripDuration': tripDuration,
@@ -67,10 +69,12 @@ class CustomerVehicleDetails {
     vehicleCheckDate = other.vehicleCheckDate;
     issuesFoundOnVehicleCheck = other.issuesFoundOnVehicleCheck;
 
-    vehicleCheckDateController.text = vehicleCheckDate ?? '';
-    saleDateController.text = saleDate ?? '';
+    // If controllers exist, update text; otherwise leave null for lazy init
+    if (vehicleCheckDateController != null) vehicleCheckDateController!.text = vehicleCheckDate ?? '';
+    if (saleDateController != null) saleDateController!.text = saleDate ?? '';
   }
 }
+
 
 class SignOff {
   int? id;
