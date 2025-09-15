@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../api/api_manager.dart';
+import '../utils/device_utils.dart';
 import 'login_screen.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,36 +17,68 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   final TextEditingController phoneController = TextEditingController();
   bool isLoading = false;
 
+  String BACKEND_BASE_URL = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
+
   Future<void> sendOTP() async {
     String phone = phoneController.text.trim();
+
     if (phone.isEmpty || phone.length < 10) {
-      Get.snackbar('Error', 'Enter a valid phone number',
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Enter a valid phone number',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
     setState(() => isLoading = true);
 
     try {
-      var url = Uri.parse("https://jl-trail-gps-tracker-backend-production.up.railway.app/send-otp");
+      // Normalize phone to +<countrycode><number>
+      final sendPhone = phone.startsWith('+') ? phone : '+$phone';
 
-      var response = await http.post(
+      final url = Uri.parse("https://$BACKEND_BASE_URL/send-otp");
+      final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone': phone}),
+        body: jsonEncode({'phone': sendPhone}),
       );
 
       if (response.statusCode == 200) {
-        Get.to(() => LoginScreen(phoneNumber: phone));  // Navigate to OTP Screen
+        // Save phone locally
+        final box = GetStorage();
+        box.write('phone', sendPhone);
+        // get deviceId (we don't pass it into LoginScreen because LoginScreen will fetch it)
+        final deviceId = await DeviceUtils.getDeviceId();
+        debugPrint('deviceId: $deviceId');
+
+        // Navigate to OTP screen (only pass phone — LoginScreen handles deviceId internally)
+        Get.to(() => LoginScreen(phoneNumber: sendPhone));
       } else {
-        Get.snackbar('Error', 'Failed to send OTP', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          'Error',
+          'Failed to send OTP',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', 'Server error! Try again later.', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Server error! Try again later.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      debugPrint('sendOTP error: $e');
+    } finally {
+      setState(() => isLoading = false);
     }
-
-    setState(() => isLoading = false);
   }
+
 
 
 

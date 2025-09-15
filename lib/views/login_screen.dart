@@ -1,15 +1,16 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:sms_autofill/sms_autofill.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../api/api_manager.dart';
+import '../utils/device_utils.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  String phoneNumber;
-  LoginScreen({super.key, required this.phoneNumber});
+  final String phoneNumber;
+  const LoginScreen({super.key, required this.phoneNumber});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -20,7 +21,8 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   bool isResendEnabled = false;
   int resendCountdown = 30;
   final box = GetStorage();
-  late String phoneNumber; // Replace with actual phone number
+  late String phoneNumber;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -33,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   @override
   void codeUpdated() {
     setState(() {
-      otpCode = code!;
+      otpCode = code ?? "";
     });
   }
 
@@ -53,61 +55,94 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   }
 
   Future<void> verifyOTP() async {
-    if (otpCode.length == 6) {
-      try {
-        var response = await ApiManager.post('verify-otp', {'phone': phoneNumber, 'otp': otpCode});
-        var data = jsonDecode(response.body);
-
-        if (data['success'] == true || data['success'] == 1) {
-          String token = data['token'];
-          String driverId = "23b1a22b-7f62-4659-9e97-9709f385d8a3" ?? data['driver']['id'].toString(); // ✅ correct way
-          String phone = "+918925450309" ?? data['driver']['phone'].toString(); // ✅ correct way
-
-          // ✅ Save token and driverId in GetStorage
-          final box = GetStorage();
-          await box.write('token', token);
-          await box.write('driverId', driverId);
-          await box.write('phone', phone);
-
-
-          Get.off(() => HomeScreen());
-        } else {
-          Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
-              snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
-        }
-      } catch (e) {
-        Get.snackbar('Error', 'OTP verification failed!',
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
-      }
-    } else {
+    if (otpCode.length != 6) {
       Get.snackbar('Error', 'Please enter a valid OTP!',
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+      return;
+    }
+
+    if (isLoading) return;
+    setState(() => isLoading = true);
+
+    try {
+      String? deviceId;
+      if (!kIsWeb) {
+        // Only attach deviceId on Android (your app is Android-only for phone flow)
+        deviceId = await DeviceUtils.getDeviceId();
+      }
+
+      final body = {
+        'phone': phoneNumber,
+        'otp': otpCode,
+        if (deviceId != null) 'deviceId': deviceId,
+      };
+
+      var response = await ApiManager.post('verify-otp', body);
+      var data = jsonDecode(response.body);
+
+      if (data['success'] == true || data['success'] == 1) {
+        String token = data['token'];
+        String driverId = data['driver']['id'].toString();
+        String phone = data['driver']['phone'].toString();
+
+        // Save in GetStorage
+        await box.write('token', token);
+        await box.write('driverId', driverId);
+        await box.write('phone', phone);
+
+        Get.off(() => HomeScreen());
+      } else {
+        Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'OTP verification failed!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+    } finally {
+      setState(() => isLoading = false);
     }
   }
-
-
 
   Future<void> checkDriverExistence() async {
     try {
       var response = await ApiManager.get('drivers/verify-phone?phone=$phoneNumber');
       var data = jsonDecode(response.body);
-      if (data['exists']) {
+      if (data['exists'] == true) {
         Get.off(() => HomeScreen());
       } else {
-        Get.snackbar('Info', 'Driver not found. Please contact support.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
+        Get.snackbar('Info', 'Driver not found. Please contact support.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to check driver existence.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Error', 'Failed to check driver existence.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
     }
   }
 
   void resendOTP() async {
+    if (!isResendEnabled) return;
     try {
       await ApiManager.post('resend-otp', {'phone': phoneNumber});
-      Get.snackbar('Info', 'OTP Resent Successfully!', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.blue, colorText: Colors.white);
+      Get.snackbar('Info', 'OTP Resent Successfully!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white);
       startResendCountdown();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to resend OTP!', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Error', 'Failed to resend OTP!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
     }
   }
 
@@ -120,10 +155,10 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50], // ✅ Light blue background
+      backgroundColor: Colors.blue[50], // Light blue background
       appBar: AppBar(
         title: const Text('OTP Verification'),
-        backgroundColor: Colors.blueAccent[700], // ✅ Deep blue AppBar
+        backgroundColor: Colors.blueAccent[700],
         elevation: 0,
       ),
       body: Padding(
@@ -135,14 +170,18 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
             Text(
               'Enter the OTP sent to your mobile number',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.blueGrey[800]),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.blueGrey[800]),
             ),
             const SizedBox(height: 20),
             PinFieldAutoFill(
               codeLength: 6,
               currentCode: otpCode,
               decoration: BoxLooseDecoration(
-                strokeColorBuilder: FixedColorBuilder(Colors.blueAccent[700]!),
+                strokeColorBuilder:
+                FixedColorBuilder(Colors.blueAccent[700]!),
                 bgColorBuilder: FixedColorBuilder(Colors.white),
                 radius: Radius.circular(12),
               ),
@@ -150,14 +189,24 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: verifyOTP,
+              onPressed: isLoading ? null : verifyOTP,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent[700], // ✅ Blue button
+                backgroundColor: Colors.blueAccent[700],
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Verify OTP', style: TextStyle(fontSize: 16)),
+              child: isLoading
+                  ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+                  : const Text('Verify OTP', style: TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 20),
             TextButton(
