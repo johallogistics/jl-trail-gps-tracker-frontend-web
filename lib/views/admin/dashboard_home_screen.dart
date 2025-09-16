@@ -9,7 +9,7 @@ class DashboardDataController extends GetxController {
   final driversCount = 0.obs;
   final formSubmissionsCount = 0.obs;
   final shiftLogsCount = 0.obs;
-  final clientCount = 1.obs;
+  final clientCount = 0.obs;
 
   @override
   void onInit() {
