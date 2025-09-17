@@ -67,39 +67,69 @@ class _LoginScreenState extends State<LoginScreen> with CodeAutoFill {
     setState(() => isLoading = true);
 
     try {
+      // Get deviceId early and log it
       String? deviceId;
       if (!kIsWeb) {
-        // Only attach deviceId on Android (your app is Android-only for phone flow)
         deviceId = await DeviceUtils.getDeviceId();
       }
+      debugPrint('verifyOTP -> deviceId: $deviceId');
 
-      final body = {
-        'phone': phoneNumber,
-        'otp': otpCode,
-        if (deviceId != null) 'deviceId': deviceId,
-      };
-
-      var response = await ApiManager.post('verify-otp', body);
-      var data = jsonDecode(response.body);
-
-      if (data['success'] == true || data['success'] == 1) {
-        String token = data['token'];
-        String driverId = data['driver']['id'].toString();
-        String phone = data['driver']['phone'].toString();
-
-        // Save in GetStorage
-        await box.write('token', token);
-        await box.write('driverId', driverId);
-        await box.write('phone', phone);
-
-        Get.off(() => HomeScreen());
-      } else {
-        Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
+      // If your server requires deviceId (your code does), show message and abort if missing
+      if (deviceId == null) {
+        Get.snackbar('Error', 'Device id not available. Please restart the app or grant permissions.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white);
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final body = jsonEncode({
+        'phone': phoneNumber,
+        'otp': otpCode,
+        'deviceId': deviceId,
+      });
+
+      // call ApiManager but also inspect the raw Response for debugging
+      final response = await ApiManager.post('verify-otp', jsonDecode(body));
+      debugPrint('verify-otp status: ${response.statusCode} body: ${response.body}');
+
+      // parse and handle responses more verbosely
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true || data['success'] == 1) {
+          String token = data['token'];
+          String driverId = data['driver']['id'].toString();
+          String phone = data['driver']['phone'].toString();
+
+          await box.write('token', token);
+          await box.write('driverId', driverId);
+          await box.write('phone', phone);
+
+          Get.off(() => HomeScreen());
+        } else {
+          Get.snackbar('Error', data['message'] ?? 'OTP verification failed',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+        }
+      } else {
+        // show server message if present
+        try {
+          final err = jsonDecode(response.body);
+          Get.snackbar('Error', err['message'] ?? 'OTP failed (${response.statusCode})',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+        } catch (e) {
+          Get.snackbar('Error', 'OTP failed (${response.statusCode})',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+        }
       }
     } catch (e) {
+      debugPrint('verifyOTP exception: $e');
       Get.snackbar('Error', 'OTP verification failed!',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,

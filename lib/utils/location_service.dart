@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'device_utils.dart';
 
 class LocationPostService {
   static const String baseUrl =
@@ -45,36 +48,67 @@ class LocationPostService {
   }
 
   // Send location to backend
-  Future<void> sendLocationToBackend(
-      double lat, double lng) async {
+  Future<void> sendLocationToBackend(double lat, double lng) async {
     try {
       final box = GetStorage();
-      String? token = box.read('token'); // ✅ fetch token
-      String? phone = "+918925450309" ?? box.read('phone'); // ✅ fetch token
+      String? token = box.read('token');
+      String? phone = box.read('phone');
+
+      // defensive: ensure phone exists
+      if (phone == null || phone.isEmpty) {
+        debugPrint('sendLocationToBackend: phone not found in storage, skipping send');
+        return;
+      }
+      // normalize phone if needed (ensure + prefix)
+      if (!phone.startsWith('+')) phone = '+$phone';
+
+      // device id for server-side checks
+      // String? deviceId;
+      // try {
+      //   deviceId = await DeviceUtils.getDeviceId();
+      // } catch (e) {
+      //   debugPrint('sendLocationToBackend: DeviceUtils.getDeviceId error: $e');
+      // }
+
+      final payload = {
+        'phone': phone,
+        'latitude': lat,
+        'longitude': lng,
+        'timestamp': DateTime.now().toIso8601String(),
+        'isIdle': false,
+        // if (deviceId != null) 'deviceId': deviceId,
+      };
+
+      debugPrint('sendLocationToBackend -> url: $baseUrl/api/driver-locations');
+      debugPrint('sendLocationToBackend -> headers: token present=${token != null}');
+      debugPrint('sendLocationToBackend -> body: ${jsonEncode(payload)}');
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/driver-locations'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // ✅ attach token
+          if (token != null) 'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'phone': phone,
-          'latitude': lat,
-          'longitude': lng,
-          'timestamp': DateTime.now().toIso8601String(),
-          "isIdle": false
-        }),
+        body: jsonEncode(payload),
       );
 
+      debugPrint('sendLocationToBackend -> status=${response.statusCode} body=${response.body}');
+
       if (response.statusCode == 200) {
-        print("📍 Location sent: $lat, $lng");
+        // inspect returned JSON (server might return the saved object)
+        try {
+          final data = jsonDecode(response.body);
+          debugPrint('Location send success, server returned: $data');
+        } catch (_) {}
+      } else if (response.statusCode == 401) {
+        debugPrint('Unauthorized sending location (401). Token may be invalid.');
+        // optional: try refresh token or force logout
       } else {
-        print(
-            "❌ Failed to send location: ${response.statusCode} - ${response.body}");
+        debugPrint('Failed to send location: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
-      print("⚠️ Error sending location: $e");
+      debugPrint('⚠️ Error sending location: $e');
     }
   }
+
 }

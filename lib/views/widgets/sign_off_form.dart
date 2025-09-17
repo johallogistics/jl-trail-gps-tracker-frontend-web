@@ -32,7 +32,8 @@ class _SignOffFormState extends State<SignOffForm> {
 
     if (c != null) {
       // Initialize controllers for vehicle details if null (do not overwrite existing ones)
-      c!.vehicleDetails.vehicleCheckDateController ??= TextEditingController(text: c!.vehicleDetails.vehicleCheckDate);
+      c!.vehicleDetails.vehicleCheckDateController ??=
+          TextEditingController(text: c!.vehicleDetails.vehicleCheckDate);
       c!.vehicleDetails.saleDateController ??=
           TextEditingController(text: c!.vehicleDetails.saleDate);
 
@@ -48,12 +49,9 @@ class _SignOffFormState extends State<SignOffForm> {
     // Dispose what this form created (controllers usually live on SignOffController).
     if (c != null) {
       c!.vehicleDetails.vehicleCheckDateController?.dispose();
-      c!.vehicleDetails.vehicleCheckDateController?.dispose();
-      c!.vehicleDetails.saleDateController?.dispose();
       c!.vehicleDetails.saleDateController?.dispose();
 
       for (var td in c!.tripDetails) {
-        td.controllers?.dispose();
         td.controllers?.dispose();
       }
     }
@@ -80,29 +78,36 @@ class _SignOffFormState extends State<SignOffForm> {
         style: TextStyle(color: Colors.blueAccent[700], fontSize: 15),
         cursorColor: Colors.blueAccent,
         decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
+          // translate label at render time
+          labelText: label.tr,
+          labelStyle: TextStyle(
+              color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
           filled: true,
           fillColor: enabled ? Colors.blue[50] : Colors.grey[200],
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
+            borderSide:
+            BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
+            borderSide:
+            BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
+            borderSide:
+            BorderSide(color: Colors.grey[400]!, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+          contentPadding:
+          const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
         ),
       ),
     );
   }
 
-  Widget _numField(TextEditingController ctl, String label, void Function(String)? onChanged) {
+  Widget _numField(TextEditingController ctl, String label,
+      void Function(String)? onChanged) {
     return SizedBox(
       width: 140,
       child: _styledTextField(
@@ -118,9 +123,13 @@ class _SignOffFormState extends State<SignOffForm> {
     // Ensure controllers exist
     td.controllers ??= TripControllers.fromTripDetail(td);
 
+    final tripLabel = td.tripNo == 6
+        ? '${'trip'.tr} ${'overall'.tr}' // 'overall' key may be added; fallback to 'Overall' if missing
+        : '${'trip'.tr} ${td.tripNo}';
+
     return ExpansionTile(
       tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-      title: Text('Trip ${td.tripNo == 6 ? 'Overall' : td.tripNo}'),
+      title: Text(tripLabel),
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -132,28 +141,36 @@ class _SignOffFormState extends State<SignOffForm> {
                 width: 220,
                 child: _styledTextField(
                     controller: td.controllers!.tripRoute,
-                    label: 'Trip Route',
+                    label: 'trip_route',
                     onChanged: (v) => td.tripRoute = v.isEmpty ? null : v),
               ),
               DateField(
                 controller: td.controllers!.startDate,
-                label: 'Start Date',
+                label: 'start_date',
                 onChanged: (v) => td.tripStartDate = v,
               ),
               DateField(
                 controller: td.controllers!.endDate,
-                label: 'End Date',
+                label: 'end_date',
                 onChanged: (v) => td.tripEndDate = v,
               ),
-              _numField(td.controllers!.startKm, 'Start km', (v) => td.startKm = v.isEmpty ? null : double.tryParse(v)),
-              _numField(td.controllers!.endKm, 'End km', (v) => td.endKm = v.isEmpty ? null : double.tryParse(v)),
-              _numField(td.controllers!.tripKm, 'Trip km', (v) => td.tripKm = v.isEmpty ? null : double.tryParse(v)),
-              _numField(td.controllers!.maxSpeed, 'Max speed', (v) => td.maxSpeed = v.isEmpty ? null : double.tryParse(v)),
-              _numField(td.controllers!.weightGVW, 'Weight (GVW)', (v) => td.weightGVW = v.isEmpty ? null : double.tryParse(v)),
-              _numField(td.controllers!.actualDiesel, 'Actual Diesel ltrs', (v) => td.actualDieselLtrs = v.isEmpty ? null : double.tryParse(v)),
+              _numField(td.controllers!.startKm, 'start_km',
+                      (v) => td.startKm = v.isEmpty ? null : double.tryParse(v)),
+              _numField(td.controllers!.endKm, 'end_km',
+                      (v) => td.endKm = v.isEmpty ? null : double.tryParse(v)),
+              _numField(td.controllers!.tripKm, 'trip_km',
+                      (v) => td.tripKm = v.isEmpty ? null : double.tryParse(v)),
+              _numField(td.controllers!.maxSpeed, 'max_speed',
+                      (v) => td.maxSpeed = v.isEmpty ? null : double.tryParse(v)),
+              _numField(td.controllers!.weightGVW, 'weight_gvw',
+                      (v) => td.weightGVW = v.isEmpty ? null : double.tryParse(v)),
+              _numField(td.controllers!.actualDiesel, 'actual_diesel_ltrs',
+                      (v) => td.actualDieselLtrs = v.isEmpty ? null : double.tryParse(v)),
               if (td.tripNo == 6) ...[
-                _numField(td.controllers!.totalTripKm, 'Total Trip km', (v) => td.totalTripKm = v.isEmpty ? null : double.tryParse(v)),
-                _numField(td.controllers!.actualFE, 'Actual FE (kmpl)', (v) => td.actualFE = v.isEmpty ? null : double.tryParse(v)),
+                _numField(td.controllers!.totalTripKm, 'total_trip_km',
+                        (v) => td.totalTripKm = v.isEmpty ? null : double.tryParse(v)),
+                _numField(td.controllers!.actualFE, 'actual_fe_kmpl',
+                        (v) => td.actualFE = v.isEmpty ? null : double.tryParse(v)),
               ],
             ],
           ),
@@ -173,14 +190,21 @@ class _SignOffFormState extends State<SignOffForm> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _styledTextField(controller: c!.customerName, label: 'Customer Name'),
+            _styledTextField(
+                controller: c!.customerName, label: 'customer_name'),
             Row(
               children: [
-                Expanded(child: _numField(c!.customerExpectedFE, 'Customer Expected FE', (_) {})),
+                Expanded(
+                    child: _numField(
+                        c!.customerExpectedFE, 'customer_expected_fe', (_) {})),
                 const SizedBox(width: 12),
-                Expanded(child: _numField(c!.beforeTrialsFE, 'Before Trials FE', (_) {})),
+                Expanded(
+                    child:
+                    _numField(c!.beforeTrialsFE, 'before_trials_fe', (_) {})),
                 const SizedBox(width: 12),
-                Expanded(child: _numField(c!.afterTrialsFE, 'After Trials FE', (_) {})),
+                Expanded(
+                    child:
+                    _numField(c!.afterTrialsFE, 'after_trials_fe', (_) {})),
               ],
             ),
           ],
@@ -200,7 +224,8 @@ class _SignOffFormState extends State<SignOffForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Customer & Vehicle Details', style: Theme.of(context).textTheme.titleMedium),
+            Text('customer_vehicle_details'.tr,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
@@ -209,45 +234,49 @@ class _SignOffFormState extends State<SignOffForm> {
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
-                    controller: TextEditingController(text: c!.vehicleDetails.tripDuration),
-                    label: 'Trip Duration',
+                    controller:
+                    TextEditingController(text: c!.vehicleDetails.tripDuration),
+                    label: 'trip_duration',
                     onChanged: (v) => c!.vehicleDetails.tripDuration = v,
                   ),
                 ),
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
-                    controller: TextEditingController(text: c!.vehicleDetails.vehicleNo),
-                    label: 'Vehicle no',
+                    controller:
+                    TextEditingController(text: c!.vehicleDetails.vehicleNo),
+                    label: 'vehicle_no',
                     onChanged: (v) => c!.vehicleDetails.vehicleNo = v,
                   ),
                 ),
                 DateField(
                   controller: c!.vehicleDetails.saleDateController!,
-                  label: 'Sale date',
+                  label: 'sale_date',
                   onChanged: (v) => c!.vehicleDetails.saleDate = v,
                 ),
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
                     controller: TextEditingController(text: c!.vehicleDetails.model),
-                    label: 'Model',
+                    label: 'model',
                     onChanged: (v) => c!.vehicleDetails.model = v,
                   ),
                 ),
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
-                    controller: TextEditingController(text: c!.vehicleDetails.application),
-                    label: 'Application',
+                    controller:
+                    TextEditingController(text: c!.vehicleDetails.application),
+                    label: 'application',
                     onChanged: (v) => c!.vehicleDetails.application = v,
                   ),
                 ),
                 SizedBox(
                   width: 480,
                   child: _styledTextField(
-                    controller: TextEditingController(text: c!.vehicleDetails.customerVerbatim),
-                    label: 'Customer Verbatim',
+                    controller:
+                    TextEditingController(text: c!.vehicleDetails.customerVerbatim),
+                    label: 'customer_verbatim',
                     maxLines: 2,
                     onChanged: (v) => c!.vehicleDetails.customerVerbatim = v,
                   ),
@@ -256,7 +285,7 @@ class _SignOffFormState extends State<SignOffForm> {
                   width: 480,
                   child: _styledTextField(
                     controller: TextEditingController(text: c!.vehicleDetails.tripRoute),
-                    label: 'Trip Route',
+                    label: 'trip_route',
                     onChanged: (v) => c!.vehicleDetails.tripRoute = v,
                   ),
                 ),
@@ -264,22 +293,24 @@ class _SignOffFormState extends State<SignOffForm> {
                   width: 220,
                   child: _styledTextField(
                     controller: TextEditingController(text: c!.vehicleDetails.roadType),
-                    label: 'Road type',
+                    label: 'road_type',
                     onChanged: (v) => c!.vehicleDetails.roadType = v,
                   ),
                 ),
                 DateField(
                   controller: c!.vehicleDetails.vehicleCheckDateController!,
-                  label: 'Vehicle check date',
+                  label: 'vehicle_check_date',
                   onChanged: (v) => c!.vehicleDetails.vehicleCheckDate = v,
                 ),
                 SizedBox(
                   width: 480,
                   child: _styledTextField(
-                    controller: TextEditingController(text: c!.vehicleDetails.issuesFoundOnVehicleCheck),
-                    label: 'Issues found on vehicle check',
+                    controller: TextEditingController(
+                        text: c!.vehicleDetails.issuesFoundOnVehicleCheck),
+                    label: 'issues_found_on_vehicle_check',
                     maxLines: 2,
-                    onChanged: (v) => c!.vehicleDetails.issuesFoundOnVehicleCheck = v,
+                    onChanged: (v) =>
+                    c!.vehicleDetails.issuesFoundOnVehicleCheck = v,
                   ),
                 ),
               ],
@@ -301,7 +332,7 @@ class _SignOffFormState extends State<SignOffForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Trials Details', style: Theme.of(context).textTheme.titleMedium),
+            Text('trials_details'.tr, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Obx(() => Column(children: c!.tripDetails.map(tripTile).toList())),
           ],
@@ -322,13 +353,13 @@ class _SignOffFormState extends State<SignOffForm> {
           children: [
             _styledTextField(
               controller: c!.issuesFoundDuringTrial,
-              label: 'Issues found while trial / driver habits corrected',
+              label: 'issues_found_during_trial',
               maxLines: 3,
             ),
             const SizedBox(height: 12),
-            _styledTextField(controller: c!.trialRemarks, label: 'Trial remarks', maxLines: 3),
+            _styledTextField(controller: c!.trialRemarks, label: 'trial_remarks', maxLines: 3),
             const SizedBox(height: 12),
-            _styledTextField(controller: c!.customerRemarks, label: 'Customer Remarks', maxLines: 3),
+            _styledTextField(controller: c!.customerRemarks, label: 'customer_remarks', maxLines: 3),
           ],
         ),
       ),
@@ -343,7 +374,7 @@ class _SignOffFormState extends State<SignOffForm> {
           // NOTE: prefer registering with Binding or at higher level.
           if (!Get.isRegistered<SignOffController>()) {
             // Provide instruction: user should register the real controller with required dependencies
-            Get.snackbar('Missing', 'SignOffController not registered. Use binding or register service before navigation.',
+            Get.snackbar('Error'.tr, 'missing_controller_message'.tr,
                 snackPosition: SnackPosition.BOTTOM);
           } else {
             setState(() {
@@ -356,9 +387,10 @@ class _SignOffFormState extends State<SignOffForm> {
           backgroundColor: Colors.blueAccent[700],
           foregroundColor: Colors.white,
           minimumSize: const Size(200, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        child: const Text('Retry'),
+        child: Text('retry'.tr),
       );
     }
 
@@ -372,15 +404,16 @@ class _SignOffFormState extends State<SignOffForm> {
             if (c!.canDriverSubmitNow()) {
               final result = await c!.submit(createdByRole: 'DRIVER');
               if (result != null) {
-                Get.snackbar("Submitted", "Trip submitted successfully");
+                Get.snackbar('Success'.tr, 'trip_submitted'.tr); // add trip_submitted in translations if desired
               }
             } else {
-              Get.snackbar("Saved", "Progress saved, continue later");
+              Get.snackbar('Info'.tr, 'progress_saved'.tr); // add progress_saved key if desired
             }
           } else {
             final result = await c!.submit(createdByRole: 'ADMIN');
             if (result != null) {
-              Get.offNamed('/signOffList', arguments: {"refresh": true, "updated": result});
+              Get.offNamed('/signOffList',
+                  arguments: {"refresh": true, "updated": result});
             }
           }
         },
@@ -388,16 +421,17 @@ class _SignOffFormState extends State<SignOffForm> {
           backgroundColor: Colors.blueAccent[700],
           foregroundColor: Colors.white,
           minimumSize: const Size(200, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
           c!.isSubmitting.value
-              ? 'Submitting...'
+              ? 'submit'.tr
               : c!.editingId.value == null
-              ? 'Create (${widget.submitRole})'
+              ? '${'create'.tr} (${widget.submitRole})'
               : widget.submitRole == 'DRIVER'
-              ? 'Save / Submit'
-              : 'Update (${widget.submitRole})',
+              ? 'save_submit'.tr
+              : '${'update'.tr} (${widget.submitRole})',
         ),
       ),
     );
@@ -408,18 +442,18 @@ class _SignOffFormState extends State<SignOffForm> {
     // If missing controller -> show helpful message and a retry button.
     if (_controllerMissing) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Sign Off')),
+        appBar: AppBar(title: Text('sign_off_driver'.tr)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('SignOff controller is not registered.',
-                    style: TextStyle(fontSize: 16)),
+                Text('missing_controller_message'.tr,
+                    style: const TextStyle(fontSize: 16)),
                 const SizedBox(height: 12),
-                const Text(
-                  'Register the SignOffService & SignOffController with GetX (binding or Get.put) before opening this page.',
+                Text(
+                  'register_controller_instruction'.tr,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -431,10 +465,11 @@ class _SignOffFormState extends State<SignOffForm> {
                         _controllerMissing = false;
                       });
                     } else {
-                      Get.snackbar('Info', 'You can use a Binding or call Get.put(SignOffController(...)) before navigation.');
+                      Get.snackbar('Info'.tr,
+                          'register_controller_instruction'.tr);
                     }
                   },
-                  child: const Text('Retry / Info'),
+                  child: Text('retry'.tr),
                 )
               ],
             ),
@@ -445,7 +480,9 @@ class _SignOffFormState extends State<SignOffForm> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.submitRole == 'DRIVER' ? 'Sign Off (Driver)' : 'Sign Off (Admin)'),
+        title: Text(widget.submitRole == 'DRIVER'
+            ? 'sign_off_driver'.tr
+            : 'sign_off_admin'.tr),
         backgroundColor: Colors.blueAccent[700],
         elevation: 0,
       ),
@@ -495,20 +532,24 @@ class DateField extends StatelessWidget {
           controller: controller,
           readOnly: true,
           decoration: InputDecoration(
-            labelText: label,
-            labelStyle: TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
+            labelText: label.tr,
+            labelStyle:
+            TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
             filled: true,
             fillColor: Colors.blue[50],
             suffixIcon: const Icon(Icons.calendar_today),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
+              borderSide:
+              BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
+              borderSide:
+              BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
             ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
           ),
           onTap: () async {
             DateTime initial = DateTime.now();

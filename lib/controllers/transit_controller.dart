@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -42,8 +43,12 @@ class TransitController extends GetxController {
     String? notes,
   }) async {
     try {
-      final driverId = "23b1a22b-7f62-4659-9e97-9709f385d8a3" ?? storage.read<String>("driverId");
-      if (driverId == null) {
+      // read without forcing a type, then convert to String
+      final rawDriverId = storage.read('driverId');
+      final driverId = rawDriverId?.toString();
+      debugPrint('startTransit: rawDriverId=$rawDriverId, driverId=$driverId');
+
+      if (driverId == null || driverId.isEmpty) {
         Get.snackbar("Error", "Driver not logged in");
         return;
       }
@@ -72,17 +77,27 @@ class TransitController extends GetxController {
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        currentTransitId.value = data["id"];
-        // Save to local storage so it persists
-        storage.write("currentTransitId", currentTransitId.value);
+
+        // Convert returned id to string to match your currentTransitId type
+        final returnedId = data['id'];
+        final returnedIdStr = returnedId?.toString();
+
+        currentTransitId.value = returnedIdStr;
+        // Save to local storage so it persists (store as String)
+        storage.write("currentTransitId", returnedIdStr);
+
+        debugPrint('startTransit: created transit id=$returnedIdStr');
         Get.snackbar("Success", "Transit started");
       } else {
+        debugPrint('startTransit failed: ${response.statusCode} ${response.body}');
         Get.snackbar("Error", response.body);
       }
     } catch (e) {
+      print("Error*********** $e");
       Get.snackbar("Error", e.toString());
     }
   }
+
 
   /// Complete the ongoing transit
   Future<void> completeTransit() async {
@@ -113,7 +128,7 @@ class TransitController extends GetxController {
 
   Future<Map<String, dynamic>?> getOngoingTransit() async {
     try {
-      final driverId = "23b1a22b-7f62-4659-9e97-9709f385d8a3" ?? storage.read<String>("driverId");
+      final driverId = storage.read<String>("driverId");
       if (driverId == null) return null;
 
       final response = await http.get(

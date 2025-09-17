@@ -25,7 +25,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 1,
       child: Scaffold(
         appBar: AppBar(
           title: Row(
@@ -43,14 +43,14 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
           bottom: const TabBar(
             tabs: [
               Tab(text: "Driver List"),
-              Tab(text: "Live Location"),
+              // Tab(text: "Live Location"),
             ],
           ),
         ),
         body: TabBarView(
           children: [
             _buildDriverList(),
-            const DriverLiveLocationScreen(),
+            // const DriverLiveLocationScreen(),
           ],
         ),
       ),
