@@ -31,7 +31,9 @@ class _SignOffEditScreenState extends State<SignOffEditScreen> {
     final so = SignOff.fromJson(data);
 
     c.editingId.value = so.id;
-
+    if (so.driverId.isNotEmpty) {
+      c.box.write('driverId', so.driverId); // persist driverId
+    }
     // text controllers
     c.customerName.text = so.customerName ?? '';
     c.customerExpectedFE.text = so.customerExpectedFE?.toString() ?? '';

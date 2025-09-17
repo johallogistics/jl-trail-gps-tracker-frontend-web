@@ -1,4 +1,5 @@
 // lib/services/sign_off_service.dart
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/sign_off_models/sign_off.dart';
@@ -70,7 +71,9 @@ class SignOffService {
   // get draft record for driver
   // GET current draft for this driver (backend should read driver from auth or query)
   Future<SignOff?> getDraftForDriver() async {
-    final res = await http.get(Uri.parse('$baseUrl/signoffs/draft/driver?driverId=1'));
+    final box = GetStorage();
+    final driverId = box.read('driverId') ?? '';
+    final res = await http.get(Uri.parse('$baseUrl/signoffs/draft/driver?driverId=$driverId'));
     if (res.statusCode == 200) {
       return SignOff.fromJson(jsonDecode(res.body));
     }

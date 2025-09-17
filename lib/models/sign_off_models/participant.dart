@@ -1,6 +1,6 @@
 // lib/models/participant.dart
 class ParticipantSignOff {
-  int? id;
+  String? id;
   int? signOffId;
   String role; // 'CSM','PC','DRIVER','CUSTOMER'
   String? name;

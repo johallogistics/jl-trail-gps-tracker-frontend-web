@@ -1,6 +1,7 @@
 // lib/controllers/sign_off_controller.dart
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../models/sign_off_models/participant.dart';
 import '../models/sign_off_models/photo.dart';
@@ -15,6 +16,8 @@ class SignOffController extends GetxController {
   /// UI / State
   var isSubmitting = false.obs;
   var editingId = RxnInt(); // null = new draft, non-null = existing
+
+  final box = GetStorage();
 
   /// Form controllers
   final customerName = TextEditingController();
@@ -54,19 +57,17 @@ class SignOffController extends GetxController {
       issuesFoundDuringTrial: issuesFoundDuringTrial.text.trim().isEmpty
           ? null
           : issuesFoundDuringTrial.text.trim(),
-      trialRemarks:
-      trialRemarks.text.trim().isEmpty ? null : trialRemarks.text.trim(),
-      customerRemarks: customerRemarks.text.trim().isEmpty
-          ? null
-          : customerRemarks.text.trim(),
+      trialRemarks: trialRemarks.text.trim().isEmpty ? null : trialRemarks.text.trim(),
+      customerRemarks: customerRemarks.text.trim().isEmpty ? null : customerRemarks.text.trim(),
       createdByRole: createdByRole,
       tripDetails: tripDetails,
       participants: participants,
       photos: photos,
       isSubmitted: isFinal,
-      driverId: '1',
+      driverId: (box.read('driverId') as String?) ?? participants.firstWhereOrNull((p) => p.role == 'DRIVER')?.id?.toString() ?? '',
     );
   }
+
 
   /// ------------------------
   /// Load / Create Draft
@@ -74,6 +75,7 @@ class SignOffController extends GetxController {
   Future<void> loadOrCreateDraft() async {
     try {
       final draft = await api.getDraftForDriver();
+      print("DRAFT::: data ${draft?.customerName}");
       if (draft != null) {
         _loadFromModel(draft);
       } else {
@@ -96,8 +98,13 @@ class SignOffController extends GetxController {
     issuesFoundDuringTrial.text = data.issuesFoundDuringTrial ?? '';
     trialRemarks.text = data.trialRemarks ?? '';
     customerRemarks.text = data.customerRemarks ?? '';
-    tripDetails.assignAll(data.tripDetails ??
-        [for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)]);
+
+    // trips
+    tripDetails.assignAll(data.tripDetails?.isNotEmpty == true
+        ? data.tripDetails!
+        : [for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)]);
+
+    // participants & photos
     participants.assignAll(data.participants ?? participants);
     photos.assignAll(data.photos ?? []);
   }
@@ -136,7 +143,6 @@ class SignOffController extends GetxController {
         t.tripKm != null;
   }
 
-  /// Check if DRIVER can submit final trip
   bool canDriverSubmitNow() {
     // overall trip (tripNo 6) must be fully completed
     final overallTrip = tripDetails.firstWhere((t) => t.tripNo == 6);
@@ -146,7 +152,6 @@ class SignOffController extends GetxController {
     for (var t in tripDetails.where((t) => t.tripNo != 6)) {
       if (_hasAnyTripData(t) && !_isTripComplete(t)) return false;
     }
-
     return true;
   }
 
@@ -159,7 +164,6 @@ class SignOffController extends GetxController {
         final draft = await api.createDraftForDriver(buildPayload('DRIVER'));
         editingId.value = draft.id;
       }
-
       await api.update(editingId.value!, buildPayload('DRIVER'));
       Get.snackbar('Saved', 'Progress saved successfully');
     } catch (e) {
@@ -168,7 +172,8 @@ class SignOffController extends GetxController {
   }
 
   Future<SignOff?> submit({required String createdByRole}) async {
-    if (!canDriverSubmitNow()) {
+    // Only enforce check if role == DRIVER
+    if (createdByRole == 'DRIVER' && !canDriverSubmitNow()) {
       Get.snackbar('Incomplete', 'Please complete all trip data before submitting');
       return null;
     }
@@ -183,6 +188,9 @@ class SignOffController extends GetxController {
       final payload = buildPayload(createdByRole, isFinal: true);
       final result = await api.submit(editingId.value!, payload, createdByRole);
 
+      if (result != null) {
+        _loadFromModel(result);
+      }
       Get.snackbar('Success', 'Trip submitted successfully');
       return result;
     } catch (e) {
@@ -192,4 +200,30 @@ class SignOffController extends GetxController {
       isSubmitting.value = false;
     }
   }
+
+  Future<SignOff?> updateAsAdmin() async {
+    isSubmitting.value = true;
+    try {
+      if (editingId.value == null) {
+        Get.snackbar('Error', 'No record selected to update');
+        return null;
+      }
+
+      final payload = buildPayload('ADMIN', isFinal: false); // <-- never submit
+      final result = await api.update(editingId.value!, payload);
+
+      if (result != null) {
+        _loadFromModel(result);
+      }
+      Get.snackbar('Success', 'Record updated successfully');
+      return result;
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+      return null;
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+
 }

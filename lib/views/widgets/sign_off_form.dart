@@ -1,6 +1,7 @@
 // lib/views/widgets/sign_off_form.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../controllers/sign_off_controller.dart';
 import '../../models/sign_off_models/trip_details.dart';
 
@@ -19,10 +20,13 @@ class _SignOffFormState extends State<SignOffForm> {
   @override
   void initState() {
     super.initState();
+    final box = GetStorage();
 
     // Defensive finding of controller: if missing don't crash — show info UI instead.
     try {
       c = Get.find<SignOffController>();
+      // final driverId = box.read('driverId') ?? '';
+      c!.loadOrCreateDraft();
     } catch (err) {
       // Controller not registered
       c = null;
@@ -410,7 +414,7 @@ class _SignOffFormState extends State<SignOffForm> {
               Get.snackbar('Info'.tr, 'progress_saved'.tr); // add progress_saved key if desired
             }
           } else {
-            final result = await c!.submit(createdByRole: 'ADMIN');
+            final result = await c!.updateAsAdmin();
             if (result != null) {
               Get.offNamed('/signOffList',
                   arguments: {"refresh": true, "updated": result});
