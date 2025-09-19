@@ -1,12 +1,19 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
 import '../../controllers/shift_log_controller.dart';
 import '../../models/shift_log_model.dart';
 import '../../utils/file_download_service.dart';
 
-
 class DailyReportManagement extends StatelessWidget {
   final ShiftLogController controller = Get.put(ShiftLogController());
+
+  // TODO: change to your real API base URL
+  final String apiBaseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app'; // Replace with your backend URL
 
   @override
   Widget build(BuildContext context) {
@@ -158,12 +165,6 @@ class DailyReportManagement extends StatelessWidget {
                     ),
                     DataCell(Row(
                       children: [
-                        // IconButton(
-                        //   icon: Icon(Icons.visibility),
-                        //   onPressed: () {
-                        //     // TODO: View details
-                        //   },
-                        // ),
                         IconButton(
                           icon: Icon(Icons.edit),
                           onPressed: () => _showAddShiftLogDialog(context, isEdit: true, existingLog: log),
@@ -265,6 +266,124 @@ class DailyReportManagement extends StatelessWidget {
     final selectedVehicleType = RxnString(existingLog?.capitalizedVehicleOrCustomerVehicle);
     final selectedPurposeOfTrial = RxnString(existingLog?.purposeOfTrial);
 
+    // Auto Fill helper - visible only on non-web
+    Future<void> _autoFillFromLatestReport() async {
+      final box = GetStorage();
+      final storedPhone = box.read('phone') as String?;
+      final phone = (storedPhone ?? '').trim();
+
+      if (phone.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Driver phone not found in storage. Please login or enter phone.'))
+        );
+        return;
+      }
+
+      try {
+        // Prefer explicit latest endpoint
+        var uri = Uri.parse('$apiBaseUrl/dailyReports/latest?phone=${Uri.encodeComponent(phone)}');
+        var resp = await http.get(uri);
+
+        Map<String, dynamic>? jsonResp;
+        if (resp.statusCode == 200) {
+          final body = json.decode(resp.body);
+          // support both { payload: {...} } and direct object
+          if (body is Map && body.containsKey('payload')) {
+            jsonResp = body['payload'] as Map<String, dynamic>?;
+          } else if (body is Map) {
+            jsonResp = body as Map<String, dynamic>?;
+          }
+        } else {
+          // Fallback: get list and pick latest
+          uri = Uri.parse('$apiBaseUrl/dailyReports?employeePhoneNo=${Uri.encodeComponent(phone)}');
+          resp = await http.get(uri);
+          if (resp.statusCode == 200) {
+            final body = json.decode(resp.body);
+            List items = [];
+            if (body is Map && body.containsKey('payload')) {
+              items = body['payload'] as List? ?? [];
+            } else if (body is List) {
+              items = body;
+            }
+            if (items.isNotEmpty) {
+              items.sort((a, b) {
+                final da = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final db = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+                return db.compareTo(da);
+              });
+              jsonResp = items.first as Map<String, dynamic>?;
+            } else {
+              jsonResp = null;
+            }
+          }
+        }
+
+        if (jsonResp == null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No previous report found for this driver')));
+          return;
+        }
+
+        // call your helper to populate controllers (reuse the _populateFormFromJson implemented earlier)
+        _populateFormFromJson(
+          jsonResp,
+          shiftController: shiftController,
+          otHoursController: otHoursController,
+          vehicleController: vehicleController,
+          regNoController: regNoController,
+          workingHoursController: workingHoursController,
+          startingKmController: startingKmController,
+          endingKmController: endingKmController,
+          totalKmController: totalKmController,
+          fromPlaceController: fromPlaceController,
+          toPlaceController: toPlaceController,
+          fuelAvgController: fuelAvgController,
+          coDriverNameController: coDriverNameController,
+          coDriverPhoneNoController: coDriverPhoneNoController,
+          inchargeSignController: inchargeSignController,
+          employeeNameController: employeeNameController,
+          employeePhoneNoController: employeePhoneNoController,
+          employeeCodeController: employeeCodeController,
+          monthYearController: monthYearController,
+          dicvInchargeNameController: dicvInchargeNameController,
+          dicvInchargePhoneNoController: dicvInchargePhoneNoController,
+          trailIdController: trailIdController,
+          chassisNoController: chassisNoController,
+          gvwController: gvwController,
+          payloadController: payloadController,
+          presentLocationController: presentLocationController,
+          previousKmplController: previousKmplController,
+          clusterKmplController: clusterKmplController,
+          highwaySweetSpotPercentController: highwaySweetSpotPercentController,
+          normalRoadSweetSpotPercentController: normalRoadSweetSpotPercentController,
+          hillsRoadSweetSpotPercentController: hillsRoadSweetSpotPercentController,
+          trialKMPLController: trialKMPLController,
+          vehicleOdometerStartingReadingController: vehicleOdometerStartingReadingController,
+          vehicleOdometerEndingReadingController: vehicleOdometerEndingReadingController,
+          trialKMSController: trialKMSController,
+          trialAllocationController: trialAllocationController,
+          vecvReportingPersonController: vecvReportingPersonController,
+          dealerNameController: dealerNameController,
+          customerNameController: customerNameController,
+          customerDriverNameController: customerDriverNameController,
+          customerDriverNoController: customerDriverNoController,
+          capitalizedVehicleOrCustomerVehicleController: capitalizedVehicleOrCustomerVehicleController,
+          customerVehicleController: customerVehicleController,
+          capitalizedVehicleController: capitalizedVehicleController,
+          vehicleNoController: vehicleNoController,
+          driverStatusController: driverStatusController,
+          purposeOfTrialController: purposeOfTrialController,
+          reasonController: reasonController,
+          dateOfSaleController: dateOfSaleController,
+          selectedVehicleType: selectedVehicleType,
+          selectedPurposeOfTrial: selectedPurposeOfTrial,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Form auto-filled from latest report')));
+      } catch (e, st) {
+        debugPrint('Auto-fill error: $e\n$st');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch latest report')));
+      }
+    }
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -277,8 +396,26 @@ class DailyReportManagement extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(isEdit ? 'Edit Shift Log' : 'Add Shift Log', style: Theme.of(context).textTheme.bodyMedium),
+                // Header row: title + Auto Fill button (visible only on non-web)
+                Row(
+                  children: [
+                    Expanded(child: Text(isEdit ? 'Edit Shift Log' : 'Add Shift Log', style: Theme.of(context).textTheme.bodyMedium)),
+                    if (!kIsWeb) ...[
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.flash_on),
+                        label: Text('Auto Fill'),
+                        onPressed: _autoFillFromLatestReport,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orangeAccent,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
                 const SizedBox(height: 16),
+
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6.0),
                   child: Obx(() {
@@ -490,6 +627,7 @@ class DailyReportManagement extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildStyledTextField({
     required TextEditingController controller,
     required String label,
@@ -520,4 +658,130 @@ class DailyReportManagement extends StatelessWidget {
     );
   }
 
+  // Helper to populate controllers from JSON payload (best-effort mapping)
+  void _populateFormFromJson(
+      Map<String, dynamic> src, {
+        required TextEditingController shiftController,
+        required TextEditingController otHoursController,
+        required TextEditingController vehicleController,
+        required TextEditingController regNoController,
+        required TextEditingController workingHoursController,
+        required TextEditingController startingKmController,
+        required TextEditingController endingKmController,
+        required TextEditingController totalKmController,
+        required TextEditingController fromPlaceController,
+        required TextEditingController toPlaceController,
+        required TextEditingController fuelAvgController,
+        required TextEditingController coDriverNameController,
+        required TextEditingController coDriverPhoneNoController,
+        required TextEditingController inchargeSignController,
+        required TextEditingController employeeNameController,
+        required TextEditingController employeePhoneNoController,
+        required TextEditingController employeeCodeController,
+        required TextEditingController monthYearController,
+        required TextEditingController dicvInchargeNameController,
+        required TextEditingController dicvInchargePhoneNoController,
+        required TextEditingController trailIdController,
+        required TextEditingController chassisNoController,
+        required TextEditingController gvwController,
+        required TextEditingController payloadController,
+        required TextEditingController presentLocationController,
+        required TextEditingController previousKmplController,
+        required TextEditingController clusterKmplController,
+        required TextEditingController highwaySweetSpotPercentController,
+        required TextEditingController normalRoadSweetSpotPercentController,
+        required TextEditingController hillsRoadSweetSpotPercentController,
+        required TextEditingController trialKMPLController,
+        required TextEditingController vehicleOdometerStartingReadingController,
+        required TextEditingController vehicleOdometerEndingReadingController,
+        required TextEditingController trialKMSController,
+        required TextEditingController trialAllocationController,
+        required TextEditingController vecvReportingPersonController,
+        required TextEditingController dealerNameController,
+        required TextEditingController customerNameController,
+        required TextEditingController customerDriverNameController,
+        required TextEditingController customerDriverNoController,
+        required TextEditingController capitalizedVehicleOrCustomerVehicleController,
+        required TextEditingController customerVehicleController,
+        required TextEditingController capitalizedVehicleController,
+        required TextEditingController vehicleNoController,
+        required TextEditingController driverStatusController,
+        required TextEditingController purposeOfTrialController,
+        required TextEditingController reasonController,
+        required TextEditingController dateOfSaleController,
+        required RxnString selectedVehicleType,
+        required RxnString selectedPurposeOfTrial,
+      }) {
+    // Simple safe reads with fallback to empty strings
+    shiftController.text = src['shift']?.toString() ?? '';
+    otHoursController.text = src['otHours']?.toString() ?? '0';
+    vehicleController.text = src['vehicleModel']?.toString() ?? '';
+    regNoController.text = src['regNo']?.toString() ?? '';
+    workingHoursController.text = src['workingHours']?.toString() ?? '0';
+    startingKmController.text = src['startingKm']?.toString() ?? '0';
+    endingKmController.text = src['endingKm']?.toString() ?? '0';
+    totalKmController.text = src['totalKm']?.toString() ?? '0';
+    fromPlaceController.text = src['fromPlace']?.toString() ?? '';
+    toPlaceController.text = src['toPlace']?.toString() ?? '';
+    fuelAvgController.text = src['fuelAvg']?.toString() ?? '0';
+    coDriverNameController.text = src['coDriverName']?.toString() ?? '';
+    coDriverPhoneNoController.text = src['coDriverPhoneNo']?.toString() ?? '';
+    inchargeSignController.text = src['inchargeSign']?.toString() ?? '';
+    employeeNameController.text = src['employeeName']?.toString() ?? '';
+    employeePhoneNoController.text = src['employeePhoneNo']?.toString() ?? '';
+    employeeCodeController.text = src['employeeCode']?.toString() ?? '';
+    monthYearController.text = src['monthYear']?.toString() ?? '';
+    dicvInchargeNameController.text = src['dicvInchargeName']?.toString() ?? '';
+    dicvInchargePhoneNoController.text = src['dicvInchargePhoneNo']?.toString() ?? '';
+    trailIdController.text = src['trailId']?.toString() ?? '';
+    chassisNoController.text = src['chassisNo']?.toString() ?? '';
+    gvwController.text = src['gvw']?.toString() ?? '0';
+    payloadController.text = src['payload']?.toString() ?? '0';
+    presentLocationController.text = src['presentLocation']?.toString() ?? '';
+    previousKmplController.text = src['previousKmpl']?.toString() ?? '0';
+    clusterKmplController.text = src['clusterKmpl']?.toString() ?? '0';
+    highwaySweetSpotPercentController.text = src['highwaySweetSpotPercent']?.toString() ?? '0';
+    normalRoadSweetSpotPercentController.text = src['normalRoadSweetSpotPercent']?.toString() ?? '0';
+    hillsRoadSweetSpotPercentController.text = src['hillsRoadSweetSpotPercent']?.toString() ?? '0';
+    trialKMPLController.text = src['trialKMPL']?.toString() ?? '';
+    vehicleOdometerStartingReadingController.text = src['vehicleOdometerStartingReading']?.toString() ?? '';
+    vehicleOdometerEndingReadingController.text = src['vehicleOdometerEndingReading']?.toString() ?? '';
+    trialKMSController.text = src['trialKMS']?.toString() ?? '';
+    trialAllocationController.text = src['trialAllocation']?.toString() ?? '';
+    vecvReportingPersonController.text = src['vecvReportingPerson']?.toString() ?? '';
+    dealerNameController.text = src['dealerName']?.toString() ?? '';
+    customerNameController.text = src['customerName']?.toString() ?? '';
+    customerDriverNameController.text = src['customerDriverName']?.toString() ?? '';
+    customerDriverNoController.text = src['customerDriverNo']?.toString() ?? '';
+    capitalizedVehicleOrCustomerVehicleController.text = src['capitalizedVehicleOrCustomerVehicle']?.toString() ?? '';
+    customerVehicleController.text = src['customerVehicle']?.toString() ?? '';
+    capitalizedVehicleController.text = src['capitalizedVehicle']?.toString() ?? '';
+    vehicleNoController.text = src['vehicleNo']?.toString() ?? '';
+    driverStatusController.text = src['driverStatus']?.toString() ?? '';
+    purposeOfTrialController.text = src['purposeOfTrial']?.toString() ?? '';
+    reasonController.text = src['reason']?.toString() ?? '';
+    dateOfSaleController.text = src['dateOfSale']?.toString() ?? '';
+
+    // Set reactive dropdown values where applicable
+    final typeVal = src['capitalizedVehicleOrCustomerVehicle']?.toString();
+    if (typeVal == 'Customer Vehicle' || typeVal == 'Capitalized Vehicle') {
+      selectedVehicleType.value = typeVal;
+    } else {
+      selectedVehicleType.value = null;
+    }
+
+    final purposeVal = src['purposeOfTrial']?.toString();
+    // check it's in allowed lists
+    final allowedCustomerPurposes = [
+      'Post Sale Live Training (Familiarization with product)',
+      'Post Sale FE Trial',
+      'Low Fuel Mileage issue'
+    ];
+    final allowedCapitalizedPurposes = ['Demo', 'Pre Sale FE Trial'];
+    if (allowedCustomerPurposes.contains(purposeVal) || allowedCapitalizedPurposes.contains(purposeVal)) {
+      selectedPurposeOfTrial.value = purposeVal;
+    } else {
+      selectedPurposeOfTrial.value = null;
+    }
+  }
 }

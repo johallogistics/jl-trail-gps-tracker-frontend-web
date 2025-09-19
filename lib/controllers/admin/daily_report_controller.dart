@@ -92,4 +92,6 @@ class ShiftLogRepository {
 
     return response.statusCode == 200;
   }
+
+
 }

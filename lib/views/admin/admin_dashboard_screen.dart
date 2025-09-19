@@ -13,6 +13,7 @@ import 'package:trail_tracker/views/admin/driver_manageement_screen.dart';
 // NEW: Live transit screen you created earlier
 import 'package:trail_tracker/views/driver_live_transit_screen.dart';
 
+import '../../controllers/shift_log_controller.dart';
 import '../../utils/image_upload_service.dart';
 
 class DashboardController extends GetxController {
@@ -55,6 +56,7 @@ class DashboardController extends GetxController {
 
 class DashboardScreen extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
+  final ShiftLogController shiftLogController = Get.put(ShiftLogController());
 
   final List<Widget Function()> pageBuilders = [
         () => DashboardHomeScreen(),
@@ -160,6 +162,9 @@ class DashboardScreen extends StatelessWidget {
       selectedTileColor: Colors.blue.shade200,
       onTap: () {
         controller.changePage(index);
+        if (index == 3) {
+          shiftLogController.fetchShiftLogs();
+        }
       },
     ));
   }
