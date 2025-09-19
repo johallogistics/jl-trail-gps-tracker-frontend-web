@@ -47,6 +47,8 @@ class _SplashScreenState extends State<SplashScreen> {
     // If no phone stored -> first time -> ask for phone
     if (storedPhone == null) {
       debugPrint('Splash: no stored phone -> ask for phone');
+      print("STORED:::::::::::::::: $storedPhone");
+
       Get.off(() => PhoneNumberScreen());
       return;
     }

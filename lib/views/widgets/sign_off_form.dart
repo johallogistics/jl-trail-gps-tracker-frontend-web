@@ -25,7 +25,6 @@ class _SignOffFormState extends State<SignOffForm> {
     // Defensive finding of controller: if missing don't crash — show info UI instead.
     try {
       c = Get.find<SignOffController>();
-      // final driverId = box.read('driverId') ?? '';
       c!.loadOrCreateDraft();
     } catch (err) {
       // Controller not registered
@@ -70,50 +69,56 @@ class _SignOffFormState extends State<SignOffForm> {
     bool enabled = true,
     void Function(String)? onChanged,
     TextInputType? keyboardType,
+    double? width,
   }) {
-    return Padding(
+    final child = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        enabled: enabled,
-        keyboardType: keyboardType,
-        onChanged: onChanged,
-        style: TextStyle(color: Colors.blueAccent[700], fontSize: 15),
-        cursorColor: Colors.blueAccent,
-        decoration: InputDecoration(
-          // translate label at render time
-          labelText: label.tr,
-          labelStyle: TextStyle(
-              color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
-          filled: true,
-          fillColor: enabled ? Colors.blue[50] : Colors.grey[200],
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-            BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.tr, style: TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            maxLines: maxLines,
+            enabled: enabled,
+            keyboardType: keyboardType,
+            onChanged: onChanged,
+            style: TextStyle(color: Colors.blueAccent[700], fontSize: 15),
+            cursorColor: Colors.blueAccent,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: enabled ? Colors.blue[50] : Colors.grey[200],
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[400]!, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 12.0),
+            ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-            BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
-          ),
-          disabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-            BorderSide(color: Colors.grey[400]!, width: 1.5),
-          ),
-          contentPadding:
-          const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-        ),
+        ],
       ),
     );
+
+    if (width != null) {
+      return SizedBox(width: width, child: child);
+    }
+    return child;
   }
 
   Widget _numField(TextEditingController ctl, String label,
-      void Function(String)? onChanged) {
+      void Function(String)? onChanged,
+      {double? width}) {
     return SizedBox(
-      width: 140,
+      width: width ?? 140,
       child: _styledTextField(
         controller: ctl,
         label: label,
@@ -128,18 +133,26 @@ class _SignOffFormState extends State<SignOffForm> {
     td.controllers ??= TripControllers.fromTripDetail(td);
 
     final tripLabel = td.tripNo == 6
-        ? '${'trip'.tr} ${'overall'.tr}' // 'overall' key may be added; fallback to 'Overall' if missing
+        ? '${'trip'.tr} ${'overall'.tr}'
         : '${'trip'.tr} ${td.tripNo}';
 
     return ExpansionTile(
-      tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-      title: Text(tripLabel),
+      tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      title: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 0, maxWidth: double.infinity),
+        child: Text(
+          tripLabel,
+          softWrap: true,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Wrap(
             spacing: 12,
             runSpacing: 12,
+            alignment: WrapAlignment.start,
             children: [
               SizedBox(
                 width: 220,
@@ -194,21 +207,15 @@ class _SignOffFormState extends State<SignOffForm> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _styledTextField(
-                controller: c!.customerName, label: 'customer_name'),
-            Row(
+            _styledTextField(controller: c!.customerName, label: 'customer_name'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
               children: [
-                Expanded(
-                    child: _numField(
-                        c!.customerExpectedFE, 'customer_expected_fe', (_) {})),
-                const SizedBox(width: 12),
-                Expanded(
-                    child:
-                    _numField(c!.beforeTrialsFE, 'before_trials_fe', (_) {})),
-                const SizedBox(width: 12),
-                Expanded(
-                    child:
-                    _numField(c!.afterTrialsFE, 'after_trials_fe', (_) {})),
+                SizedBox(width: 220, child: _numField(c!.customerExpectedFE, 'customer_expected_fe', (_) {})),
+                SizedBox(width: 220, child: _numField(c!.beforeTrialsFE, 'before_trials_fe', (_) {})),
+                SizedBox(width: 220, child: _numField(c!.afterTrialsFE, 'after_trials_fe', (_) {})),
               ],
             ),
           ],
@@ -228,8 +235,7 @@ class _SignOffFormState extends State<SignOffForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('customer_vehicle_details'.tr,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text('customer_vehicle_details'.tr, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
@@ -238,8 +244,7 @@ class _SignOffFormState extends State<SignOffForm> {
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
-                    controller:
-                    TextEditingController(text: c!.vehicleDetails.tripDuration),
+                    controller: TextEditingController(text: c!.vehicleDetails.tripDuration),
                     label: 'trip_duration',
                     onChanged: (v) => c!.vehicleDetails.tripDuration = v,
                   ),
@@ -247,8 +252,7 @@ class _SignOffFormState extends State<SignOffForm> {
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
-                    controller:
-                    TextEditingController(text: c!.vehicleDetails.vehicleNo),
+                    controller: TextEditingController(text: c!.vehicleDetails.vehicleNo),
                     label: 'vehicle_no',
                     onChanged: (v) => c!.vehicleDetails.vehicleNo = v,
                   ),
@@ -269,8 +273,7 @@ class _SignOffFormState extends State<SignOffForm> {
                 SizedBox(
                   width: 220,
                   child: _styledTextField(
-                    controller:
-                    TextEditingController(text: c!.vehicleDetails.application),
+                    controller: TextEditingController(text: c!.vehicleDetails.application),
                     label: 'application',
                     onChanged: (v) => c!.vehicleDetails.application = v,
                   ),
@@ -278,8 +281,7 @@ class _SignOffFormState extends State<SignOffForm> {
                 SizedBox(
                   width: 480,
                   child: _styledTextField(
-                    controller:
-                    TextEditingController(text: c!.vehicleDetails.customerVerbatim),
+                    controller: TextEditingController(text: c!.vehicleDetails.customerVerbatim),
                     label: 'customer_verbatim',
                     maxLines: 2,
                     onChanged: (v) => c!.vehicleDetails.customerVerbatim = v,
@@ -309,12 +311,10 @@ class _SignOffFormState extends State<SignOffForm> {
                 SizedBox(
                   width: 480,
                   child: _styledTextField(
-                    controller: TextEditingController(
-                        text: c!.vehicleDetails.issuesFoundOnVehicleCheck),
+                    controller: TextEditingController(text: c!.vehicleDetails.issuesFoundOnVehicleCheck),
                     label: 'issues_found_on_vehicle_check',
                     maxLines: 2,
-                    onChanged: (v) =>
-                    c!.vehicleDetails.issuesFoundOnVehicleCheck = v,
+                    onChanged: (v) => c!.vehicleDetails.issuesFoundOnVehicleCheck = v,
                   ),
                 ),
               ],
@@ -375,11 +375,9 @@ class _SignOffFormState extends State<SignOffForm> {
       return ElevatedButton(
         onPressed: () {
           // Attempt to register controller in-place if missing (quick dev fallback).
-          // NOTE: prefer registering with Binding or at higher level.
           if (!Get.isRegistered<SignOffController>()) {
             // Provide instruction: user should register the real controller with required dependencies
-            Get.snackbar('Error'.tr, 'missing_controller_message'.tr,
-                snackPosition: SnackPosition.BOTTOM);
+            Get.snackbar('Error'.tr, 'missing_controller_message'.tr, snackPosition: SnackPosition.BOTTOM);
           } else {
             setState(() {
               c = Get.find<SignOffController>();
@@ -391,8 +389,7 @@ class _SignOffFormState extends State<SignOffForm> {
           backgroundColor: Colors.blueAccent[700],
           foregroundColor: Colors.white,
           minimumSize: const Size(200, 48),
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text('retry'.tr),
       );
@@ -408,16 +405,15 @@ class _SignOffFormState extends State<SignOffForm> {
             if (c!.canDriverSubmitNow()) {
               final result = await c!.submit(createdByRole: 'DRIVER');
               if (result != null) {
-                Get.snackbar('Success'.tr, 'trip_submitted'.tr); // add trip_submitted in translations if desired
+                Get.snackbar('Success'.tr, 'trip_submitted'.tr);
               }
             } else {
-              Get.snackbar('Info'.tr, 'progress_saved'.tr); // add progress_saved key if desired
+              Get.snackbar('Info'.tr, 'progress_saved'.tr);
             }
           } else {
             final result = await c!.updateAsAdmin();
             if (result != null) {
-              Get.offNamed('/signOffList',
-                  arguments: {"refresh": true, "updated": result});
+              Get.offNamed('/signOffList', arguments: {"refresh": true, "updated": result});
             }
           }
         },
@@ -425,8 +421,7 @@ class _SignOffFormState extends State<SignOffForm> {
           backgroundColor: Colors.blueAccent[700],
           foregroundColor: Colors.white,
           minimumSize: const Size(200, 48),
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
           c!.isSubmitting.value
@@ -453,13 +448,9 @@ class _SignOffFormState extends State<SignOffForm> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('missing_controller_message'.tr,
-                    style: const TextStyle(fontSize: 16)),
+                Text('missing_controller_message'.tr, style: const TextStyle(fontSize: 16)),
                 const SizedBox(height: 12),
-                Text(
-                  'register_controller_instruction'.tr,
-                  textAlign: TextAlign.center,
-                ),
+                Text('register_controller_instruction'.tr, textAlign: TextAlign.center),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
@@ -469,8 +460,7 @@ class _SignOffFormState extends State<SignOffForm> {
                         _controllerMissing = false;
                       });
                     } else {
-                      Get.snackbar('Info'.tr,
-                          'register_controller_instruction'.tr);
+                      Get.snackbar('Info'.tr, 'register_controller_instruction'.tr);
                     }
                   },
                   child: Text('retry'.tr),
@@ -484,9 +474,7 @@ class _SignOffFormState extends State<SignOffForm> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.submitRole == 'DRIVER'
-            ? 'sign_off_driver'.tr
-            : 'sign_off_admin'.tr),
+        title: Text(widget.submitRole == 'DRIVER' ? 'sign_off_driver'.tr : 'sign_off_admin'.tr),
         backgroundColor: Colors.blueAccent[700],
         elevation: 0,
       ),
@@ -515,65 +503,110 @@ class _SignOffFormState extends State<SignOffForm> {
 }
 
 /// Safe date picker field using internal BuildContext
+/// DateField: multi-line readOnly field so long text is always visible (no ellipsis)
+/// Multi-line, always-visible date display with calendar picker.
+/// Shows label above the field and a wrapping text area (no ellipsis).
 class DateField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final void Function(String) onChanged;
+  final double? width; // optional
 
   const DateField({
     super.key,
     required this.controller,
     required this.label,
     required this.onChanged,
+    this.width,
   });
+
+  Future<void> _pickDate(BuildContext ctx) async {
+    DateTime initial = DateTime.now();
+    if (controller.text.isNotEmpty) {
+      final parsed = DateTime.tryParse(controller.text);
+      if (parsed != null) initial = parsed;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: ctx,
+      initialDate: initial,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final val = picked.toIso8601String().split('T').first;
+      controller.text = val;
+      onChanged(val);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      child: Builder(
-        builder: (ctx) => TextField(
-          controller: controller,
-          readOnly: true,
-          decoration: InputDecoration(
-            labelText: label.tr,
-            labelStyle:
-            TextStyle(color: Colors.blueAccent[700], fontWeight: FontWeight.bold),
-            filled: true,
-            fillColor: Colors.blue[50],
-            suffixIcon: const Icon(Icons.calendar_today),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-              BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-              BorderSide(color: Colors.blueAccent[700]!, width: 2.0),
-            ),
-            contentPadding:
-            const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-          ),
-          onTap: () async {
-            DateTime initial = DateTime.now();
-            if (controller.text.isNotEmpty) {
-              final parsed = DateTime.tryParse(controller.text);
-              if (parsed != null) initial = parsed;
-            }
-
-            DateTime? picked = await showDatePicker(
-              context: ctx,
-              initialDate: initial,
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-            );
-            if (picked != null) {
-              controller.text = picked.toIso8601String().split('T').first;
-              onChanged(controller.text);
-            }
-          },
+    final field = InkWell(
+      onTap: () => _pickDate(context),
+      child: Container(
+        decoration: BoxDecoration(
+          // match your other fields visual style
+          color: Colors.blue[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.blueAccent.shade100, width: 1.2),
         ),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // AnimatedBuilder listens to controller and rebuilds when text changes
+            Expanded(
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (_, __) {
+                  final text = controller.text;
+                  if (text.isEmpty) {
+                    return Text(
+                      '-', // placeholder
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    );
+                  }
+                  return SelectableText(
+                    text,
+                    maxLines: null, // allow wrapping
+                    textAlign: TextAlign.left,
+                    style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(width: 8),
+            // calendar icon (tappable)
+            GestureDetector(
+              onTap: () => _pickDate(context),
+              child: Icon(Icons.calendar_today, color: Colors.blueAccent[700]),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return SizedBox(
+      width: width ?? 220,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Always-visible label above (localized)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6.0),
+            child: Text(
+              label.tr,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent[700],
+              ),
+            ),
+          ),
+          // Field that shows wrapping text; outer InkWell handles taps
+          field,
+        ],
       ),
     );
   }

@@ -87,7 +87,7 @@ class DailyReportManagement extends StatelessWidget {
                   DataColumn(label: Text('Cap. Cust/Vehicle')),
                   DataColumn(label: Text('Co-Driver')),
                   DataColumn(label: Text('Co-Driver Phone')),
-                  DataColumn(label: Text('Incharge Sign')),
+                  // DataColumn(label: Text('Incharge Sign')),
                   DataColumn(label: Text('Employee Name')),
                   DataColumn(label: Text('Employee Phone')),
                   DataColumn(label: Text('Employee Code')),
@@ -143,7 +143,7 @@ class DailyReportManagement extends StatelessWidget {
                     DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
                     DataCell(Text(log.coDriverName)),
                     DataCell(Text(log.coDriverPhoneNo)),
-                    DataCell(Text(log.inchargeSign)),
+                    // DataCell(Text(log.inchargeSign)),
                     DataCell(Text(log.employeeName)),
                     DataCell(Text(log.employeePhoneNo)),
                     DataCell(Text(log.employeeCode)),
@@ -269,121 +269,101 @@ class DailyReportManagement extends StatelessWidget {
     // Auto Fill helper - visible only on non-web
     Future<void> _autoFillFromLatestReport() async {
       final box = GetStorage();
-      final storedPhone = box.read('phone') as String?;
-      final phone = (storedPhone ?? '').trim();
+      final storedPhone = (box.read('phone') as String?)?.trim() ?? '';
 
-      if (phone.isEmpty) {
+      if (storedPhone.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Driver phone not found in storage. Please login or enter phone.'))
+            SnackBar(content: Text('Driver phone not found in storage.'))
         );
         return;
       }
 
-      try {
-        // Prefer explicit latest endpoint
-        var uri = Uri.parse('$apiBaseUrl/dailyReports/latest?phone=${Uri.encodeComponent(phone)}');
-        var resp = await http.get(uri);
+      // Decide whether you want to enforce leading + on client side.
+      // If storedPhone already contains +, this will encode it as %2B.
+      final encodedPhone = Uri.encodeComponent(storedPhone);
 
-        Map<String, dynamic>? jsonResp;
+      print("STORED:::::::::::::::: $storedPhone");
+
+      final uri = Uri.parse('https://jl-trail-gps-tracker-backend-production.up.railway.app/dailyReports/latest?phone=$encodedPhone');
+
+      try {
+        final resp = await http.get(uri);
         if (resp.statusCode == 200) {
           final body = json.decode(resp.body);
-          // support both { payload: {...} } and direct object
-          if (body is Map && body.containsKey('payload')) {
-            jsonResp = body['payload'] as Map<String, dynamic>?;
-          } else if (body is Map) {
-            jsonResp = body as Map<String, dynamic>?;
-          }
-        } else {
-          // Fallback: get list and pick latest
-          uri = Uri.parse('$apiBaseUrl/dailyReports?employeePhoneNo=${Uri.encodeComponent(phone)}');
-          resp = await http.get(uri);
-          if (resp.statusCode == 200) {
-            final body = json.decode(resp.body);
-            List items = [];
-            if (body is Map && body.containsKey('payload')) {
-              items = body['payload'] as List? ?? [];
-            } else if (body is List) {
-              items = body;
-            }
-            if (items.isNotEmpty) {
-              items.sort((a, b) {
-                final da = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-                final db = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-                return db.compareTo(da);
-              });
-              jsonResp = items.first as Map<String, dynamic>?;
-            } else {
-              jsonResp = null;
-            }
-          }
-        }
+          final Map<String, dynamic>? payload = (body is Map && body['payload'] != null) ? body['payload'] as Map<String, dynamic> : (body is Map ? body as Map<String, dynamic> : null);
 
-        if (jsonResp == null) {
+          if (payload == null) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No payload returned')));
+            return;
+          }
+
+          // call the helper you already have (make sure it's in scope)
+          _populateFormFromJson(
+            payload,
+            shiftController: shiftController,
+            otHoursController: otHoursController,
+            vehicleController: vehicleController,
+            regNoController: regNoController,
+            workingHoursController: workingHoursController,
+            startingKmController: startingKmController,
+            endingKmController: endingKmController,
+            totalKmController: totalKmController,
+            fromPlaceController: fromPlaceController,
+            toPlaceController: toPlaceController,
+            fuelAvgController: fuelAvgController,
+            coDriverNameController: coDriverNameController,
+            coDriverPhoneNoController: coDriverPhoneNoController,
+            inchargeSignController: inchargeSignController,
+            employeeNameController: employeeNameController,
+            employeePhoneNoController: employeePhoneNoController,
+            employeeCodeController: employeeCodeController,
+            monthYearController: monthYearController,
+            dicvInchargeNameController: dicvInchargeNameController,
+            dicvInchargePhoneNoController: dicvInchargePhoneNoController,
+            trailIdController: trailIdController,
+            chassisNoController: chassisNoController,
+            gvwController: gvwController,
+            payloadController: payloadController,
+            presentLocationController: presentLocationController,
+            previousKmplController: previousKmplController,
+            clusterKmplController: clusterKmplController,
+            highwaySweetSpotPercentController: highwaySweetSpotPercentController,
+            normalRoadSweetSpotPercentController: normalRoadSweetSpotPercentController,
+            hillsRoadSweetSpotPercentController: hillsRoadSweetSpotPercentController,
+            trialKMPLController: trialKMPLController,
+            vehicleOdometerStartingReadingController: vehicleOdometerStartingReadingController,
+            vehicleOdometerEndingReadingController: vehicleOdometerEndingReadingController,
+            trialKMSController: trialKMSController,
+            trialAllocationController: trialAllocationController,
+            vecvReportingPersonController: vecvReportingPersonController,
+            dealerNameController: dealerNameController,
+            customerNameController: customerNameController,
+            customerDriverNameController: customerDriverNameController,
+            customerDriverNoController: customerDriverNoController,
+            capitalizedVehicleOrCustomerVehicleController: capitalizedVehicleOrCustomerVehicleController,
+            customerVehicleController: customerVehicleController,
+            capitalizedVehicleController: capitalizedVehicleController,
+            vehicleNoController: vehicleNoController,
+            driverStatusController: driverStatusController,
+            purposeOfTrialController: purposeOfTrialController,
+            reasonController: reasonController,
+            dateOfSaleController: dateOfSaleController,
+            selectedVehicleType: selectedVehicleType,
+            selectedPurposeOfTrial: selectedPurposeOfTrial,
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Auto-fill successful')));
+        } else if (resp.statusCode == 404) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No previous report found for this driver')));
-          return;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Server error: ${resp.statusCode}')));
         }
-
-        // call your helper to populate controllers (reuse the _populateFormFromJson implemented earlier)
-        _populateFormFromJson(
-          jsonResp,
-          shiftController: shiftController,
-          otHoursController: otHoursController,
-          vehicleController: vehicleController,
-          regNoController: regNoController,
-          workingHoursController: workingHoursController,
-          startingKmController: startingKmController,
-          endingKmController: endingKmController,
-          totalKmController: totalKmController,
-          fromPlaceController: fromPlaceController,
-          toPlaceController: toPlaceController,
-          fuelAvgController: fuelAvgController,
-          coDriverNameController: coDriverNameController,
-          coDriverPhoneNoController: coDriverPhoneNoController,
-          inchargeSignController: inchargeSignController,
-          employeeNameController: employeeNameController,
-          employeePhoneNoController: employeePhoneNoController,
-          employeeCodeController: employeeCodeController,
-          monthYearController: monthYearController,
-          dicvInchargeNameController: dicvInchargeNameController,
-          dicvInchargePhoneNoController: dicvInchargePhoneNoController,
-          trailIdController: trailIdController,
-          chassisNoController: chassisNoController,
-          gvwController: gvwController,
-          payloadController: payloadController,
-          presentLocationController: presentLocationController,
-          previousKmplController: previousKmplController,
-          clusterKmplController: clusterKmplController,
-          highwaySweetSpotPercentController: highwaySweetSpotPercentController,
-          normalRoadSweetSpotPercentController: normalRoadSweetSpotPercentController,
-          hillsRoadSweetSpotPercentController: hillsRoadSweetSpotPercentController,
-          trialKMPLController: trialKMPLController,
-          vehicleOdometerStartingReadingController: vehicleOdometerStartingReadingController,
-          vehicleOdometerEndingReadingController: vehicleOdometerEndingReadingController,
-          trialKMSController: trialKMSController,
-          trialAllocationController: trialAllocationController,
-          vecvReportingPersonController: vecvReportingPersonController,
-          dealerNameController: dealerNameController,
-          customerNameController: customerNameController,
-          customerDriverNameController: customerDriverNameController,
-          customerDriverNoController: customerDriverNoController,
-          capitalizedVehicleOrCustomerVehicleController: capitalizedVehicleOrCustomerVehicleController,
-          customerVehicleController: customerVehicleController,
-          capitalizedVehicleController: capitalizedVehicleController,
-          vehicleNoController: vehicleNoController,
-          driverStatusController: driverStatusController,
-          purposeOfTrialController: purposeOfTrialController,
-          reasonController: reasonController,
-          dateOfSaleController: dateOfSaleController,
-          selectedVehicleType: selectedVehicleType,
-          selectedPurposeOfTrial: selectedPurposeOfTrial,
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Form auto-filled from latest report')));
-      } catch (e, st) {
-        debugPrint('Auto-fill error: $e\n$st');
+      } catch (e) {
+        debugPrint('Auto-fill error: $e');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch latest report')));
       }
     }
+
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -522,7 +502,7 @@ class DailyReportManagement extends StatelessWidget {
                 _buildStyledTextField(controller: trialAllocationController, label: 'Trial Allocation'),
                 _buildStyledTextField(controller: coDriverNameController, label: 'Co-Driver Name'),
                 _buildStyledTextField(controller: coDriverPhoneNoController, label: 'Co-Driver Phone No'),
-                _buildStyledTextField(controller: inchargeSignController, label: 'Incharge Sign'),
+                // _buildStyledTextField(controller: inchargeSignController, label: 'Incharge Sign'),
                 _buildStyledTextField(controller: employeeNameController, label: 'Employee Name'),
                 _buildStyledTextField(controller: employeePhoneNoController, label: 'Employee Phone No'),
                 _buildStyledTextField(controller: employeeCodeController, label: 'Employee Code'),
