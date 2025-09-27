@@ -752,7 +752,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             ),
 
             // Region field (text)
-            buildLabeledField('Region', controller.regionController),
+            buildLabeledField('region'.tr, controller.regionController),
 
             buildLabeledField(
                 'purpose_other'.tr, controller.purposeOfTrialController),
@@ -848,6 +848,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     final shiftLog = ShiftLog(
       id: widget.existingLog?.id,
       shift: controller.shiftController.text.trim(),
+      region: controller.regionController.text.trim(),
       otHours: _parseInt(controller.otHoursController.text.trim()),
       inTime: _tryParseDateTime(controller.inTimeController.text.trim()),
       outTime: _tryParseDateTime(controller.outTimeController.text.trim()),

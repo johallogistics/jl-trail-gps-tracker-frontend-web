@@ -57,194 +57,137 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
           //   ),
           // ),
           Expanded(
-            child: Obx(() => Scrollbar(
-              controller: _verticalController,
-              thumbVisibility: true,
-              child: SingleChildScrollView(
+            child: Obx(() {
+              final _verticalController = ScrollController();
+              final _horizontalController = ScrollController();
+
+              return Scrollbar(
                 controller: _verticalController,
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('S.NO')),
-                    DataColumn(label: Text('REGION')),
-                    DataColumn(label: Text('EMP CODE')),
-                    DataColumn(label: Text('DRIVER NAME')),
-                    DataColumn(label: Text('Allocation')),
-                    DataColumn(label: Text('Contact No.')),
-                    DataColumn(label: Text('Designation')),
-                    DataColumn(label: Text('Native Place')),
-                    DataColumn(label: Text('Available at')),
-                    DataColumn(label: Text('Driver Status')),
-                    DataColumn(label: Text('Capitalized Vehicle/Customer Vehicle')),
-                    DataColumn(label: Text('Purpose of Trial')),
-                    DataColumn(label: Text('Reason, If Others')),
-                    DataColumn(label: Text('Date Of Sale')),
-                    DataColumn(label: Text('VECV reporting Person')),
-                    DataColumn(label: Text('Dealer Name')),
-                    DataColumn(label: Text('Customer Name')),
-                    DataColumn(label: Text('Customer Driver Name')),
-                    DataColumn(label: Text('Customer Driver No')),
-                    DataColumn(label: Text('Present location')),
-                    DataColumn(label: Text('Vehicle No')),
-                    DataColumn(label: Text('Chassis No')),
-                    DataColumn(label: Text('Vehicle Model')),
-                    DataColumn(label: Text('GVW')),
-                    DataColumn(label: Text('Payload')),
-                    DataColumn(label: Text('Previous KMPL')),
-                    DataColumn(label: Text('Trial KMPL')),
-                    DataColumn(label: Text('cluster KMPL')),
-                    DataColumn(label: Text('Vehicle Odometer - Start')),
-                    DataColumn(label: Text('Vehicle Odometer - End')),
-                    DataColumn(label: Text('Trial KMS')),
-                    DataColumn(label: Text('HighWay Sweet Spot %')),
-                    DataColumn(label: Text('Normal Road Sweet Spot %')),
-                    DataColumn(label: Text('Hills Road Sweet Spot %')),
-                    DataColumn(label: Text('Trial Allocation')),
-                    DataColumn(label: Text('Media')),
-                    DataColumn(label: Text('Actions')),
-                  ],
-                  rows: controller.shiftLogs.map((log) {
-                    return DataRow(cells: [
-                      // NOTE: mapping assumptions below — change as required.
-                      //  S.NO
-                      DataCell(Text(log.id?.toString() ?? '')),
-
-                      // REGION
-                      DataCell(Text(log.region ?? '-')),
-
-                      // EMP CODE  -> ShiftLog.employeeCode
-                      DataCell(Text(log.employeeCode)),
-
-                      // DRIVER NAME -> ShiftLog.employeeName
-                      DataCell(Text(log.employeeName)),
-
-                      // Allocation -> ShiftLog.trialAllocation
-                      DataCell(Text(log.allocation.toString())),
-
-                      // Contact No. -> employeePhoneNo
-                      DataCell(Text(log.employeePhoneNo)),
-
-                      // Designation -> ASSUMED mapping: capitalizedVehicle (no explicit designation field available)
-                      // If you have a separate designation field, replace this with that.
-                      DataCell(Text(log.capitalizedVehicle)),
-
-                      // Native Place -> presentLocation
-                      DataCell(Text(log.presentLocation)),
-
-                      // Available at -> fromPlace (you can change to toPlace if preferred)
-                      DataCell(Text(log.fromPlace)),
-
-                      // Driver Status -> driverStatus
-                      DataCell(Text(log.driverStatus)),
-
-                      // Capitalized Vehicle/Customer Vehicle -> capitalizedVehicleOrCustomerVehicle
-                      DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
-
-                      // Purpose of Trial -> purposeOfTrial
-                      DataCell(Text(log.purposeOfTrial)),
-
-                      // Reason, If Others -> reason
-                      DataCell(Text(log.reason)),
-
-                      // Date Of Sale -> dateOfSale
-                      DataCell(Text(log.dateOfSale)),
-
-                      // VECV reporting Person -> vecvReportingPerson
-                      DataCell(Text(log.vecvReportingPerson)),
-
-                      // Dealer Name -> dealerName
-                      DataCell(Text(log.dealerName)),
-
-                      // Customer Name -> customerName
-                      DataCell(Text(log.customerName)),
-
-                      // Customer Driver Name -> customerDriverName
-                      DataCell(Text(log.customerDriverName)),
-
-                      // Customer Driver No -> customerDriverNo
-                      DataCell(Text(log.customerDriverNo)),
-
-                      // Present location -> presentLocation (duplicate kept because requested)
-                      DataCell(Text(log.presentLocation)),
-
-                      // Vehicle No -> vehicleNo
-                      DataCell(Text(log.vehicleNo)),
-
-                      // Chassis No -> chassisNo
-                      DataCell(Text(log.chassisNo)),
-
-                      // Vehicle Model -> vehicleModel
-                      DataCell(Text(log.vehicleModel)),
-
-                      // GVW -> gvw
-                      DataCell(Text(log.gvw.toString())),
-
-                      // Payload -> payload
-                      DataCell(Text(log.payload.toString())),
-
-                      // Previous KMPL -> previousKmpl
-                      DataCell(Text(log.previousKmpl.toString())),
-
-                      // Trial KMPL -> trialKMPL
-                      DataCell(Text(log.trialKMPL)),
-
-                      // cluster KMPL -> clusterKmpl
-                      DataCell(Text(log.clusterKmpl.toString())),
-
-                      // Vehicle Odometer - Start -> vehicleOdometerStartingReading
-                      DataCell(Text(log.vehicleOdometerStartingReading)),
-
-                      // Vehicle Odometer - End -> vehicleOdometerEndingReading
-                      DataCell(Text(log.vehicleOdometerEndingReading)),
-
-                      // Trial KMS -> trialKMS
-                      DataCell(Text(log.trialKMS)),
-
-                      // HighWay Sweet Spot % -> highwaySweetSpotPercent
-                      DataCell(Text(log.highwaySweetSpotPercent.toString())),
-
-                      // Normal Road Sweet Spot % -> normalRoadSweetSpotPercent
-                      DataCell(Text(log.normalRoadSweetSpotPercent.toString())),
-
-                      // Hills Road Sweet Spot % -> hillsRoadSweetSpotPercent
-                      DataCell(Text(log.hillsRoadSweetSpotPercent.toString())),
-
-                      // Trial Allocation (again) -> trialAllocation
-                      DataCell(Text(log.trialAllocation)),
-
-                      // Media (download icon)
-                      DataCell(
-                        log.imageVideoUrls.isEmpty
-                            ? Icon(Icons.insert_drive_file, color: Colors.grey)
-                            : IconButton(
-                          icon: Icon(Icons.download, color: Colors.blue),
-                          onPressed: () async {
-                            for (var url in log.imageVideoUrls) {
-                              await downloadFileFromUrl(url);
-                            }
-                          },
-                        ),
-                      ),
-
-                      // Actions (edit/delete)
-                      DataCell(Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.edit),
-                            onPressed: () => _showAddShiftLogDialog(context, isEdit: true, existingLog: log),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _confirmDelete(context, log.id!),
-                          ),
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _verticalController,
+                  scrollDirection: Axis.vertical,
+                  child: Scrollbar(
+                    controller: _horizontalController,
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      controller: _horizontalController,
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columns: const [
+                          DataColumn(label: Text('S.NO')),
+                          DataColumn(label: Text('REGION')),
+                          DataColumn(label: Text('EMP CODE')),
+                          DataColumn(label: Text('DRIVER NAME')),
+                          DataColumn(label: Text('Allocation')),
+                          DataColumn(label: Text('Contact No.')),
+                          DataColumn(label: Text('Designation')),
+                          DataColumn(label: Text('Native Place')),
+                          DataColumn(label: Text('Available at')),
+                          DataColumn(label: Text('Driver Status')),
+                          DataColumn(label: Text('Capitalized Vehicle/Customer Vehicle')),
+                          DataColumn(label: Text('Purpose of Trial')),
+                          DataColumn(label: Text('Reason, If Others')),
+                          DataColumn(label: Text('Date Of Sale')),
+                          DataColumn(label: Text('VECV reporting Person')),
+                          DataColumn(label: Text('Dealer Name')),
+                          DataColumn(label: Text('Customer Name')),
+                          DataColumn(label: Text('Customer Driver Name')),
+                          DataColumn(label: Text('Customer Driver No')),
+                          DataColumn(label: Text('Present location')),
+                          DataColumn(label: Text('Vehicle No')),
+                          DataColumn(label: Text('Chassis No')),
+                          DataColumn(label: Text('Vehicle Model')),
+                          DataColumn(label: Text('GVW')),
+                          DataColumn(label: Text('Payload')),
+                          DataColumn(label: Text('Previous KMPL')),
+                          DataColumn(label: Text('Trial KMPL')),
+                          DataColumn(label: Text('cluster KMPL')),
+                          DataColumn(label: Text('Vehicle Odometer - Start')),
+                          DataColumn(label: Text('Vehicle Odometer - End')),
+                          DataColumn(label: Text('Trial KMS')),
+                          DataColumn(label: Text('HighWay Sweet Spot %')),
+                          DataColumn(label: Text('Normal Road Sweet Spot %')),
+                          DataColumn(label: Text('Hills Road Sweet Spot %')),
+                          DataColumn(label: Text('Trial Allocation')),
+                          DataColumn(label: Text('Media')),
+                          DataColumn(label: Text('Actions')),
                         ],
-                      )),
-                    ]);
-                  }).toList(),
+                        rows: controller.shiftLogs.map((log) {
+                          return DataRow(cells: [
+                            DataCell(Text(log.id?.toString() ?? '')),
+                            DataCell(Text(log.region ?? '-')),
+                            DataCell(Text(log.employeeCode)),
+                            DataCell(Text(log.employeeName)),
+                            DataCell(Text(log.allocation ?? '-')),
+                            DataCell(Text(log.employeePhoneNo)),
+                            DataCell(Text(log.capitalizedVehicle)),
+                            DataCell(Text(log.presentLocation)),
+                            DataCell(Text(log.fromPlace)),
+                            DataCell(Text(log.driverStatus)),
+                            DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
+                            DataCell(Text(log.purposeOfTrial)),
+                            DataCell(Text(log.reason)),
+                            DataCell(Text(log.dateOfSale)),
+                            DataCell(Text(log.vecvReportingPerson)),
+                            DataCell(Text(log.dealerName)),
+                            DataCell(Text(log.customerName)),
+                            DataCell(Text(log.customerDriverName)),
+                            DataCell(Text(log.customerDriverNo)),
+                            DataCell(Text(log.presentLocation)),
+                            DataCell(Text(log.vehicleNo)),
+                            DataCell(Text(log.chassisNo)),
+                            DataCell(Text(log.vehicleModel)),
+                            DataCell(Text(log.gvw.toString())),
+                            DataCell(Text(log.payload.toString())),
+                            DataCell(Text(log.previousKmpl.toString())),
+                            DataCell(Text(log.trialKMPL)),
+                            DataCell(Text(log.clusterKmpl.toString())),
+                            DataCell(Text(log.vehicleOdometerStartingReading)),
+                            DataCell(Text(log.vehicleOdometerEndingReading)),
+                            DataCell(Text(log.trialKMS)),
+                            DataCell(Text(log.highwaySweetSpotPercent.toString())),
+                            DataCell(Text(log.normalRoadSweetSpotPercent.toString())),
+                            DataCell(Text(log.hillsRoadSweetSpotPercent.toString())),
+                            DataCell(Text(log.trialAllocation)),
+                            DataCell(
+                              log.imageVideoUrls.isEmpty
+                                  ? Icon(Icons.insert_drive_file, color: Colors.grey)
+                                  : IconButton(
+                                icon: Icon(Icons.download, color: Colors.blue),
+                                onPressed: () async {
+                                  for (var url in log.imageVideoUrls) {
+                                    await downloadFileFromUrl(url);
+                                  }
+                                },
+                              ),
+                            ),
+                            DataCell(Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () => _showAddShiftLogDialog(
+                                    context,
+                                    isEdit: true,
+                                    existingLog: log,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _confirmDelete(context, log.id!),
+                                ),
+                              ],
+                            )),
+                          ]);
+                        }).toList(),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            )),
+              );
+            }),
           ),
+          SizedBox(height: 20,)
         ],
       ),
       floatingActionButton: FloatingActionButton(
