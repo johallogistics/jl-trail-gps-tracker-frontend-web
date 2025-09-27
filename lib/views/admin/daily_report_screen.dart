@@ -8,12 +8,29 @@ import 'package:http/http.dart' as http;
 import '../../controllers/shift_log_controller.dart';
 import '../../models/shift_log_model.dart';
 import '../../utils/file_download_service.dart';
+import '../daily_report_screen.dart';
 
-class DailyReportManagement extends StatelessWidget {
+class DailyReportManagement extends StatefulWidget {
+  @override
+  State<DailyReportManagement> createState() => _DailyReportManagementState();
+}
+
+class _DailyReportManagementState extends State<DailyReportManagement> {
   final ShiftLogController controller = Get.put(ShiftLogController());
 
+  final ScrollController _horizontalController = ScrollController();
+  final ScrollController _verticalController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalController.dispose();
+    _verticalController.dispose();
+    super.dispose();
+  }
+
   // TODO: change to your real API base URL
-  final String apiBaseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app'; // Replace with your backend URL
+  final String apiBaseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app';
+  // Replace with your backend URL
 
   @override
   Widget build(BuildContext context) {
@@ -30,157 +47,204 @@ class DailyReportManagement extends StatelessWidget {
       )),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
-              onChanged: (query) {
-                // TODO: Implement search functionality
-              },
-            ),
-          ),
+          // Padding(
+          //   padding: EdgeInsets.all(8.0),
+          //   child: TextField(
+          //     decoration: InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
+          //     onChanged: (query) {
+          //       // TODO: Implement search functionality
+          //     },
+          //   ),
+          // ),
           Expanded(
-            child: Obx(() => SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('ID')),
-                  DataColumn(label: Text('Shift')),
-                  DataColumn(label: Text('OT Hours')),
-                  DataColumn(label: Text('Vehicle')),
-                  DataColumn(label: Text('Reg No')),
-                  DataColumn(label: Text('Chassis No')),
-                  DataColumn(label: Text('GVW')),
-                  DataColumn(label: Text('Payload')),
-                  DataColumn(label: Text('Vehicle No')),
-                  DataColumn(label: Text('In Time')),
-                  DataColumn(label: Text('Out Time')),
-                  DataColumn(label: Text('Working Hours')),
-                  DataColumn(label: Text('Starting KM')),
-                  DataColumn(label: Text('Ending KM')),
-                  DataColumn(label: Text('Total KM')),
-                  DataColumn(label: Text('From')),
-                  DataColumn(label: Text('To')),
-                  DataColumn(label: Text('Present Location')),
-                  DataColumn(label: Text('Fuel Avg')),
-                  DataColumn(label: Text('Prev KMPL')),
-                  DataColumn(label: Text('Trial KMPL')),
-                  DataColumn(label: Text('Cluster KMPL')),
-                  DataColumn(label: Text('Trial KMS')),
-                  DataColumn(label: Text('ODO Start')),
-                  DataColumn(label: Text('ODO End')),
-                  DataColumn(label: Text('Sweet Spot HW')),
-                  DataColumn(label: Text('Sweet Spot NR')),
-                  DataColumn(label: Text('Sweet Spot Hill')),
-                  DataColumn(label: Text('Trial Allocation')),
-                  DataColumn(label: Text('Purpose')),
-                  DataColumn(label: Text('Reason')),
-                  DataColumn(label: Text('Date of Sale')),
-                  DataColumn(label: Text('Customer Name')),
-                  DataColumn(label: Text('Customer Driver')),
-                  DataColumn(label: Text('Customer Driver No')),
-                  DataColumn(label: Text('Dealer Name')),
-                  DataColumn(label: Text('VECV Reporting')),
-                  DataColumn(label: Text('Driver Status')),
-                  DataColumn(label: Text('Customer Vehicle')),
-                  DataColumn(label: Text('Cap. Vehicle')),
-                  DataColumn(label: Text('Cap. Cust/Vehicle')),
-                  DataColumn(label: Text('Co-Driver')),
-                  DataColumn(label: Text('Co-Driver Phone')),
-                  // DataColumn(label: Text('Incharge Sign')),
-                  DataColumn(label: Text('Employee Name')),
-                  DataColumn(label: Text('Employee Phone')),
-                  DataColumn(label: Text('Employee Code')),
-                  DataColumn(label: Text('Month-Year')),
-                  DataColumn(label: Text('DICV Incharge')),
-                  DataColumn(label: Text('DICV Phone')),
-                  DataColumn(label: Text('Trail ID')),
-                  DataColumn(label: Text('Media')),
-                  DataColumn(label: Text('Actions')),
-                ],
-                rows: controller.shiftLogs.map((log) {
-                  return DataRow(cells: [
-                    DataCell(Text(log.id?.toString() ?? '')),
-                    DataCell(Text(log.shift)),
-                    DataCell(Text(log.otHours.toString())),
-                    DataCell(Text(log.vehicleModel)),
-                    DataCell(Text(log.regNo)),
-                    DataCell(Text(log.chassisNo)),
-                    DataCell(Text(log.gvw.toString())),
-                    DataCell(Text(log.payload.toString())),
-                    DataCell(Text(log.vehicleNo)),
-                    DataCell(Text(log.inTime.toString())),
-                    DataCell(Text(log.outTime.toString())),
-                    DataCell(Text(log.workingHours.toString())),
-                    DataCell(Text(log.startingKm.toString())),
-                    DataCell(Text(log.endingKm.toString())),
-                    DataCell(Text(log.totalKm.toString())),
-                    DataCell(Text(log.fromPlace)),
-                    DataCell(Text(log.toPlace)),
-                    DataCell(Text(log.presentLocation)),
-                    DataCell(Text(log.fuelAvg.toString())),
-                    DataCell(Text(log.previousKmpl.toString())),
-                    DataCell(Text(log.trialKMPL)),
-                    DataCell(Text(log.clusterKmpl.toString())),
-                    DataCell(Text(log.trialKMS)),
-                    DataCell(Text(log.vehicleOdometerStartingReading)),
-                    DataCell(Text(log.vehicleOdometerEndingReading)),
-                    DataCell(Text(log.highwaySweetSpotPercent.toString())),
-                    DataCell(Text(log.normalRoadSweetSpotPercent.toString())),
-                    DataCell(Text(log.hillsRoadSweetSpotPercent.toString())),
-                    DataCell(Text(log.trialAllocation)),
-                    DataCell(Text(log.purposeOfTrial)),
-                    DataCell(Text(log.reason)),
-                    DataCell(Text(log.dateOfSale)),
-                    DataCell(Text(log.customerName)),
-                    DataCell(Text(log.customerDriverName)),
-                    DataCell(Text(log.customerDriverNo)),
-                    DataCell(Text(log.dealerName)),
-                    DataCell(Text(log.vecvReportingPerson)),
-                    DataCell(Text(log.driverStatus)),
-                    DataCell(Text(log.customerVehicle)),
-                    DataCell(Text(log.capitalizedVehicle)),
-                    DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
-                    DataCell(Text(log.coDriverName)),
-                    DataCell(Text(log.coDriverPhoneNo)),
-                    // DataCell(Text(log.inchargeSign)),
-                    DataCell(Text(log.employeeName)),
-                    DataCell(Text(log.employeePhoneNo)),
-                    DataCell(Text(log.employeeCode)),
-                    DataCell(Text(log.monthYear)),
-                    DataCell(Text(log.dicvInchargeName)),
-                    DataCell(Text(log.dicvInchargePhoneNo)),
-                    DataCell(Text(log.trailId)),
-                    DataCell(
-                      log.imageVideoUrls.isEmpty
-                          ? Icon(Icons.insert_drive_file, color: Colors.grey)
-                          : IconButton(
-                        icon: Icon(Icons.download, color: Colors.blue),
-                        onPressed: () async {
-                          for (var url in log.imageVideoUrls) {
-                            await downloadFileFromUrl(url);
-                          }
-                        },
+            child: Obx(() => Scrollbar(
+              controller: _verticalController,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _verticalController,
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('S.NO')),
+                    DataColumn(label: Text('REGION')),
+                    DataColumn(label: Text('EMP CODE')),
+                    DataColumn(label: Text('DRIVER NAME')),
+                    DataColumn(label: Text('Allocation')),
+                    DataColumn(label: Text('Contact No.')),
+                    DataColumn(label: Text('Designation')),
+                    DataColumn(label: Text('Native Place')),
+                    DataColumn(label: Text('Available at')),
+                    DataColumn(label: Text('Driver Status')),
+                    DataColumn(label: Text('Capitalized Vehicle/Customer Vehicle')),
+                    DataColumn(label: Text('Purpose of Trial')),
+                    DataColumn(label: Text('Reason, If Others')),
+                    DataColumn(label: Text('Date Of Sale')),
+                    DataColumn(label: Text('VECV reporting Person')),
+                    DataColumn(label: Text('Dealer Name')),
+                    DataColumn(label: Text('Customer Name')),
+                    DataColumn(label: Text('Customer Driver Name')),
+                    DataColumn(label: Text('Customer Driver No')),
+                    DataColumn(label: Text('Present location')),
+                    DataColumn(label: Text('Vehicle No')),
+                    DataColumn(label: Text('Chassis No')),
+                    DataColumn(label: Text('Vehicle Model')),
+                    DataColumn(label: Text('GVW')),
+                    DataColumn(label: Text('Payload')),
+                    DataColumn(label: Text('Previous KMPL')),
+                    DataColumn(label: Text('Trial KMPL')),
+                    DataColumn(label: Text('cluster KMPL')),
+                    DataColumn(label: Text('Vehicle Odometer - Start')),
+                    DataColumn(label: Text('Vehicle Odometer - End')),
+                    DataColumn(label: Text('Trial KMS')),
+                    DataColumn(label: Text('HighWay Sweet Spot %')),
+                    DataColumn(label: Text('Normal Road Sweet Spot %')),
+                    DataColumn(label: Text('Hills Road Sweet Spot %')),
+                    DataColumn(label: Text('Trial Allocation')),
+                    DataColumn(label: Text('Media')),
+                    DataColumn(label: Text('Actions')),
+                  ],
+                  rows: controller.shiftLogs.map((log) {
+                    return DataRow(cells: [
+                      // NOTE: mapping assumptions below — change as required.
+                      //  S.NO
+                      DataCell(Text(log.id?.toString() ?? '')),
+
+                      // REGION
+                      DataCell(Text(log.region ?? '-')),
+
+                      // EMP CODE  -> ShiftLog.employeeCode
+                      DataCell(Text(log.employeeCode)),
+
+                      // DRIVER NAME -> ShiftLog.employeeName
+                      DataCell(Text(log.employeeName)),
+
+                      // Allocation -> ShiftLog.trialAllocation
+                      DataCell(Text(log.allocation.toString())),
+
+                      // Contact No. -> employeePhoneNo
+                      DataCell(Text(log.employeePhoneNo)),
+
+                      // Designation -> ASSUMED mapping: capitalizedVehicle (no explicit designation field available)
+                      // If you have a separate designation field, replace this with that.
+                      DataCell(Text(log.capitalizedVehicle)),
+
+                      // Native Place -> presentLocation
+                      DataCell(Text(log.presentLocation)),
+
+                      // Available at -> fromPlace (you can change to toPlace if preferred)
+                      DataCell(Text(log.fromPlace)),
+
+                      // Driver Status -> driverStatus
+                      DataCell(Text(log.driverStatus)),
+
+                      // Capitalized Vehicle/Customer Vehicle -> capitalizedVehicleOrCustomerVehicle
+                      DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
+
+                      // Purpose of Trial -> purposeOfTrial
+                      DataCell(Text(log.purposeOfTrial)),
+
+                      // Reason, If Others -> reason
+                      DataCell(Text(log.reason)),
+
+                      // Date Of Sale -> dateOfSale
+                      DataCell(Text(log.dateOfSale)),
+
+                      // VECV reporting Person -> vecvReportingPerson
+                      DataCell(Text(log.vecvReportingPerson)),
+
+                      // Dealer Name -> dealerName
+                      DataCell(Text(log.dealerName)),
+
+                      // Customer Name -> customerName
+                      DataCell(Text(log.customerName)),
+
+                      // Customer Driver Name -> customerDriverName
+                      DataCell(Text(log.customerDriverName)),
+
+                      // Customer Driver No -> customerDriverNo
+                      DataCell(Text(log.customerDriverNo)),
+
+                      // Present location -> presentLocation (duplicate kept because requested)
+                      DataCell(Text(log.presentLocation)),
+
+                      // Vehicle No -> vehicleNo
+                      DataCell(Text(log.vehicleNo)),
+
+                      // Chassis No -> chassisNo
+                      DataCell(Text(log.chassisNo)),
+
+                      // Vehicle Model -> vehicleModel
+                      DataCell(Text(log.vehicleModel)),
+
+                      // GVW -> gvw
+                      DataCell(Text(log.gvw.toString())),
+
+                      // Payload -> payload
+                      DataCell(Text(log.payload.toString())),
+
+                      // Previous KMPL -> previousKmpl
+                      DataCell(Text(log.previousKmpl.toString())),
+
+                      // Trial KMPL -> trialKMPL
+                      DataCell(Text(log.trialKMPL)),
+
+                      // cluster KMPL -> clusterKmpl
+                      DataCell(Text(log.clusterKmpl.toString())),
+
+                      // Vehicle Odometer - Start -> vehicleOdometerStartingReading
+                      DataCell(Text(log.vehicleOdometerStartingReading)),
+
+                      // Vehicle Odometer - End -> vehicleOdometerEndingReading
+                      DataCell(Text(log.vehicleOdometerEndingReading)),
+
+                      // Trial KMS -> trialKMS
+                      DataCell(Text(log.trialKMS)),
+
+                      // HighWay Sweet Spot % -> highwaySweetSpotPercent
+                      DataCell(Text(log.highwaySweetSpotPercent.toString())),
+
+                      // Normal Road Sweet Spot % -> normalRoadSweetSpotPercent
+                      DataCell(Text(log.normalRoadSweetSpotPercent.toString())),
+
+                      // Hills Road Sweet Spot % -> hillsRoadSweetSpotPercent
+                      DataCell(Text(log.hillsRoadSweetSpotPercent.toString())),
+
+                      // Trial Allocation (again) -> trialAllocation
+                      DataCell(Text(log.trialAllocation)),
+
+                      // Media (download icon)
+                      DataCell(
+                        log.imageVideoUrls.isEmpty
+                            ? Icon(Icons.insert_drive_file, color: Colors.grey)
+                            : IconButton(
+                          icon: Icon(Icons.download, color: Colors.blue),
+                          onPressed: () async {
+                            for (var url in log.imageVideoUrls) {
+                              await downloadFileFromUrl(url);
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                    DataCell(Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => _showAddShiftLogDialog(context, isEdit: true, existingLog: log),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _confirmDelete(context, log.id!),
-                        ),
-                      ],
-                    )),
-                  ]);
-                }).toList(),
+
+                      // Actions (edit/delete)
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit),
+                            onPressed: () => _showAddShiftLogDialog(context, isEdit: true, existingLog: log),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _confirmDelete(context, log.id!),
+                          ),
+                        ],
+                      )),
+                    ]);
+                  }).toList(),
+                ),
               ),
             )),
           ),
-
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -263,6 +327,7 @@ class DailyReportManagement extends StatelessWidget {
     final purposeOfTrialController = TextEditingController(text: existingLog?.purposeOfTrial ?? '');
     final reasonController = TextEditingController(text: existingLog?.reason ?? '');
     final dateOfSaleController = TextEditingController(text: existingLog?.dateOfSale ?? '');
+    final regionController = TextEditingController(text: existingLog?.region ?? ''); // NEW
     final selectedVehicleType = RxnString(existingLog?.capitalizedVehicleOrCustomerVehicle);
     final selectedPurposeOfTrial = RxnString(existingLog?.purposeOfTrial);
 
@@ -348,6 +413,7 @@ class DailyReportManagement extends StatelessWidget {
             purposeOfTrialController: purposeOfTrialController,
             reasonController: reasonController,
             dateOfSaleController: dateOfSaleController,
+            regionController: regionController, // NEW
             selectedVehicleType: selectedVehicleType,
             selectedPurposeOfTrial: selectedPurposeOfTrial,
           );
@@ -368,274 +434,19 @@ class DailyReportManagement extends StatelessWidget {
       context: context,
       builder: (_) => Dialog(
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 600, // set custom width
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header row: title + Auto Fill button (visible only on non-web)
-                Row(
-                  children: [
-                    Expanded(child: Text(isEdit ? 'Edit Shift Log' : 'Add Shift Log', style: Theme.of(context).textTheme.bodyMedium)),
-                    if (!kIsWeb) ...[
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        icon: Icon(Icons.flash_on),
-                        label: Text('Auto Fill'),
-                        onPressed: _autoFillFromLatestReport,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6.0),
-                  child: Obx(() {
-                    // make sure the value is one of the allowed items or null
-                    final items = ['Customer Vehicle', 'Capitalized Vehicle'];
-                    final currentValue = items.contains(selectedVehicleType.value) ? selectedVehicleType.value : null;
-                    return DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: 'Capitalized Vehicle/Customer Vehicle',
-                        labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
-                        filled: true,
-                        fillColor: Colors.blue[50],
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
-                        ),
-                      ),
-                      style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
-                      value: currentValue,
-                      items: items.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
-                      onChanged: (val) {
-                        selectedVehicleType.value = val;
-                        selectedPurposeOfTrial.value = null; // Reset purpose when type changes
-                      },
-                    );
-                  }),
-                ),
-
-                const SizedBox(height: 12),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6.0),
-                  child: Obx(() {
-                    final type = selectedVehicleType.value;
-                    List<String> purposes = [];
-                    if (type == 'Customer Vehicle') {
-                      purposes = [
-                        'Post Sale Live Training (Familiarization with product)',
-                        'Post Sale FE Trial',
-                        'Low Fuel Mileage issue',
-                      ];
-                    } else if (type == 'Capitalized Vehicle') {
-                      purposes = [
-                        'Demo',
-                        'Pre Sale FE Trial',
-                      ];
-                    }
-                    // guard selected purpose: must be in current purposes or null
-                    final currentPurpose = purposes.contains(selectedPurposeOfTrial.value) ? selectedPurposeOfTrial.value : null;
-
-                    return DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: 'Purpose of Trial',
-                        labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
-                        filled: true,
-                        fillColor: Colors.blue[50],
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
-                        ),
-                      ),
-                      style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
-                      value: currentPurpose,
-                      items: purposes.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
-                      onChanged: (val) => selectedPurposeOfTrial.value = val,
-                    );
-                  }),
-                ),
-
-                _buildStyledTextField(controller: shiftController, label: 'Shift'),
-                _buildStyledTextField(controller: otHoursController, label: 'OT Hours', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: vehicleController, label: 'Vehicle Model'),
-                _buildStyledTextField(controller: regNoController, label: 'Registration No'),
-                _buildStyledTextField(controller: chassisNoController, label: 'Chassis No'),
-                _buildStyledTextField(controller: gvwController, label: 'GVW', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: payloadController, label: 'Payload', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: workingHoursController, label: 'Working Hours', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: startingKmController, label: 'Starting KM', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: endingKmController, label: 'Ending KM', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: totalKmController, label: 'Total KM', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: fromPlaceController, label: 'From Place'),
-                _buildStyledTextField(controller: toPlaceController, label: 'To Place'),
-                _buildStyledTextField(controller: presentLocationController, label: 'Present Location'),
-                _buildStyledTextField(controller: fuelAvgController, label: 'Fuel Avg', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: previousKmplController, label: 'Previous KMPL', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: clusterKmplController, label: 'Cluster KMPL', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: highwaySweetSpotPercentController, label: 'Highway Sweet Spot %', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: normalRoadSweetSpotPercentController, label: 'Normal Road Sweet Spot %', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: hillsRoadSweetSpotPercentController, label: 'Hills Road Sweet Spot %', keyboardType: TextInputType.number),
-                _buildStyledTextField(controller: trialKMPLController, label: 'Trial KMPL'),
-                _buildStyledTextField(controller: vehicleOdometerStartingReadingController, label: 'Odometer Start Reading'),
-                _buildStyledTextField(controller: vehicleOdometerEndingReadingController, label: 'Odometer End Reading'),
-                _buildStyledTextField(controller: trialKMSController, label: 'Trial KMS'),
-                _buildStyledTextField(controller: trialAllocationController, label: 'Trial Allocation'),
-                _buildStyledTextField(controller: coDriverNameController, label: 'Co-Driver Name'),
-                _buildStyledTextField(controller: coDriverPhoneNoController, label: 'Co-Driver Phone No'),
-                // _buildStyledTextField(controller: inchargeSignController, label: 'Incharge Sign'),
-                _buildStyledTextField(controller: employeeNameController, label: 'Employee Name'),
-                _buildStyledTextField(controller: employeePhoneNoController, label: 'Employee Phone No'),
-                _buildStyledTextField(controller: employeeCodeController, label: 'Employee Code'),
-                _buildStyledTextField(controller: monthYearController, label: 'Month & Year'),
-                _buildStyledTextField(controller: dicvInchargeNameController, label: 'DICV Incharge Name'),
-                _buildStyledTextField(controller: dicvInchargePhoneNoController, label: 'DICV Incharge Phone No'),
-                _buildStyledTextField(controller: vecvReportingPersonController, label: 'VECV Reporting Person'),
-                _buildStyledTextField(controller: dealerNameController, label: 'Dealer Name'),
-                _buildStyledTextField(controller: customerNameController, label: 'Customer Name'),
-                _buildStyledTextField(controller: customerDriverNameController, label: 'Customer Driver Name'),
-                _buildStyledTextField(controller: customerDriverNoController, label: 'Customer Driver No'),
-                _buildStyledTextField(controller: capitalizedVehicleOrCustomerVehicleController, label: 'Capitalized Customer Vehicle'),
-                _buildStyledTextField(controller: customerVehicleController, label: 'Customer Vehicle'),
-                _buildStyledTextField(controller: capitalizedVehicleController, label: 'Capitalized Vehicle'),
-                _buildStyledTextField(controller: vehicleNoController, label: 'Vehicle No'),
-                _buildStyledTextField(controller: driverStatusController, label: 'Driver Status'),
-                _buildStyledTextField(controller: purposeOfTrialController, label: 'Purpose of Trial'),
-                _buildStyledTextField(controller: reasonController, label: 'Reason'),
-                _buildStyledTextField(controller: dateOfSaleController, label: 'Date of Sale'),
-                _buildStyledTextField(controller: trailIdController, label: 'Trail ID'),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        final shiftLog = ShiftLog(
-                          id: existingLog?.id,
-                          shift: shiftController.text,
-                          otHours: int.tryParse(otHoursController.text) ?? 0,
-                          vehicleModel: vehicleController.text,
-                          regNo: regNoController.text,
-                          chassisNo: chassisNoController.text,
-                          gvw: double.tryParse(gvwController.text) ?? 0.0,
-                          payload: double.tryParse(payloadController.text) ?? 0.0,
-                          inTime: DateTime.now(),
-                          outTime: DateTime.now(),
-                          workingHours: int.tryParse(workingHoursController.text) ?? 0,
-                          startingKm: int.tryParse(startingKmController.text) ?? 0,
-                          endingKm: int.tryParse(endingKmController.text) ?? 0,
-                          totalKm: int.tryParse(totalKmController.text) ?? 0,
-                          presentLocation: presentLocationController.text,
-                          fromPlace: fromPlaceController.text,
-                          toPlace: toPlaceController.text,
-                          fuelAvg: double.tryParse(fuelAvgController.text) ?? 0,
-                          previousKmpl: double.tryParse(previousKmplController.text) ?? 0,
-                          clusterKmpl: double.tryParse(clusterKmplController.text) ?? 0,
-                          highwaySweetSpotPercent: double.tryParse(highwaySweetSpotPercentController.text) ?? 0,
-                          normalRoadSweetSpotPercent: double.tryParse(normalRoadSweetSpotPercentController.text) ?? 0,
-                          hillsRoadSweetSpotPercent: double.tryParse(hillsRoadSweetSpotPercentController.text) ?? 0,
-                          trialKMPL: trialKMPLController.text,
-                          vehicleOdometerStartingReading: vehicleOdometerStartingReadingController.text,
-                          vehicleOdometerEndingReading: vehicleOdometerEndingReadingController.text,
-                          trialKMS: trialKMSController.text,
-                          trialAllocation: trialAllocationController.text,
-                          coDriverName: coDriverNameController.text,
-                          coDriverPhoneNo: coDriverPhoneNoController.text,
-                          inchargeSign: inchargeSignController.text,
-                          employeeName: employeeNameController.text,
-                          employeePhoneNo: employeePhoneNoController.text,
-                          employeeCode: employeeCodeController.text,
-                          monthYear: monthYearController.text,
-                          dicvInchargeName: dicvInchargeNameController.text,
-                          dicvInchargePhoneNo: dicvInchargePhoneNoController.text,
-                          vecvReportingPerson: vecvReportingPersonController.text,
-                          dealerName: dealerNameController.text,
-                          customerName: customerNameController.text,
-                          customerDriverName: customerDriverNameController.text,
-                          customerDriverNo: customerDriverNoController.text,
-                          capitalizedVehicleOrCustomerVehicle: selectedVehicleType.value ?? '',
-                          customerVehicle: customerVehicleController.text,
-                          capitalizedVehicle: capitalizedVehicleController.text,
-                          vehicleNo: vehicleNoController.text,
-                          driverStatus: driverStatusController.text,
-                          purposeOfTrial: selectedPurposeOfTrial.value ?? '',
-                          reason: reasonController.text,
-                          dateOfSale: dateOfSaleController.text,
-                          trailId: trailIdController.text,
-                          createdAt: existingLog?.createdAt ?? DateTime.now(),
-                          updatedAt: DateTime.now(),
-                          imageVideoUrls: [], // Populate appropriately if needed
-                        );
-
-                        if (isEdit) {
-                          controller.editShiftLog(shiftLog);
-                        } else {
-                          controller.addShiftLog(shiftLog);
-                        }
-
-                        Navigator.of(context).pop();
-                      },
-                      child: Text(isEdit ? 'Update' : 'Add'),
-                    ),
-                  ],
-                )
-              ],
-            ),
+          constraints: BoxConstraints(maxWidth: 900, maxHeight: 780),
+          child: SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: DailyReportScreen(
+              isEdit: isEdit,
+              existingLog: existingLog,
+            ), // <-- pass existingLog & isEdit flag
           ),
         ),
       ),
     );
-  }
 
-  Widget _buildStyledTextField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: TextStyle(fontSize: 16, color: Colors.blueAccent[700]),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent[700]),
-          filled: true,
-          fillColor: Colors.blue[50],
-          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blueAccent[100]!, width: 1.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blueAccent[700]!, width: 2),
-          ),
-        ),
-      ),
-    );
   }
 
   // Helper to populate controllers from JSON payload (best-effort mapping)
@@ -689,6 +500,7 @@ class DailyReportManagement extends StatelessWidget {
         required TextEditingController purposeOfTrialController,
         required TextEditingController reasonController,
         required TextEditingController dateOfSaleController,
+        required TextEditingController regionController, // NEW
         required RxnString selectedVehicleType,
         required RxnString selectedPurposeOfTrial,
       }) {
@@ -727,7 +539,10 @@ class DailyReportManagement extends StatelessWidget {
     vehicleOdometerStartingReadingController.text = src['vehicleOdometerStartingReading']?.toString() ?? '';
     vehicleOdometerEndingReadingController.text = src['vehicleOdometerEndingReading']?.toString() ?? '';
     trialKMSController.text = src['trialKMS']?.toString() ?? '';
+
+    // trialAllocation: keep existing behavior; ensure fallback compatibility
     trialAllocationController.text = src['trialAllocation']?.toString() ?? '';
+
     vecvReportingPersonController.text = src['vecvReportingPerson']?.toString() ?? '';
     dealerNameController.text = src['dealerName']?.toString() ?? '';
     customerNameController.text = src['customerName']?.toString() ?? '';
@@ -741,6 +556,9 @@ class DailyReportManagement extends StatelessWidget {
     purposeOfTrialController.text = src['purposeOfTrial']?.toString() ?? '';
     reasonController.text = src['reason']?.toString() ?? '';
     dateOfSaleController.text = src['dateOfSale']?.toString() ?? '';
+
+    // NEW: populate region (if server has it)
+    regionController.text = src['region']?.toString() ?? '';
 
     // Set reactive dropdown values where applicable
     final typeVal = src['capitalizedVehicleOrCustomerVehicle']?.toString();

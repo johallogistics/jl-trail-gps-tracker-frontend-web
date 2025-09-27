@@ -7,6 +7,7 @@ class ShiftLogController extends GetxController {
   var selectedShiftLog = Rxn<ShiftLogResponse>(); // Holds a single shift log
   var isLoading = false.obs;
   final ShiftLogRepository _repository = ShiftLogRepository();
+  bool _isFetching = false;
 
   @override
   void onInit() {
@@ -14,28 +15,53 @@ class ShiftLogController extends GetxController {
     fetchShiftLogs();
   }
 
-  void fetchShiftLogs() async {
-    print("Inside fetching shift logs");
+  Future<void> fetchShiftLogs({bool force = false}) async {
+    if (_isFetching && !force) {
+      print('[ShiftLogController] fetchShiftLogs skipped — already fetching');
+      return;
+    }
 
     try {
+      _isFetching = true;
       isLoading(true);
-      var logs = await _repository.fetchShiftLogs();
-      print("Fetched shift logs: $logs");
+      print('[ShiftLogController] fetchShiftLogs START at ${DateTime.now().toIso8601String()}');
 
-      shiftLogs.assignAll(logs);
-    } catch (e) {
-      print("Error fetching shift logs: $e");
+      final logs = await _repository.fetchShiftLogs();
+
+      print('[ShiftLogController] fetched ${logs.length} from repo');
+
+      // Dedupe by id (adjust field name if different)
+      final Map<String, ShiftLog> uniqueMap = {};
+      for (final log in logs) {
+        if (log.id == null) {
+          // if id can be null, fallback to some other key or include it anyway
+          uniqueMap['null_${uniqueMap.length}'] = log;
+        } else {
+          uniqueMap[log.id.toString()] = log;
+        }
+      }
+      final deduped = uniqueMap.values.toList();
+
+      print('[ShiftLogController] deduped to ${deduped.length} items');
+
+      // Replace the list atomically
+      shiftLogs.assignAll(deduped);
+    } catch (e, st) {
+      print('[ShiftLogController] Error fetching shift logs: $e\n$st');
     } finally {
       isLoading(false);
+      _isFetching = false;
+      print('[ShiftLogController] fetchShiftLogs END at ${DateTime.now().toIso8601String()}');
     }
   }
 
   Future<void> addShiftLog(ShiftLog shiftLog) async {
+    if (_isFetching) return;
     try {
       isLoading(true);
-      bool success = await _repository.postShiftLog(shiftLog);
+      final success = await _repository.postShiftLog(shiftLog);
       if (success) {
-        fetchShiftLogs(); // Refresh full list from server
+        await fetchShiftLogs(force: true); // force reload
       }
     } catch (e) {
       print("Error adding shift log: $e");
@@ -62,7 +88,7 @@ class ShiftLogController extends GetxController {
       isLoading(true);
       final success = await _repository.updateShiftLog(log);
       if (success) {
-        fetchShiftLogs(); // refresh UI with updated list
+        await fetchShiftLogs(force: true);
       }
     } finally {
       isLoading(false);
@@ -76,7 +102,7 @@ class ShiftLogController extends GetxController {
       final success = await _repository.deleteShiftLog(id);
       if (success) {
         print("Delete Success");
-        fetchShiftLogs(); // refresh UI
+        await fetchShiftLogs(force: true);
       }
     } finally {
       isLoading(false);

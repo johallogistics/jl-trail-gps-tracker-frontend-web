@@ -1,7 +1,6 @@
 // daily_report_screen.dart
 import 'dart:convert';
 import 'dart:typed_data' as td;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,9 +9,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
 import 'package:http/http.dart' as http;
-
 import '../models/shift_log_model.dart';
 import 'daily_report_review_screen.dart';
+import '../../controllers/shift_log_controller.dart';
 
 class DailyReportController extends GetxController {
   // Basic timing & vehicle fields
@@ -56,6 +55,7 @@ class DailyReportController extends GetxController {
   final vehicleOdometerEndingReadingController = TextEditingController();
   final trialKMSController = TextEditingController();
   final trialAllocationController = TextEditingController();
+  final allocationController = TextEditingController();
   final vecvReportingPersonController = TextEditingController();
   final dealerNameController = TextEditingController();
   final customerNameController = TextEditingController();
@@ -71,7 +71,7 @@ class DailyReportController extends GetxController {
   final dateOfSaleController = TextEditingController();
   final trailIdController = TextEditingController();
   final inchargeSignController = TextEditingController();
-
+  final regionController = TextEditingController();
   // Reactive dropdowns
   final selectedVehicleType = RxnString();
   final selectedPurposeOfTrial = RxnString();
@@ -96,7 +96,8 @@ class DailyReportController extends GetxController {
       final e = int.tryParse(endingKmController.text.trim()) ?? 0;
       final diff = e - s;
       final totalValue = diff < 0 ? 0 : diff;
-      final currentTotal = int.tryParse(totalKmController.text.trim()) ?? -999999;
+      final currentTotal =
+          int.tryParse(totalKmController.text.trim()) ?? -999999;
       if (currentTotal != totalValue) {
         // update without triggering infinite loops (these controllers don't listen to total)
         totalKmController.text = totalValue.toString();
@@ -105,7 +106,6 @@ class DailyReportController extends GetxController {
       // ignore parse errors
     }
   }
-
 
   @override
   void onClose() {
@@ -163,13 +163,28 @@ class DailyReportController extends GetxController {
     dateOfSaleController.dispose();
     trailIdController.dispose();
     inchargeSignController.dispose();
-
+    regionController.dispose();
     super.onClose();
   }
 }
 
-class DailyReportScreen extends StatelessWidget {
+class DailyReportScreen extends StatefulWidget {
+  final bool isEdit;
+  final ShiftLog? existingLog;
+
+  const DailyReportScreen({Key? key, this.isEdit = false, this.existingLog})
+      : super(key: key);
+
+  @override
+  State<DailyReportScreen> createState() => _DailyReportScreenState();
+}
+
+class _DailyReportScreenState extends State<DailyReportScreen> {
+  // controller that drives the form fields
   final DailyReportController controller = Get.put(DailyReportController());
+
+  // optional shift log controller (exists when opened from admin list)
+  ShiftLogController? shiftLogController;
 
   final SignatureController _signatureController = SignatureController(
     penStrokeWidth: 3,
@@ -181,17 +196,39 @@ class DailyReportScreen extends StatelessWidget {
   static const String apiBaseUrl =
       'https://jl-trail-gps-tracker-backend-production.up.railway.app';
 
-  DailyReportScreen({super.key});
-
   // Responsive helper: if width >= breakpoint, show two columns, else single column
   static const double _twoColumnBreakpoint = 800.0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // attempt to find ShiftLogController if available (safe check)
+    if (Get.isRegistered<ShiftLogController>()) {
+      shiftLogController = Get.find<ShiftLogController>();
+    }
+
+    // If editing, populate form from existing ShiftLog
+    if (widget.isEdit && widget.existingLog != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _populateFromShiftLog(widget.existingLog!);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _signatureController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
-        title: Text('daily_report_form'.tr),
+        title: Text(
+            widget.isEdit ? 'edit_daily_report'.tr : 'daily_report_form'.tr),
         backgroundColor: Colors.blueAccent[700],
         elevation: 0,
       ),
@@ -273,10 +310,13 @@ class DailyReportScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                    child: Text('employee_details'.tr,
+                    child: Text(
+                        widget.isEdit
+                            ? 'edit_daily_report'.tr
+                            : 'employee_details'.tr,
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16))),
-                if (!kIsWeb)
+                if (!kIsWeb && !widget.isEdit)
                   FittedBox(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.flash_on),
@@ -296,16 +336,10 @@ class DailyReportScreen extends StatelessWidget {
                 keyboardType: TextInputType.phone),
             buildLabeledField(
                 'employee_code'.tr, controller.employeeCodeController),
+            buildLabeledField(
+                'allocation'.tr, controller.allocationController),
             const SizedBox(height: 8),
-            _twoFieldRow(
-              label1: 'month'.tr,
-              controller1: controller.monthController,
-              keyboard1: TextInputType.number,
-              label2: 'year'.tr,
-              controller2: controller.yearController,
-              keyboard2: TextInputType.number,
-              isTwoColumn: isTwoColumn,
-            ),
+            _monthYearRow(isTwoColumn: isTwoColumn),
             buildLabeledField(
                 'incharge_name'.tr, controller.inchargeNameController),
             buildLabeledField(
@@ -329,22 +363,9 @@ class DailyReportScreen extends StatelessWidget {
             buildLabeledField(
                 'date'.tr, TextEditingController(text: controller.date),
                 enabled: false),
-            buildLabeledField('shift'.tr, controller.shiftController),
-            buildLabeledField('ot_hours'.tr, controller.otHoursController,
-                keyboardType: TextInputType.number),
             buildLabeledField(
                 'vehicle_model'.tr, controller.vehicleModelController),
             buildLabeledField('vehicle_reg_no'.tr, controller.regNoController),
-            _twoFieldRow(
-              label1: 'in_time'.tr,
-              controller1: controller.inTimeController,
-              label2: 'out_time'.tr,
-              controller2: controller.outTimeController,
-              isTwoColumn: isTwoColumn,
-            ),
-            buildLabeledField(
-                'working_hours'.tr, controller.workingHoursController,
-                keyboardType: TextInputType.number),
             _threeFieldRow(
               isTwoColumn: isTwoColumn,
               label1: 'starting_km'.tr,
@@ -384,10 +405,10 @@ class DailyReportScreen extends StatelessWidget {
     required String label3,
     required TextEditingController c3,
   }) {
-    // Input formatter for digits-only values (integers). For decimals use different formatter.
-    final onlyDigits = <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly];
+    final onlyDigits = <TextInputFormatter>[
+      FilteringTextInputFormatter.digitsOnly
+    ];
 
-    // starting & ending - numeric only; total - readOnly & disabled
     final Widget startField = buildLabeledField(label1, c1,
         keyboardType: const TextInputType.numberWithOptions(decimal: false),
         inputFormatters: onlyDigits);
@@ -414,8 +435,16 @@ class DailyReportScreen extends StatelessWidget {
     );
   }
 
-
   Widget _buildExtraFieldsCard(bool isTwoColumn) {
+    // choices for new dropdowns
+    const List<String> trialAllocationOptions = ['FE', 'Driver Training'];
+    const List<String> driverStatusOptions = [
+      'Load / UnLoad',
+      'Leave',
+      'Trial',
+      'Transit To'
+    ];
+
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -424,23 +453,18 @@ class DailyReportScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Vehicle type dropdown using canonical values (so localization doesn't break logic)
-            // Vehicle type dropdown (keep option values and labels in English, no translation)
+            // Vehicle type dropdown (English labels)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: Obx(() {
-                // Keep labels in plain English (these are both the displayed text and the value)
                 final options = <String>[
                   'Customer Vehicle',
                   'Capitalized Vehicle'
                 ];
-
                 final current = controller.selectedVehicleType.value;
-
                 return InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'capitalized_customer_vehicle'
-                        .tr, // you can translate the label itself
+                    labelText: 'capitalized_customer_vehicle'.tr,
                     filled: true,
                     fillColor: Colors.blue[50],
                     contentPadding: const EdgeInsets.symmetric(
@@ -451,17 +475,13 @@ class DailyReportScreen extends StatelessWidget {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
-                      // only use current value if it matches one of the option strings
                       value: options.contains(current) ? current : null,
                       hint: Text('select_vehicle_type'.tr),
                       items: options
                           .map((label) => DropdownMenuItem<String>(
-                        value: label,
-                        child: Text(label, softWrap: true),
-                      ))
+                              value: label, child: Text(label, softWrap: true)))
                           .toList(),
                       onChanged: (val) {
-                        // store English text as-is, so autofill remains English
                         controller.selectedVehicleType.value = val;
                         controller.selectedPurposeOfTrial.value = null;
                       },
@@ -471,13 +491,11 @@ class DailyReportScreen extends StatelessWidget {
               }),
             ),
 
-            // Purpose dropdown (English labels/values only; depends on English vehicle type)
+            // Purpose dropdown (English labels)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
               child: Obx(() {
                 final type = controller.selectedVehicleType.value;
-
-                // Purposes are plain English strings (values == labels)
                 final Map<String, List<String>> purposeMap = {
                   'Customer Vehicle': [
                     'Post Sale Live Training (Familiarization with product)',
@@ -489,11 +507,8 @@ class DailyReportScreen extends StatelessWidget {
                     'Pre Sale FE Trial',
                   ],
                 };
-
                 final purposes = purposeMap[type] ?? <String>[];
-
                 final currentPurpose = controller.selectedPurposeOfTrial.value;
-
                 return InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'purpose_of_trial'.tr,
@@ -513,17 +528,16 @@ class DailyReportScreen extends StatelessWidget {
                       hint: Text('select_purpose'.tr),
                       items: purposes
                           .map((label) => DropdownMenuItem<String>(
-                        value: label,
-                        child: Text(label, softWrap: true),
-                      ))
+                              value: label, child: Text(label, softWrap: true)))
                           .toList(),
                       onChanged: (val) =>
-                      controller.selectedPurposeOfTrial.value = val,
+                          controller.selectedPurposeOfTrial.value = val,
                     ),
                   ),
                 );
               }),
             ),
+
             // --- Extra fields in responsive layout (two-column where possible) ---
             _twoFieldRow(
               label1: 'chassis_no'.tr,
@@ -580,12 +594,87 @@ class DailyReportScreen extends StatelessWidget {
               isTwoColumn: isTwoColumn,
             ),
 
-            _twoFieldRow(
-              label1: 'trial_kms'.tr,
-              controller1: controller.trialKMSController,
-              label2: 'trial_allocation'.tr,
-              controller2: controller.trialAllocationController,
-              isTwoColumn: isTwoColumn,
+            // Trial KMS + Trial Allocation (dropdown)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: isTwoColumn
+                  ? Row(
+                      children: [
+                        Expanded(
+                            child: buildLabeledField(
+                                'trial_kms'.tr, controller.trialKMSController)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'trial_allocation'.tr,
+                              filled: true,
+                              fillColor: Colors.blue[50],
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 12),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: trialAllocationOptions.contains(
+                                        controller
+                                            .trialAllocationController.text)
+                                    ? controller.trialAllocationController.text
+                                    : null,
+                                hint: Text('Select'),
+                                items: trialAllocationOptions
+                                    .map((v) => DropdownMenuItem(
+                                        value: v, child: Text(v)))
+                                    .toList(),
+                                onChanged: (val) {
+                                  // set both trialAllocationController (existing) and trailAllocationController (new model name) for compatibility
+                                  controller.trialAllocationController.text =
+                                      val ?? '';
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        buildLabeledField(
+                            'trial_kms'.tr, controller.trialKMSController),
+                        const SizedBox(height: 6),
+                        InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'trial_allocation'.tr,
+                            filled: true,
+                            fillColor: Colors.blue[50],
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 12),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: trialAllocationOptions.contains(
+                                      controller.trialAllocationController.text)
+                                  ? controller.trialAllocationController.text
+                                  : null,
+                              hint: Text('Select'),
+                              items: trialAllocationOptions
+                                  .map((v) => DropdownMenuItem(
+                                      value: v, child: Text(v)))
+                                  .toList(),
+                              onChanged: (val) {
+                                controller.trialAllocationController.text =
+                                    val ?? '';
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
 
             _twoFieldRow(
@@ -615,7 +704,7 @@ class DailyReportScreen extends StatelessWidget {
             _twoFieldRow(
               label1: 'capitalized_customer_vehicle'.tr,
               controller1:
-              controller.capitalizedVehicleOrCustomerVehicleController,
+                  controller.capitalizedVehicleOrCustomerVehicleController,
               label2: 'customer_vehicle'.tr,
               controller2: controller.customerVehicleController,
               isTwoColumn: isTwoColumn,
@@ -625,22 +714,51 @@ class DailyReportScreen extends StatelessWidget {
               label1: 'capitalized_vehicle'.tr,
               controller1: controller.capitalizedVehicleController,
               label2: 'driver_status'.tr,
-              controller2: controller.driverStatusController,
+              controller2: controller
+                  .driverStatusController, // but we show a dropdown below instead of direct text
               isTwoColumn: isTwoColumn,
             ),
+
+            // Replace the driver status text field with a dropdown (keeps controller for programmatic access)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'driver_status'.tr,
+                  filled: true,
+                  fillColor: Colors.blue[50],
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: driverStatusOptions
+                            .contains(controller.driverStatusController.text)
+                        ? controller.driverStatusController.text
+                        : null,
+                    hint: Text('Select'),
+                    items: driverStatusOptions
+                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                        .toList(),
+                    onChanged: (val) {
+                      controller.driverStatusController.text = val ?? '';
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            // Region field (text)
+            buildLabeledField('Region', controller.regionController),
 
             buildLabeledField(
                 'purpose_other'.tr, controller.purposeOfTrialController),
             buildLabeledField('reason'.tr, controller.reasonController),
-
-            _twoFieldRow(
-              label1: 'date_of_sale'.tr,
-              controller1: controller.dateOfSaleController,
-              label2: 'trail_id'.tr,
-              controller2: controller.trailIdController,
-              isTwoColumn: isTwoColumn,
-            ),
-
+            buildLabeledField(
+                'date_of_sale'.tr, controller.dateOfSaleController),
             const SizedBox(height: 8),
           ],
         ),
@@ -682,7 +800,8 @@ class DailyReportScreen extends StatelessWidget {
         _buildElevatedButton('clear'.tr, Colors.red, () {
           _signatureController.clear();
         }),
-        _buildElevatedButton('review'.tr, Colors.blueAccent[700], () {
+        _buildElevatedButton(
+            widget.isEdit ? 'Update' : 'review'.tr, Colors.blueAccent[700], () {
           _saveReportWithSignature(context);
         }),
       ],
@@ -690,14 +809,15 @@ class DailyReportScreen extends StatelessWidget {
   }
 
   Future<void> _saveReportWithSignature(BuildContext context) async {
-    if (_signatureController.isEmpty) {
+    if (_signatureController.isEmpty && !widget.isEdit) {
+      // For new reports we require signature as before.
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('please_provide_signature'.tr)));
       return;
     }
 
     final td.Uint8List? signature = await _signatureController.toPngBytes();
-    if (signature == null) return;
+    if (signature == null && !widget.isEdit) return;
 
     final now = DateTime.now();
     int _parseInt(String s) {
@@ -724,15 +844,16 @@ class DailyReportScreen extends StatelessWidget {
       }
     }
 
+    // Build a ShiftLog from controllers (same as existing logic) + new fields
     final shiftLog = ShiftLog(
-      id: null,
+      id: widget.existingLog?.id,
       shift: controller.shiftController.text.trim(),
       otHours: _parseInt(controller.otHoursController.text.trim()),
       inTime: _tryParseDateTime(controller.inTimeController.text.trim()),
       outTime: _tryParseDateTime(controller.outTimeController.text.trim()),
       workingHours: _parseInt(controller.workingHoursController.text.trim()),
       monthYear:
-      '${controller.monthController.text.trim()}-${controller.yearController.text.trim()}',
+          '${controller.monthController.text.trim()}-${controller.yearController.text.trim()}',
       vehicleModel: controller.vehicleModelController.text.trim(),
       regNo: controller.regNoController.text.trim(),
       chassisNo: controller.chassisNoController.text.trim(),
@@ -755,15 +876,14 @@ class DailyReportScreen extends StatelessWidget {
           controller.hillsRoadSweetSpotPercentController.text.trim()),
       trialKMPL: controller.trialKMPLController.text.trim(),
       vehicleOdometerStartingReading:
-      controller.vehicleOdometerStartingReadingController.text.trim(),
+          controller.vehicleOdometerStartingReadingController.text.trim(),
       vehicleOdometerEndingReading:
-      controller.vehicleOdometerEndingReadingController.text.trim(),
+          controller.vehicleOdometerEndingReadingController.text.trim(),
       trialKMS: controller.trialKMSController.text.trim(),
       trialAllocation: controller.trialAllocationController.text.trim(),
       coDriverName: controller.coDriverNameController.text.trim(),
       coDriverPhoneNo: controller.coDriverPhoneController.text.trim(),
-      inchargeSign:
-      controller.inchargeSignController.text.trim(), // placeholder
+      inchargeSign: controller.inchargeSignController.text.trim(),
       employeeName: controller.employeeNameController.text.trim(),
       vecvReportingPerson: controller.vecvReportingPersonController.text.trim(),
       employeePhoneNo: controller.employeePhoneController.text.trim(),
@@ -775,9 +895,9 @@ class DailyReportScreen extends StatelessWidget {
       customerDriverName: controller.customerDriverNameController.text.trim(),
       customerDriverNo: controller.customerDriverNoController.text.trim(),
       capitalizedVehicleOrCustomerVehicle: controller
-          .capitalizedVehicleOrCustomerVehicleController.text
-          .trim()
-          .isNotEmpty
+              .capitalizedVehicleOrCustomerVehicleController.text
+              .trim()
+              .isNotEmpty
           ? controller.capitalizedVehicleOrCustomerVehicleController.text.trim()
           : (controller.selectedVehicleType.value ?? ''),
       customerVehicle: controller.customerVehicleController.text.trim(),
@@ -789,20 +909,47 @@ class DailyReportScreen extends StatelessWidget {
       reason: controller.reasonController.text.trim(),
       dateOfSale: controller.dateOfSaleController.text.trim(),
       trailId: controller.trailIdController.text.trim(),
-      imageVideoUrls: const [],
-      createdAt: now,
+      imageVideoUrls: widget.existingLog?.imageVideoUrls ?? const [],
+      createdAt: widget.existingLog?.createdAt ?? now,
       updatedAt: now,
+      allocation: controller.allocationController.text.trim(),
     );
 
-    // debug json
-    print('ShiftLog JSON: ${shiftLog.toJson()}');
+    // attach optional/new fields if your ShiftLog constructor accepts named args for them
+    // If ShiftLog constructor includes `trailAllocation` and `region`, please ensure they are passed above
+    // (If your ShiftLog constructor signature differs, adapt accordingly.)
 
-    Get.to(
-          () => DailyReportReviewScreen(
-        signature: signature,
-        shiftLog: shiftLog,
-      ),
-    );
+    // If we're editing, call the ShiftLogController to update
+    if (widget.isEdit && widget.existingLog != null) {
+      try {
+        if (shiftLogController == null &&
+            Get.isRegistered<ShiftLogController>()) {
+          shiftLogController = Get.find<ShiftLogController>();
+        }
+
+        if (shiftLogController == null) {
+          // fallback: create temporary controller and call update (shouldn't normally happen)
+          final tempController = ShiftLogController();
+          tempController.editShiftLog(shiftLog);
+        } else {
+          shiftLogController!.editShiftLog(shiftLog);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Shift log updated successfully')));
+        Navigator.of(context).pop(); // close the edit dialog/screen
+        return;
+      } catch (e, st) {
+        debugPrint('Update error: $e\n$st');
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('failed_update_shift_log'.tr)));
+        return;
+      }
+    }
+
+    // Default (driver flow) -> review screen (original behavior)
+    Get.to(() =>
+        DailyReportReviewScreen(signature: signature!, shiftLog: shiftLog));
   }
 
   Widget _buildElevatedButton(
@@ -820,13 +967,14 @@ class DailyReportScreen extends StatelessWidget {
   }
 
   // Helper: label above the field (guarantees label always visible and wraps)
-  // Helper: label above the field (guarantees label always visible and wraps)
   Widget buildLabeledField(String label, TextEditingController controller,
       {bool enabled = true,
-        bool readOnly = false,
-        TextInputType keyboardType = TextInputType.text,
-        List<TextInputFormatter>? inputFormatters}) {
-    final fillColor = enabled ? (readOnly ? Colors.grey[100] : Colors.blue[50]) : Colors.grey[200];
+      bool readOnly = false,
+      TextInputType keyboardType = TextInputType.text,
+      List<TextInputFormatter>? inputFormatters}) {
+    final fillColor = enabled
+        ? (readOnly ? Colors.grey[100] : Colors.blue[50])
+        : Colors.grey[200];
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -850,28 +998,24 @@ class DailyReportScreen extends StatelessWidget {
               filled: true,
               fillColor: fillColor,
               contentPadding:
-              const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide:
-                BorderSide(color: Colors.blueAccent[100]!, width: 1.2),
-              ),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      BorderSide(color: Colors.blueAccent[100]!, width: 1.2)),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide:
-                BorderSide(color: Colors.blueAccent[700]!, width: 1.8),
-              ),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      BorderSide(color: Colors.blueAccent[700]!, width: 1.8)),
               disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2),
-              ),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2)),
             ),
           ),
         ],
       ),
     );
   }
-
 
   // -----------------------
   // Auto-fill implementation
@@ -894,9 +1038,9 @@ class DailyReportScreen extends StatelessWidget {
       if (resp.statusCode == 200) {
         final body = json.decode(resp.body);
         final Map<String, dynamic>? payload =
-        (body is Map && body['payload'] != null)
-            ? body['payload'] as Map<String, dynamic>
-            : (body is Map ? body as Map<String, dynamic> : null);
+            (body is Map && body['payload'] != null)
+                ? body['payload'] as Map<String, dynamic>
+                : (body is Map ? body as Map<String, dynamic> : null);
         if (payload == null) {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text('no_payload_returned'.tr)));
@@ -993,6 +1137,9 @@ class DailyReportScreen extends StatelessWidget {
     controller.vehicleOdometerEndingReadingController.text =
         src['vehicleOdometerEndingReading']?.toString() ?? '';
     controller.trialKMSController.text = src['trialKMS']?.toString() ?? '';
+
+    // trial / trialAllocation (auto-fill)
+    // set both the older trialAllocationController and the new trailAllocationController
     controller.trialAllocationController.text =
         src['trialAllocation']?.toString() ?? '';
     controller.vecvReportingPersonController.text =
@@ -1011,8 +1158,12 @@ class DailyReportScreen extends StatelessWidget {
     controller.capitalizedVehicleController.text =
         src['capitalizedVehicle']?.toString() ?? '';
     controller.vehicleNoController.text = src['vehicleNo']?.toString() ?? '';
+
+    // driver status, region (auto-fill)
     controller.driverStatusController.text =
         src['driverStatus']?.toString() ?? '';
+    controller.regionController.text = src['region']?.toString() ?? '';
+
     controller.reasonController.text = src['reason']?.toString() ?? '';
     controller.dateOfSaleController.text = src['dateOfSale']?.toString() ?? '';
     controller.trailIdController.text = src['trailId']?.toString() ?? '';
@@ -1027,66 +1178,209 @@ class DailyReportScreen extends StatelessWidget {
 
     final rawPurpose = src['purposeOfTrial']?.toString() ?? '';
     final normalizedPurpose =
-    _normalizePurpose(rawPurpose, controller.selectedVehicleType.value);
+        _normalizePurpose(rawPurpose, controller.selectedVehicleType.value);
     controller.selectedPurposeOfTrial.value = normalizedPurpose;
   }
 
-  /// Map server labels or free-text to canonical type: 'customer' | 'capitalized' or null
+  /// Map server labels or free-text to canonical type: 'Customer Vehicle' | 'Capitalized Vehicle' or null
   String? _normalizeVehicleType(String raw) {
     final s = raw.trim().toLowerCase();
     if (s.isEmpty) return null;
-    if (s.contains('customer')) return 'customer';
+    if (s.contains('customer')) return 'Customer Vehicle';
     if (s.contains('capital') || s.contains('capitalized'))
-      return 'capitalized';
+      return 'Capitalized Vehicle';
     // sometimes server returns exact canonical words; handle those
     if (s == 'customer' || s == 'capitalized') return s;
     return null; // unknown -> leave null so dropdown shows hint instead of failing
   }
 
-  /// Map server purpose texts to canonical purpose codes depending on vehicle type.
-  /// Returns null when not able to map.
+  /// Map server purpose texts to canonical purpose strings depending on vehicle type.
   String? _normalizePurpose(String raw, String? vehicleType) {
     final s = raw.trim().toLowerCase();
     if (s.isEmpty) return null;
 
-    // customer purposes
     final Map<String, String> customerMap = {
       'post sale live training (familiarization with product)':
-      'post_sale_live_training',
-      'post sale fe trial': 'post_sale_fe_trial',
-      'low fuel mileage issue': 'low_fuel_mileage_issue',
+          'Post Sale Live Training (Familiarization with product)',
+      'post sale fe trial': 'Post Sale FE Trial',
+      'low fuel mileage issue': 'Low Fuel Mileage issue',
     };
 
-    // capitalized purposes
     final Map<String, String> capitalizedMap = {
-      'demo': 'demo',
-      'pre sale fe trial': 'pre_sale_fe_trial',
+      'demo': 'Demo',
+      'pre sale fe trial': 'Pre Sale FE Trial',
     };
 
-    // try exact matches first
     if (customerMap.containsKey(s)) return customerMap[s];
     if (capitalizedMap.containsKey(s)) return capitalizedMap[s];
 
-    // try more permissive checks
     if (s.contains('live training') || s.contains('familiarization'))
-      return 'post_sale_live_training';
+      return 'Post Sale Live Training (Familiarization with product)';
     if (s.contains('post sale') && s.contains('fe'))
-      return 'post_sale_fe_trial';
+      return 'Post Sale FE Trial';
     if (s.contains('low fuel') || s.contains('mileage'))
-      return 'low_fuel_mileage_issue';
-    if (s.contains('demo')) return 'demo';
-    if (s.contains('pre sale') && s.contains('fe')) return 'pre_sale_fe_trial';
+      return 'Low Fuel Mileage issue';
+    if (s.contains('demo')) return 'Demo';
+    if (s.contains('pre sale') && s.contains('fe')) return 'Pre Sale FE Trial';
 
-    // Fallback: if server already returned canonical code, accept it
     final known = <String>{
-      'post_sale_live_training',
-      'post_sale_fe_trial',
-      'low_fuel_mileage_issue',
-      'demo',
-      'pre_sale_fe_trial'
+      'Post Sale Live Training (Familiarization with product)',
+      'Post Sale FE Trial',
+      'Low Fuel Mileage issue',
+      'Demo',
+      'Pre Sale FE Trial'
     };
     if (known.contains(s)) return s;
 
     return null;
+  }
+
+  // -----------------------
+  // Helper: populate controllers from a ShiftLog model (edit mode)
+  // -----------------------
+  void _populateFromShiftLog(ShiftLog log) {
+    controller.shiftController.text = log.shift;
+    controller.otHoursController.text = log.otHours.toString();
+    controller.vehicleModelController.text = log.vehicleModel;
+    controller.regNoController.text = log.regNo;
+    controller.inTimeController.text = log.inTime.toIso8601String();
+    controller.outTimeController.text = log.outTime.toIso8601String();
+    controller.workingHoursController.text = log.workingHours.toString();
+    controller.startingKmController.text = log.startingKm.toString();
+    controller.endingKmController.text = log.endingKm.toString();
+    controller.totalKmController.text = log.totalKm.toString();
+    controller.fromPlaceController.text = log.fromPlace;
+    controller.toPlaceController.text = log.toPlace;
+    controller.presentLocationController.text = log.presentLocation;
+    controller.fuelAvgController.text = log.fuelAvg.toString();
+    controller.coDriverNameController.text = log.coDriverName;
+    controller.coDriverPhoneController.text = log.coDriverPhoneNo;
+
+    // employee fields
+    controller.employeeNameController.text = log.employeeName;
+    controller.employeePhoneController.text = log.employeePhoneNo;
+    controller.employeeCodeController.text = log.employeeCode;
+
+    // monthYear split
+    final monthYear = log.monthYear;
+    if (monthYear.contains('-')) {
+      final parts = monthYear.split('-');
+      controller.monthController.text = parts[0];
+      controller.yearController.text = parts.length > 1 ? parts[1] : '';
+    } else {
+      controller.monthController.text = monthYear;
+      controller.yearController.text = '';
+    }
+
+    controller.inchargeNameController.text = log.dicvInchargeName;
+    controller.inchargePhoneController.text = log.dicvInchargePhoneNo;
+
+    // extra fields
+    controller.chassisNoController.text = log.chassisNo;
+    controller.gvwController.text = log.gvw.toString();
+    controller.payloadController.text = log.payload.toString();
+    controller.previousKmplController.text = log.previousKmpl.toString();
+    controller.clusterKmplController.text = log.clusterKmpl.toString();
+    controller.highwaySweetSpotPercentController.text =
+        log.highwaySweetSpotPercent.toString();
+    controller.normalRoadSweetSpotPercentController.text =
+        log.normalRoadSweetSpotPercent.toString();
+    controller.hillsRoadSweetSpotPercentController.text =
+        log.hillsRoadSweetSpotPercent.toString();
+    controller.trialKMPLController.text = log.trialKMPL;
+    controller.vehicleOdometerStartingReadingController.text =
+        log.vehicleOdometerStartingReading;
+    controller.vehicleOdometerEndingReadingController.text =
+        log.vehicleOdometerEndingReading;
+    controller.trialKMSController.text = log.trialKMS;
+    controller.trialAllocationController.text = log.trialAllocation;
+    controller.vecvReportingPersonController.text = log.vecvReportingPerson;
+    controller.dealerNameController.text = log.dealerName;
+    controller.customerNameController.text = log.customerName;
+    controller.customerDriverNameController.text = log.customerDriverName;
+    controller.customerDriverNoController.text = log.customerDriverNo;
+    controller.capitalizedVehicleOrCustomerVehicleController.text =
+        log.capitalizedVehicleOrCustomerVehicle;
+    controller.customerVehicleController.text = log.customerVehicle;
+    controller.capitalizedVehicleController.text = log.capitalizedVehicle;
+    controller.vehicleNoController.text = log.vehicleNo;
+    controller.driverStatusController.text = log.driverStatus;
+    controller.purposeOfTrialController.text = log.purposeOfTrial;
+    controller.reasonController.text = log.reason;
+    controller.dateOfSaleController.text = log.dateOfSale;
+    controller.trailIdController.text = log.trailId;
+
+    // NEW: region
+    controller.regionController.text = log.region ?? '';
+
+    // set reactive dropdowns
+    controller.selectedVehicleType.value =
+        log.capitalizedVehicleOrCustomerVehicle;
+    controller.selectedPurposeOfTrial.value = log.purposeOfTrial;
+
+    // recalc totals if needed
+    controller.recalcTotalKm();
+  }
+
+  /// Month dropdown (English names, not translated) + Year field.
+  Widget _monthYearRow({required bool isTwoColumn}) {
+    const List<String> months = <String>[
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    String? current = controller.monthController.text.isNotEmpty
+        ? controller.monthController.text
+        : null;
+
+    final monthDropdown = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'month'.tr,
+          filled: true,
+          fillColor: Colors.blue[50],
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: true,
+            value: months.contains(current) ? current : null,
+            hint: const Text('Select month'),
+            items: months
+                .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                .toList(),
+            onChanged: (val) {
+              controller.monthController.text = val ?? '';
+            },
+          ),
+        ),
+      ),
+    );
+
+    final yearField = buildLabeledField('year'.tr, controller.yearController,
+        keyboardType: TextInputType.number);
+
+    if (!isTwoColumn) {
+      return Column(children: [monthDropdown, yearField]);
+    }
+
+    return Row(children: [
+      Expanded(child: monthDropdown),
+      const SizedBox(width: 12),
+      Expanded(child: yearField)
+    ]);
   }
 }

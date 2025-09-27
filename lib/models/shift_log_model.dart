@@ -1,7 +1,3 @@
-import 'dart:convert';
-
-import 'dart:convert';
-
 class ShiftLog {
   final int? id;
 
@@ -32,7 +28,10 @@ class ShiftLog {
   final String vehicleOdometerStartingReading;
   final String vehicleOdometerEndingReading;
   final String trialKMS;
-  final String trialAllocation;
+  final String trialAllocation; // existing
+
+  // NEW allocation (distinct from trialAllocation)
+  final String allocation;
 
   // Trial info
   final String purposeOfTrial;
@@ -72,6 +71,9 @@ class ShiftLog {
   final List<String> imageVideoUrls;
   final String inchargeSign;
 
+  // NEW optional region
+  final String? region;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -102,6 +104,7 @@ class ShiftLog {
     required this.vehicleOdometerEndingReading,
     required this.trialKMS,
     required this.trialAllocation,
+    required this.allocation, // new
     required this.purposeOfTrial,
     required this.reason,
     required this.dateOfSale,
@@ -128,135 +131,103 @@ class ShiftLog {
     required this.driverStatus,
     required this.imageVideoUrls,
     required this.inchargeSign,
+    this.region,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory ShiftLog.fromJson(Map<String, dynamic> json) {
-    DateTime _parseDate(String? input) {
+    DateTime _parseDate(dynamic input) {
       try {
-        return DateTime.parse(input ?? '').toLocal();
+        if (input == null) return DateTime.now();
+        return DateTime.parse(input.toString()).toLocal();
       } catch (_) {
         return DateTime.now();
       }
     }
 
+    double _toDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is num) return v.toDouble();
+      try {
+        return double.parse(v.toString());
+      } catch (_) {
+        return 0.0;
+      }
+    }
+
+    int _toInt(dynamic v) {
+      if (v == null) return 0;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      try {
+        return int.parse(v.toString());
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    String _toString(dynamic v) => v?.toString() ?? '';
+
     return ShiftLog(
-      id: json['id'],
-      shift: json['shift'],
-      otHours: json['otHours'],
+      id: json['id'] is int ? json['id'] as int : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
+      shift: _toString(json['shift']),
+      otHours: _toInt(json['otHours']),
       inTime: _parseDate(json['inTime']),
       outTime: _parseDate(json['outTime']),
-      workingHours: json['workingHours'],
-      monthYear: json['monthYear'],
-      vehicleModel: json['vehicleModel'],
-      regNo: json['regNo'],
-      chassisNo: json['chassisNo'],
-      gvw: (json['gvw'] as num).toDouble(),
-      payload: (json['payload'] as num).toDouble(),
-      startingKm: json['startingKm'],
-      endingKm: json['endingKm'],
-      totalKm: json['totalKm'],
-      fuelAvg: (json['fuelAvg'] as num).toDouble(),
-      previousKmpl: (json['previousKmpl'] as num).toDouble(),
-      clusterKmpl: (json['clusterKmpl'] as num).toDouble(),
-      highwaySweetSpotPercent: (json['highwaySweetSpotPercent'] as num).toDouble(),
-      normalRoadSweetSpotPercent: (json['normalRoadSweetSpotPercent'] as num).toDouble(),
-      hillsRoadSweetSpotPercent: (json['hillsRoadSweetSpotPercent'] as num).toDouble(),
-      trialKMPL: json['trialKMPL'],
-      vehicleOdometerStartingReading: json['vehicleOdometerStartingReading'],
-      vehicleOdometerEndingReading: json['vehicleOdometerEndingReading'],
-      trialKMS: json['trialKMS'],
-      trialAllocation: json['trialAllocation'],
-      purposeOfTrial: json['purposeOfTrial'],
-      reason: json['reason'],
-      dateOfSale: json['dateOfSale'],
-      trailId: json['trailId'],
-      fromPlace: json['fromPlace'],
-      toPlace: json['toPlace'],
-      presentLocation: json['presentLocation'],
-      employeeName: json['employeeName'],
-      vecvReportingPerson: json['vecvReportingPerson'],
-      employeePhoneNo: json['employeePhoneNo'],
-      employeeCode: json['employeeCode'],
-      dicvInchargeName: json['dicvInchargeName'],
-      dicvInchargePhoneNo: json['dicvInchargePhoneNo'],
-      dealerName: json['dealerName'],
-      customerName: json['customerName'],
-      customerDriverName: json['customerDriverName'],
-      customerDriverNo: json['customerDriverNo'],
-      capitalizedVehicleOrCustomerVehicle: json['capitalizedVehicleOrCustomerVehicle'],
-      customerVehicle: json['customerVehicle'],
-      capitalizedVehicle: json['capitalizedVehicle'],
-      vehicleNo: json['vehicleNo'],
-      coDriverName: json['coDriverName'],
-      coDriverPhoneNo: json['coDriverPhoneNo'],
-      driverStatus: json['driverStatus'],
+      workingHours: _toInt(json['workingHours']),
+      monthYear: _toString(json['monthYear']),
+      vehicleModel: _toString(json['vehicleModel']),
+      regNo: _toString(json['regNo']),
+      chassisNo: _toString(json['chassisNo']),
+      gvw: _toDouble(json['gvw']),
+      payload: _toDouble(json['payload']),
+      startingKm: _toInt(json['startingKm']),
+      endingKm: _toInt(json['endingKm']),
+      totalKm: _toInt(json['totalKm']),
+      fuelAvg: _toDouble(json['fuelAvg']),
+      previousKmpl: _toDouble(json['previousKmpl']),
+      clusterKmpl: _toDouble(json['clusterKmpl']),
+      highwaySweetSpotPercent: _toDouble(json['highwaySweetSpotPercent']),
+      normalRoadSweetSpotPercent: _toDouble(json['normalRoadSweetSpotPercent']),
+      hillsRoadSweetSpotPercent: _toDouble(json['hillsRoadSweetSpotPercent']),
+      trialKMPL: _toString(json['trialKMPL']),
+      vehicleOdometerStartingReading: _toString(json['vehicleOdometerStartingReading']),
+      vehicleOdometerEndingReading: _toString(json['vehicleOdometerEndingReading']),
+      trialKMS: _toString(json['trialKMS']),
+      trialAllocation: _toString(json['trialAllocation']),
+      allocation: _toString(json['allocation']), // new field
+      purposeOfTrial: _toString(json['purposeOfTrial']),
+      reason: _toString(json['reason']),
+      dateOfSale: _toString(json['dateOfSale']),
+      trailId: _toString(json['trailId']),
+      fromPlace: _toString(json['fromPlace']),
+      toPlace: _toString(json['toPlace']),
+      presentLocation: _toString(json['presentLocation']),
+      employeeName: _toString(json['employeeName']),
+      vecvReportingPerson: _toString(json['vecvReportingPerson']),
+      employeePhoneNo: _toString(json['employeePhoneNo']),
+      employeeCode: _toString(json['employeeCode']),
+      dicvInchargeName: _toString(json['dicvInchargeName']),
+      dicvInchargePhoneNo: _toString(json['dicvInchargePhoneNo']),
+      dealerName: _toString(json['dealerName']),
+      customerName: _toString(json['customerName']),
+      customerDriverName: _toString(json['customerDriverName']),
+      customerDriverNo: _toString(json['customerDriverNo']),
+      capitalizedVehicleOrCustomerVehicle: _toString(json['capitalizedVehicleOrCustomerVehicle']),
+      customerVehicle: _toString(json['customerVehicle']),
+      capitalizedVehicle: _toString(json['capitalizedVehicle']),
+      vehicleNo: _toString(json['vehicleNo']),
+      coDriverName: _toString(json['coDriverName']),
+      coDriverPhoneNo: _toString(json['coDriverPhoneNo']),
+      driverStatus: _toString(json['driverStatus']),
       imageVideoUrls: (json['imageVideoUrls'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      inchargeSign: json['inchargeSign'],
+      inchargeSign: _toString(json['inchargeSign']),
+      region: json.containsKey('region') ? (json['region'] != null ? json['region'].toString() : null) : null,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
     );
   }
-
-  Map<String, dynamic> toJsonWithoutId() {
-    return {
-      'shift': shift,
-      'otHours': otHours,
-      'vehicleModel': vehicleModel,
-      'regNo': regNo,
-      'chassisNo': chassisNo,
-      'gvw': gvw,
-      'payload': payload,
-      'inTime': inTime.toIso8601String(),
-      'outTime': outTime.toIso8601String(),
-      'workingHours': workingHours,
-      'startingKm': startingKm,
-      'endingKm': endingKm,
-      'totalKm': totalKm,
-      'fromPlace': fromPlace,
-      'toPlace': toPlace,
-      'presentLocation': presentLocation,
-      'fuelAvg': fuelAvg,
-      'previousKmpl': previousKmpl,
-      'clusterKmpl': clusterKmpl,
-      'highwaySweetSpotPercent': highwaySweetSpotPercent,
-      'normalRoadSweetSpotPercent': normalRoadSweetSpotPercent,
-      'hillsRoadSweetSpotPercent': hillsRoadSweetSpotPercent,
-      'trialKMPL': trialKMPL,
-      'vehicleOdometerStartingReading': vehicleOdometerStartingReading,
-      'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
-      'trialKMS': trialKMS,
-      'trialAllocation': trialAllocation,
-      'coDriverName': coDriverName,
-      'coDriverPhoneNo': coDriverPhoneNo,
-      'inchargeSign': inchargeSign,
-      'employeeName': employeeName,
-      'employeePhoneNo': employeePhoneNo,
-      'employeeCode': employeeCode,
-      'monthYear': monthYear,
-      'dicvInchargeName': dicvInchargeName,
-      'dicvInchargePhoneNo': dicvInchargePhoneNo,
-      'vecvReportingPerson': vecvReportingPerson,
-      'dealerName': dealerName,
-      'customerName': customerName,
-      'customerDriverName': customerDriverName,
-      'customerDriverNo': customerDriverNo,
-      'capitalizedVehicleOrCustomerVehicle': capitalizedVehicleOrCustomerVehicle,
-      'customerVehicle': customerVehicle,
-      'capitalizedVehicle': capitalizedVehicle,
-      'vehicleNo': vehicleNo,
-      'driverStatus': driverStatus,
-      'purposeOfTrial': purposeOfTrial,
-      'reason': reason,
-      'dateOfSale': dateOfSale,
-      'trailId': trailId,
-      'imageVideoUrls': imageVideoUrls,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-
 
   Map<String, dynamic> toJson() {
     return {
@@ -286,6 +257,7 @@ class ShiftLog {
       'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
       'trialKMS': trialKMS,
       'trialAllocation': trialAllocation,
+      'allocation': allocation, // new
       'purposeOfTrial': purposeOfTrial,
       'reason': reason,
       'dateOfSale': dateOfSale,
@@ -312,12 +284,75 @@ class ShiftLog {
       'driverStatus': driverStatus,
       'imageVideoUrls': imageVideoUrls,
       'inchargeSign': inchargeSign,
+      'region': region,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
-}
 
+  Map<String, dynamic> toJsonWithoutId() {
+    final map = {
+      'shift': shift,
+      'otHours': otHours,
+      'vehicleModel': vehicleModel,
+      'regNo': regNo,
+      'chassisNo': chassisNo,
+      'gvw': gvw,
+      'payload': payload,
+      'inTime': inTime.toIso8601String(),
+      'outTime': outTime.toIso8601String(),
+      'workingHours': workingHours,
+      'startingKm': startingKm,
+      'endingKm': endingKm,
+      'totalKm': totalKm,
+      'fromPlace': fromPlace,
+      'toPlace': toPlace,
+      'presentLocation': presentLocation,
+      'fuelAvg': fuelAvg,
+      'previousKmpl': previousKmpl,
+      'clusterKmpl': clusterKmpl,
+      'highwaySweetSpotPercent': highwaySweetSpotPercent,
+      'normalRoadSweetSpotPercent': normalRoadSweetSpotPercent,
+      'hillsRoadSweetSpotPercent': hillsRoadSweetSpotPercent,
+      'trialKMPL': trialKMPL,
+      'vehicleOdometerStartingReading': vehicleOdometerStartingReading,
+      'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
+      'trialKMS': trialKMS,
+      'trialAllocation': trialAllocation,
+      'allocation': allocation, // <-- ✅ NEW FIELD
+      'coDriverName': coDriverName,
+      'coDriverPhoneNo': coDriverPhoneNo,
+      'inchargeSign': inchargeSign,
+      'employeeName': employeeName,
+      'employeePhoneNo': employeePhoneNo,
+      'employeeCode': employeeCode,
+      'monthYear': monthYear,
+      'dicvInchargeName': dicvInchargeName,
+      'dicvInchargePhoneNo': dicvInchargePhoneNo,
+      'vecvReportingPerson': vecvReportingPerson,
+      'dealerName': dealerName,
+      'customerName': customerName,
+      'customerDriverName': customerDriverName,
+      'customerDriverNo': customerDriverNo,
+      'capitalizedVehicleOrCustomerVehicle': capitalizedVehicleOrCustomerVehicle,
+      'customerVehicle': customerVehicle,
+      'capitalizedVehicle': capitalizedVehicle,
+      'vehicleNo': vehicleNo,
+      'driverStatus': driverStatus,
+      'purposeOfTrial': purposeOfTrial,
+      'reason': reason,
+      'dateOfSale': dateOfSale,
+      'trailId': trailId,
+      'imageVideoUrls': imageVideoUrls,
+      'region': region, // optional
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+
+    return map;
+  }
+
+}
 
 /// Model for handling the API response
 class ShiftLogResponse {
@@ -339,5 +374,4 @@ class ShiftLogResponse {
       'payload': payload.toJson(),
     };
   }
-
 }

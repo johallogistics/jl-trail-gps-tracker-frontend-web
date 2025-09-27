@@ -51,81 +51,96 @@ Future<String?> exportShiftLogsToCsvImpl(List<ShiftLog> logs, {String filename =
     return v.toString();
   }
 
+  // New header order as requested
   final headers = [
-    'ID', 'Shift', 'OT Hours', 'Vehicle', 'Reg No', 'Chassis No', 'GVW',
-    'Payload', 'Vehicle No', 'In Time', 'Out Time', 'Working Hours',
-    'Starting KM', 'Ending KM', 'Total KM', 'From', 'To', 'Present Location',
-    'Fuel Avg', 'Prev KMPL', 'Trial KMPL', 'Cluster KMPL', 'Trial KMS',
-    'ODO Start', 'ODO End', 'Sweet Spot HW', 'Sweet Spot NR', 'Sweet Spot Hill',
-    'Trial Allocation', 'Purpose', 'Reason', 'Date of Sale', 'Customer Name',
-    'Customer Driver', 'Customer Driver No', 'Dealer Name', 'VECV Reporting',
-    'Driver Status', 'Customer Vehicle', 'Cap. Vehicle', 'Cap. Cust/Vehicle',
-    'Co-Driver', 'Co-Driver Phone', 'Incharge Sign', 'Employee Name',
-    'Employee Phone', 'Employee Code', 'Month-Year', 'DICV Incharge',
-    'DICV Phone', 'Trail ID'
+    'S.NO',
+    'REGION',
+    'EMP CODE',
+    'DRIVER NAME',
+    'Allocation', // NEW allocation field (distinct from trialAllocation)
+    'Contact No.',
+    'Designation',
+    'Native Place',
+    'Available at',
+    'Driver Status',
+    'Capitalized Vehicle/Customer Vehicle',
+    'Purpose of Trial',
+    'Reason (If Others)',
+    'Date Of Sale',
+    'VECV reporting Person',
+    'Dealer Name',
+    'Customer Name',
+    'Customer Driver (Name / No)',
+    'Present location',
+    'Vehicle No.',
+    'Chassis No.',
+    'Vehicle Model',
+    'GVW',
+    'Payload',
+    'Previous KMPL',
+    'Trial KMPL',
+    'Cluster KMPL',
+    'Vehicle Odometer - Starting reading (Kms.)',
+    'Vehicle Odometer - Ending reading (Kms.)',
+    'Trial KMS',
+    'HighWay Sweet Spot %',
+    'Normal Road Sweet Spot %',
+    'Hills Road Sweet Spot %',
+    'Trial Allocation' // existing trialAllocation (kept at end as requested)
   ];
 
   final rows = <List<dynamic>>[];
   rows.add(headers);
 
   for (final log in logs) {
+    // Safely read fields and combine where needed
+    final customerDriverCombined = [
+      if ((log.customerDriverName ?? '').isNotEmpty) log.customerDriverName,
+      if ((log.customerDriverNo ?? '').isNotEmpty) log.customerDriverNo
+    ].join(' / ');
+
     rows.add([
-      _fmt(log.id),
-      _fmt(log.shift),
-      _fmt(log.otHours),
-      _fmt(log.vehicleModel),
-      _fmt(log.regNo),
-      _fmt(log.chassisNo),
-      _fmt(log.gvw),
-      _fmt(log.payload),
-      _fmt(log.vehicleNo),
-      _fmt(log.inTime is DateTime ? log.inTime : (log.inTime != null ? DateTime.tryParse(log.inTime.toString()) : null)),
-      _fmt(log.outTime is DateTime ? log.outTime : (log.outTime != null ? DateTime.tryParse(log.outTime.toString()) : null)),
-      _fmt(log.workingHours),
-      _fmt(log.startingKm),
-      _fmt(log.endingKm),
-      _fmt(log.totalKm),
-      _fmt(log.fromPlace),
-      _fmt(log.toPlace),
-      _fmt(log.presentLocation),
-      _fmt(log.fuelAvg),
-      _fmt(log.previousKmpl),
-      _fmt(log.trialKMPL),
-      _fmt(log.clusterKmpl),
-      _fmt(log.trialKMS),
-      _fmt(log.vehicleOdometerStartingReading),
-      _fmt(log.vehicleOdometerEndingReading),
-      _fmt(log.highwaySweetSpotPercent),
-      _fmt(log.normalRoadSweetSpotPercent),
-      _fmt(log.hillsRoadSweetSpotPercent),
-      _fmt(log.trialAllocation),
-      _fmt(log.purposeOfTrial),
-      _fmt(log.reason),
-      _fmt(log.dateOfSale),
-      _fmt(log.customerName),
-      _fmt(log.customerDriverName),
-      _fmt(log.customerDriverNo),
-      _fmt(log.dealerName),
-      _fmt(log.vecvReportingPerson),
-      _fmt(log.driverStatus),
-      _fmt(log.customerVehicle),
-      _fmt(log.capitalizedVehicle),
-      _fmt(log.capitalizedVehicleOrCustomerVehicle),
-      _fmt(log.coDriverName),
-      _fmt(log.coDriverPhoneNo),
-      _fmt(log.inchargeSign),
-      _fmt(log.employeeName),
-      _fmt(log.employeePhoneNo),
-      _fmt(log.employeeCode),
-      _fmt(log.monthYear),
-      _fmt(log.dicvInchargeName),
-      _fmt(log.dicvInchargePhoneNo),
-      _fmt(log.trailId),
+      _fmt(log.id), // S.NO
+      _fmt(log.region), // REGION (nullable)
+      _fmt(log.employeeCode), // EMP CODE
+      _fmt(log.employeeName), // DRIVER NAME (mapped to employeeName)
+      _fmt((log as dynamic).allocation ?? ''), // Allocation (new field) — defensive cast to dynamic in case model updated
+      _fmt(log.employeePhoneNo), // Contact No.
+      _fmt(log.driverStatus), // Designation (best-fit; adjust if you have a separate designation field)
+      _fmt(log.fromPlace), // Native Place
+      _fmt(log.presentLocation), // Available at
+      _fmt(log.driverStatus), // Driver Status (explicit)
+      _fmt(log.capitalizedVehicleOrCustomerVehicle), // Capitalized Vehicle/Customer Vehicle
+      _fmt(log.purposeOfTrial), // Purpose of Trial
+      _fmt(log.reason), // Reason (If Others)
+      _fmt(log.dateOfSale), // Date Of Sale
+      _fmt(log.vecvReportingPerson), // VECV reporting Person
+      _fmt(log.dealerName), // Dealer Name
+      _fmt(log.customerName), // Customer Name
+      _fmt(customerDriverCombined), // Customer Driver (Name / No)
+      _fmt(log.presentLocation), // Present location
+      _fmt(log.vehicleNo), // Vehicle No.
+      _fmt(log.chassisNo), // Chassis No.
+      _fmt(log.vehicleModel), // Vehicle Model
+      _fmt(log.gvw), // GVW
+      _fmt(log.payload), // Payload
+      _fmt(log.previousKmpl), // Previous KMPL
+      _fmt(log.trialKMPL), // Trial KMPL
+      _fmt(log.clusterKmpl), // Cluster KMPL
+      _fmt(log.vehicleOdometerStartingReading), // Vehicle Odometer - Starting
+      _fmt(log.vehicleOdometerEndingReading), // Vehicle Odometer - Ending
+      _fmt(log.trialKMS), // Trial KMS
+      _fmt(log.highwaySweetSpotPercent), // HighWay Sweet Spot %
+      _fmt(log.normalRoadSweetSpotPercent), // Normal Road Sweet Spot %
+      _fmt(log.hillsRoadSweetSpotPercent), // Hills Road Sweet Spot %
+      _fmt(log.trialAllocation) // Trial Allocation (existing)
     ]);
   }
 
   final csv = const ListToCsvConverter().convert(rows);
   final bytes = utf8.encode(csv);
+
+  // Web download (same as before)
   final blob = html.Blob([bytes], 'text/csv;charset=utf-8');
   final url = html.Url.createObjectUrlFromBlob(blob);
 

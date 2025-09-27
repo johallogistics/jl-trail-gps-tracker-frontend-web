@@ -6,6 +6,9 @@ class AppTranslations extends Translations {
   Map<String, Map<String, String>> get keys => {
     'en': {
       // existing keys (kept as-is)
+      "region": "Region",
+      "allocation": "Allocation",
+      "driver_status": "Driver Status",
       'trip_form': 'Trip Form',
       'location': 'Location',
       'date': 'Date',
@@ -26,7 +29,7 @@ class AppTranslations extends Translations {
       'employee_code': 'Employee Code',
       'month': 'Month',
       'year': 'Year',
-      'incharge_name': 'DICV Incharge Name',
+      'incharge_name': 'Incharge Name',
       'incharge_phone': 'Incharge Phone',
       'shift': 'Shift',
       'ot_hours': 'OT Hours',
@@ -170,7 +173,6 @@ class AppTranslations extends Translations {
       'capitalized_customer_vehicle': 'Capitalized / Customer Vehicle',
       'customer_vehicle': 'Customer Vehicle',
       'capitalized_vehicle': 'Capitalized Vehicle',
-      'driver_status': 'Driver Status',
       'date_of_sale': 'Date of Sale',
       'trail_id': 'Trail ID',
       'reason': 'Reason',
@@ -207,7 +209,7 @@ class AppTranslations extends Translations {
       'employee_code': 'பணியாளர் குறியீடு',
       'month': 'மாதம்',
       'year': 'ஆண்டு',
-      'incharge_name': 'DICV பொறுப்பாளர் பெயர்',
+      'incharge_name': 'பொறுப்பாளர் பெயர்',
       'incharge_phone': 'பொறுப்பாளர் கைபேசி',
       'shift': 'ஷிப்ட்',
       'ot_hours': 'கூடுதல் நேரம்',
@@ -355,14 +357,15 @@ class AppTranslations extends Translations {
       'date_of_sale': 'விற்பனை தேதி',
       'trail_id': 'ட்ரெயில் ஐடி',
       'reason': 'காரணம்',
-
       'review_report': 'அறிக்கையை மறுபரிசீலனை செய்',
       'generate_pdf': 'PDF உருவாக்கு',
       'upload_media': 'படங்கள் மற்றும் வீடியோக்களை பதிவேறு',
       'signature': 'கையொப்பம்',
       'other_details': 'மற்ற விவரங்கள்',
       'report_details': 'அறிக்கை விவரங்கள்',
-      'employee_details': 'பணியாளர் விவரங்கள்'
+      'employee_details': 'பணியாளர் விவரங்கள்',
+      "region": "பிராந்தியம்",
+      "allocation": "ஒதுக்கீடு",
     },
 
     // -------------------- Hindi --------------------
@@ -388,7 +391,7 @@ class AppTranslations extends Translations {
       'employee_code': 'कर्मचारी कोड',
       'month': 'महीना',
       'year': 'साल',
-      'incharge_name': 'DICV प्रभारी का नाम',
+      'incharge_name': 'प्रभारी का नाम',
       'incharge_phone': 'प्रभारी फ़ोन',
       'shift': 'शिफ्ट',
       'ot_hours': 'ओवरटाइम घंटे',
@@ -542,12 +545,16 @@ class AppTranslations extends Translations {
       'signature': 'हस्ताक्षर',
       'other_details': 'अन्य विवरण',
       'report_details': 'रिपोर्ट विवरण',
-      'employee_details': 'कर्मचारी विवरण'
+      'employee_details': 'कर्मचारी विवरण',
+      "region": "क्षेत्र",
+      "allocation": "आवंटन"
     },
 
     // -------------------- Telugu --------------------
     'te': {
       // existing telugu keys...
+      "region": "ప్రాంతం",
+      "allocation": "కేటాయింపు",
       'trip_form': 'ప్రయాణ ఫారమ్',
       'location': 'స్థానం',
       'date': 'తేదీ',
@@ -568,7 +575,7 @@ class AppTranslations extends Translations {
       'employee_code': 'ఉద్యోగి కోడ్',
       'month': 'నెల',
       'year': 'సంవత్సరం',
-      'incharge_name': 'DICV ఇన్‌ఛార్జ్ పేరు',
+      'incharge_name': 'ఇన్‌ఛార్జ్ పేరు',
       'incharge_phone': 'ఇన్‌ఛార్జ్ ఫోన్',
       'shift': 'షిఫ్ట్',
       'ot_hours': 'ఓవర్ టైమ్ గంటలు',
@@ -729,6 +736,8 @@ class AppTranslations extends Translations {
     // -------------------- Malayalam --------------------
     'ml': {
       // existing Malayalam keys...
+      "region": "പ്രദേശം",
+      "allocation": "വിനിയോഗം",
       'trip_form': 'യാത്ര ഫോം',
       'location': 'സ്ഥലം',
       'date': 'തീയതി',
@@ -749,7 +758,7 @@ class AppTranslations extends Translations {
       'employee_code': 'ഓഫീസ് കോഡ്',
       'month': 'മാസം',
       'year': 'വർഷം',
-      'incharge_name': 'DICV ചുമതലക്കാരൻ',
+      'incharge_name': 'ചുമതലക്കാരൻ',
       'incharge_phone': 'ഇൻ ചാർജ് ഫോൺ',
       'shift': 'ഷിഫ്റ്റ്',
       'ot_hours': 'ഓവർടൈം മണിക്കൂറുകൾ',
@@ -904,7 +913,7 @@ class AppTranslations extends Translations {
       'employee_code': 'ಕರ್ಮಚಾರಿ ಕೋಡ್',
       'month': 'ತಿಂಗಳು',
       'year': 'ವರ್ಷ',
-      'incharge_name': 'DICV ಜವಾಬ್ದಾರಿ ಹೆಸರು',
+      'incharge_name': 'ಜವಾಬ್ದಾರಿ ಹೆಸರು',
       'incharge_phone': 'ಜವಾಬ್ದಾರಿ ಫೋನ್',
       'shift': 'ಶಿಫ್ಟ್',
       'ot_hours': 'ಓವರ್‌ಟೈಮ್ ಗಂಟೆಗಳು',
