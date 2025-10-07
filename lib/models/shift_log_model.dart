@@ -1,8 +1,8 @@
 class ShiftLog {
   final int? id;
-
   // Timing
   final String shift;
+  final String? date;
   final int otHours;
   final DateTime inTime;
   final DateTime outTime;
@@ -80,6 +80,7 @@ class ShiftLog {
   ShiftLog({
     this.id,
     required this.shift,
+    required this.date,
     required this.otHours,
     required this.inTime,
     required this.outTime,
@@ -172,6 +173,7 @@ class ShiftLog {
     return ShiftLog(
       id: json['id'] is int ? json['id'] as int : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
       shift: _toString(json['shift']),
+      date: _toString(json['date']),
       otHours: _toInt(json['otHours']),
       inTime: _parseDate(json['inTime']),
       outTime: _parseDate(json['outTime']),
@@ -233,6 +235,7 @@ class ShiftLog {
     return {
       'id': id,
       'shift': shift,
+      'date':date,
       'otHours': otHours,
       'inTime': inTime.toIso8601String(),
       'outTime': outTime.toIso8601String(),
@@ -293,6 +296,7 @@ class ShiftLog {
   Map<String, dynamic> toJsonWithoutId() {
     final map = {
       'shift': shift,
+      'date': date,
       'otHours': otHours,
       'vehicleModel': vehicleModel,
       'regNo': regNo,

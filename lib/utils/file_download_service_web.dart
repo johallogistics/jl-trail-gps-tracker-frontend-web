@@ -54,14 +54,15 @@ Future<String?> exportShiftLogsToCsvImpl(List<ShiftLog> logs, {String filename =
   // New header order as requested
   final headers = [
     'S.NO',
+    'DATE',
     'REGION',
     'EMP CODE',
     'DRIVER NAME',
-    'Allocation', // NEW allocation field (distinct from trialAllocation)
+    // 'Allocation', // NEW allocation field (distinct from trialAllocation)
     'Contact No.',
-    'Designation',
-    'Native Place',
-    'Available at',
+    // 'Designation',
+    // 'Native Place',
+    // 'Available at',
     'Driver Status',
     'Capitalized Vehicle/Customer Vehicle',
     'Purpose of Trial',
@@ -101,14 +102,15 @@ Future<String?> exportShiftLogsToCsvImpl(List<ShiftLog> logs, {String filename =
 
     rows.add([
       _fmt(log.id), // S.NO
+      _fmt(log.date), // DATE
       _fmt(log.region), // REGION (nullable)
       _fmt(log.employeeCode), // EMP CODE
       _fmt(log.employeeName), // DRIVER NAME (mapped to employeeName)
-      _fmt((log as dynamic).allocation ?? ''), // Allocation (new field) — defensive cast to dynamic in case model updated
+      // _fmt((log as dynamic).allocation ?? ''), // Allocation (new field) — defensive cast to dynamic in case model updated
       _fmt(log.employeePhoneNo), // Contact No.
-      _fmt(log.driverStatus), // Designation (best-fit; adjust if you have a separate designation field)
-      _fmt(log.fromPlace), // Native Place
-      _fmt(log.presentLocation), // Available at
+      // _fmt(log.driverStatus), // Designation (best-fit; adjust if you have a separate designation field)
+      // _fmt(log.fromPlace), // Native Place
+      // _fmt(log.presentLocation), // Available at
       _fmt(log.driverStatus), // Driver Status (explicit)
       _fmt(log.capitalizedVehicleOrCustomerVehicle), // Capitalized Vehicle/Customer Vehicle
       _fmt(log.purposeOfTrial), // Purpose of Trial

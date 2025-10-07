@@ -77,7 +77,7 @@ class DailyReportController extends GetxController {
   final selectedPurposeOfTrial = RxnString();
 
   // Default date string
-  final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  var date = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   @override
   void onInit() {
@@ -336,8 +336,6 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 keyboardType: TextInputType.phone),
             buildLabeledField(
                 'employee_code'.tr, controller.employeeCodeController),
-            buildLabeledField(
-                'allocation'.tr, controller.allocationController),
             const SizedBox(height: 8),
             _monthYearRow(isTwoColumn: isTwoColumn),
             buildLabeledField(
@@ -442,7 +440,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       'Load / UnLoad',
       'Leave',
       'Trial',
-      'Transit To'
+      'Transit To',
+      'Demo'
     ];
 
     return Card(
@@ -847,6 +846,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     // Build a ShiftLog from controllers (same as existing logic) + new fields
     final shiftLog = ShiftLog(
       id: widget.existingLog?.id,
+      date: controller.date,
       shift: controller.shiftController.text.trim(),
       region: controller.regionController.text.trim(),
       otHours: _parseInt(controller.otHoursController.text.trim()),
@@ -1073,6 +1073,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
   // Map payload -> controllers (full mapping)
   void _populateFromJson(Map<String, dynamic> src) {
     controller.shiftController.text = src['shift']?.toString() ?? '';
+    controller.date = src['date']?.toString() ?? '';
     controller.otHoursController.text = src['otHours']?.toString() ?? '';
     controller.vehicleModelController.text =
         src['vehicleModel']?.toString() ?? '';
@@ -1241,6 +1242,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
   // -----------------------
   void _populateFromShiftLog(ShiftLog log) {
     controller.shiftController.text = log.shift;
+    controller.date = log.date ?? "NA";
     controller.otHoursController.text = log.otHours.toString();
     controller.vehicleModelController.text = log.vehicleModel;
     controller.regNoController.text = log.regNo;
