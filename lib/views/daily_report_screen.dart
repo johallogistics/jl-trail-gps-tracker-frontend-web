@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
 import 'package:http/http.dart' as http;
 import '../models/shift_log_model.dart';
+import '../utils/phone_number_formatter.dart';
 import 'daily_report_review_screen.dart';
 import '../../controllers/shift_log_controller.dart';
 
@@ -77,7 +78,7 @@ class DailyReportController extends GetxController {
   final selectedPurposeOfTrial = RxnString();
 
   // Default date string
-  var date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  var date = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
   @override
   void onInit() {
@@ -333,6 +334,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 'employee_name'.tr, controller.employeeNameController),
             buildLabeledField(
                 'employee_phone'.tr, controller.employeePhoneController,
+                isPhone :true,
                 keyboardType: TextInputType.phone),
             buildLabeledField(
                 'employee_code'.tr, controller.employeeCodeController),
@@ -970,12 +972,48 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
   // Helper: label above the field (guarantees label always visible and wraps)
   Widget buildLabeledField(String label, TextEditingController controller,
       {bool enabled = true,
-      bool readOnly = false,
-      TextInputType keyboardType = TextInputType.text,
-      List<TextInputFormatter>? inputFormatters}) {
+        bool readOnly = false,
+        TextInputType keyboardType = TextInputType.text,
+        List<TextInputFormatter>? inputFormatters,
+        // Add the new optional boolean here
+        bool isPhone = false}) {
+
+    // Conditionally set the keyboard type for phone input
+    final inputKeyboardType = isPhone ? TextInputType.phone : keyboardType;
+
+    // Conditionally set input formatters
+    List<TextInputFormatter> effectiveFormatters = [];
+    if (isPhone) {
+      // If isPhone is true, use the custom formatter
+      effectiveFormatters.add(IndianPhoneNumberFormatter());
+      // Also limit the number of digits that can be entered
+      effectiveFormatters.add(LengthLimitingTextInputFormatter(13)); // +91 (3) + 10 digits (10) = 13
+    }
+    // Add any other formatters passed in the argument
+    if (inputFormatters != null) {
+      effectiveFormatters.addAll(inputFormatters);
+    }
+
+
+    // The rest of your existing logic remains the same
     final fillColor = enabled
         ? (readOnly ? Colors.grey[100] : Colors.blue[50])
         : Colors.grey[200];
+
+    // Logic to automatically set +91 on the controller only once when starting
+    // This ensures the controller has the value even before the user starts typing.
+    if (isPhone && controller.text.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Only set if not already set by the user or an initial value
+        if (!controller.text.startsWith('+91')) {
+          controller.text = '+91';
+          // Set cursor to the end
+          controller.selection = TextSelection.fromPosition(
+              TextPosition(offset: controller.text.length));
+        }
+      });
+    }
+
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -990,8 +1028,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             controller: controller,
             enabled: enabled,
             readOnly: readOnly,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
+            // Use the conditionally set keyboard type
+            keyboardType: inputKeyboardType,
+            // Use the combined list of formatters
+            inputFormatters: effectiveFormatters.isNotEmpty ? effectiveFormatters : null,
             maxLines: 1,
             style: TextStyle(color: Colors.blueAccent[700], fontSize: 16),
             decoration: InputDecoration(
@@ -999,15 +1039,15 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               filled: true,
               fillColor: fillColor,
               contentPadding:
-                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+              const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide:
-                      BorderSide(color: Colors.blueAccent[100]!, width: 1.2)),
+                  BorderSide(color: Colors.blueAccent[100]!, width: 1.2)),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide:
-                      BorderSide(color: Colors.blueAccent[700]!, width: 1.8)),
+                  BorderSide(color: Colors.blueAccent[700]!, width: 1.8)),
               disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2)),
@@ -1387,3 +1427,4 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     ]);
   }
 }
+

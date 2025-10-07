@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/sign_off_list_controller.dart';
 import '../../models/sign_off_models/sign_off.dart';
+import '../../utils/sign_off_pdf_service.dart';
 import 'sign_off_edit_screen.dart';
 
 class SignOffListScreen extends StatelessWidget {
@@ -104,6 +105,15 @@ class SignOffListScreen extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child: Text('SignOff #${s.id ?? ''}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                    TextButton.icon(
+                      onPressed: () {
+                        // Close dialog before generating PDF (optional but good UX)
+                        Navigator.of(context).pop();
+                        SignOffPdfService.savePdf(s);
+                      },
+                      icon: const Icon(Icons.download, size: 18),
+                      label: const Text('Download PDF'),
+                    ),
                     IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
                   ],
                 ),

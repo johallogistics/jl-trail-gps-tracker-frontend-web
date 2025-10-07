@@ -23,7 +23,7 @@ dependencies:
   google_place: ^0.4.6
   cloud_firestore: ^4.7.0
   intl: ^0.18.1
-  signature: ^4.0.0
+  signature: ^5.5.0
   syncfusion_flutter_pdf: ^20.4.48
   path_provider: ^2.0.11
   get_storage: ^2.1.1
@@ -42,6 +42,9 @@ dependencies:
   flutter_map: any
   flutter_map_location_marker: any
   device_info_plus: ^10.1.0
+  printing: ^5.11.1
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

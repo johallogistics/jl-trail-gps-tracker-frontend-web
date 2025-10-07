@@ -39,6 +39,14 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text('Daily Report Management'),
+          Spacer(),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              // Call the controller method to fetch the latest data
+              controller.fetchShiftLogs();
+            },
+          ),
           ElevatedButton(
             onPressed: () => exportShiftLogsToCsvImpl(controller.shiftLogs),
             child: Text('Export to CSV'),
