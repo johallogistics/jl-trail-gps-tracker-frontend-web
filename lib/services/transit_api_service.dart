@@ -8,9 +8,7 @@ class TransitApiService {
   // Use the actual URL of your deployed Fastify backend
   static const String BASE_URL = 'https://jl-trail-gps-tracker-backend-production.up.railway.app/api';
 
-  // NOTE: This call will use the *existing* DriverLocationTransitService
-  // as it is assumed to be a custom backend service, not the Google API.
-  // We don't need to rewrite it here, just focus on the Maps APIs.
+
 
   /// Calls the server-side proxy for Google Directions API.
   Future<Map<String, dynamic>> fetchDirectionsProxy(

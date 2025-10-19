@@ -60,8 +60,8 @@ class _RouteMapPageState extends State<RouteMapPage> {
       body: FlutterMap(
         mapController: _mapController,
         options: MapOptions(
-            center: start,
-            zoom: 13.0
+            initialCenter: start,
+            initialZoom: 13.0
         ),
         children: [
           // ✅ Tile Layer
@@ -77,25 +77,21 @@ class _RouteMapPageState extends State<RouteMapPage> {
                 point: start,
                 width: 40,
                 height: 40,
-                builder: (BuildContext context) {
-                  return const Icon(
+                child: Icon(
                     Icons.location_on,
                     color: Colors.green,
                     size: 40,
-                  );
-                },
+                  ),
               ),
               Marker(
                 point: end,
                 width: 40,
                 height: 40,
-                builder: (BuildContext context) {
-                  return const Icon(
+                child: Icon(
                     Icons.location_on,
                     color: Colors.red,
                     size: 40,
-                  );
-                },
+                  ),
               ),
             ],
           ),

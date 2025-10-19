@@ -36,6 +36,10 @@
           onload="window.mapplsReady = true; console.log('✅ Mappls SDK loaded');">
   </script>
 
+  <script async
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCvbNj7Lw5DdcbP-bfCYlp5yBTMZEn0DFA&libraries=geometry">
+  </script>
+
   <script>
     function initMapplsMap(divId, lat, lng, destLat, destLng) {
       if (!window.mapplsReady || typeof mappls === 'undefined') {

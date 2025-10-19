@@ -1,8 +1,9 @@
+// transit_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // <— Google Maps LatLng
 import '../controllers/transit_controller.dart';
-import '../utils/location_services/location_picker_widget.dart';
+import '../utils/location_services/location_picker_widget.dart'; // (updated file below)
 
 class TransitScreen extends StatefulWidget {
   const TransitScreen({super.key});
@@ -18,7 +19,7 @@ class _TransitScreenState extends State<TransitScreen> {
   LatLng? _endCoords;
   String? _endAddress;
 
-  String? _ongoingTransitId; // Store ongoing transit id
+  String? _ongoingTransitId;
 
   final TransitController controller = Get.put(TransitController());
 
@@ -32,55 +33,62 @@ class _TransitScreenState extends State<TransitScreen> {
     final transit = await controller.getOngoingTransit();
     if (transit != null) {
       setState(() {
-        _ongoingTransitId = transit["id"].toString(); // ensure string
-        _startCoords = LatLng(transit["startLatitude"], transit["startLongitude"]);
+        _ongoingTransitId = transit["id"].toString();
+        _startCoords = LatLng(
+          (transit["startLatitude"] as num).toDouble(),
+          (transit["startLongitude"] as num).toDouble(),
+        );
         _startAddress = transit["startAddress"] ?? "From saved location";
-        _endCoords = LatLng(transit["endLatitude"], transit["endLongitude"]);
+        _endCoords = LatLng(
+          (transit["endLatitude"] as num).toDouble(),
+          (transit["endLongitude"] as num).toDouble(),
+        );
         _endAddress = transit["endAddress"] ?? "To saved location";
       });
 
-      // keep controller in sync
       controller.currentTransitId.value = transit["id"].toString();
     }
   }
 
-
-
-  void _pickStartLocation() async {
-    if (_ongoingTransitId != null) return; // disable if ongoing
-    await Navigator.push(
+  Future<void> _pickStartLocation() async {
+    if (_ongoingTransitId != null) return;
+    final result = await Navigator.push<Map<String, dynamic>?>(
       context,
       MaterialPageRoute(
         builder: (_) => LocationPicker(
-          onLocationPicked: (LatLng pos, String address) {
-            setState(() {
-              _startCoords = pos;
-              _startAddress = address;
-            });
-          },
+          initial: _startCoords,
+          hint: "Search start location...",
         ),
       ),
     );
+    if (result != null) {
+      setState(() {
+        _startCoords = result['latLng'] as LatLng;
+        _startAddress = result['address'] as String;
+      });
+    }
   }
 
-  void _pickEndLocation() async {
-    if (_ongoingTransitId != null) return; // disable if ongoing
-    await Navigator.push(
+  Future<void> _pickEndLocation() async {
+    if (_ongoingTransitId != null) return;
+    final result = await Navigator.push<Map<String, dynamic>?>(
       context,
       MaterialPageRoute(
         builder: (_) => LocationPicker(
-          onLocationPicked: (LatLng pos, String address) {
-            setState(() {
-              _endCoords = pos;
-              _endAddress = address;
-            });
-          },
+          initial: _endCoords,
+          hint: "Search destination...",
         ),
       ),
     );
+    if (result != null) {
+      setState(() {
+        _endCoords = result['latLng'] as LatLng;
+        _endAddress = result['address'] as String;
+      });
+    }
   }
 
-  void _saveTransit() async {
+  Future<void> _saveTransit() async {
     if (_startCoords == null || _endCoords == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select both start and end locations")),
@@ -102,16 +110,16 @@ class _TransitScreenState extends State<TransitScreen> {
         const SnackBar(content: Text("Transit started successfully")),
       );
 
-      _loadOngoingTransit(); // refresh screen
+      _loadOngoingTransit();
     } catch (e) {
-      print("Error:::::::::::::::::::::::::::::: $e");
+      debugPrint("Error:::::::::::::::::::::::::::::: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
     }
   }
 
-  void _completeTransit() async {
+  Future<void> _completeTransit() async {
     if (controller.currentTransitId.value == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No ongoing transit to complete")),
@@ -120,7 +128,7 @@ class _TransitScreenState extends State<TransitScreen> {
     }
 
     try {
-      await controller.completeTransit(); // no parameter needed
+      await controller.completeTransit();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Transit completed successfully")),
@@ -139,7 +147,6 @@ class _TransitScreenState extends State<TransitScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

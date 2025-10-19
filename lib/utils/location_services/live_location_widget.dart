@@ -16,7 +16,9 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
   final MapController _mapController = MapController();
   LatLng liveLocation = LatLng(13.0827, 80.2707); // Default (Chennai)
   Timer? _timer;
-  static const String baseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
+
+  static const String baseUrl =
+      "https://jl-trail-gps-tracker-backend-production.up.railway.app";
 
   @override
   void initState() {
@@ -26,21 +28,22 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
 
   Future<void> _fetchLiveLocation() async {
     try {
-      // Replace with your API endpoint
       final response = await http.get(Uri.parse("$baseUrl/location"));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
+        final newLocation = LatLng(
+          (data["latitude"] as num).toDouble(),
+          (data["longitude"] as num).toDouble(),
+        );
+
         setState(() {
-          liveLocation = LatLng(
-            (data["latitude"] as num).toDouble(),
-            (data["longitude"] as num).toDouble(),
-          );
+          liveLocation = newLocation;
         });
 
-        // Move camera to new location
-        _mapController.move(liveLocation, _mapController.zoom);
+        // Move camera smoothly to new location
+        _mapController.move(liveLocation, _mapController.camera.zoom);
       } else {
         debugPrint("Failed to fetch location: ${response.statusCode}");
       }
@@ -50,13 +53,8 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
   }
 
   void _startLiveLocationUpdates() {
-    // Fetch first time immediately
-    _fetchLiveLocation();
-
-    // Then fetch every 5 seconds
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      _fetchLiveLocation();
-    });
+    _fetchLiveLocation(); // Fetch immediately
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchLiveLocation());
   }
 
   @override
@@ -72,8 +70,8 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
       body: FlutterMap(
         mapController: _mapController,
         options: MapOptions(
-          center: liveLocation,
-          zoom: 12,
+          initialCenter: liveLocation,
+          initialZoom: 12,
         ),
         children: [
           TileLayer(
@@ -86,7 +84,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> {
                 point: liveLocation,
                 width: 50,
                 height: 50,
-                builder: (context) => const Icon(
+                child: const Icon(
                   Icons.location_on,
                   color: Colors.red,
                   size: 40,

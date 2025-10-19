@@ -6,7 +6,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:trail_tracker/repositories/sign_off_services.dart';
 import 'package:trail_tracker/utils/app_translations.dart';
 import 'package:trail_tracker/utils/auth_middleware.dart';
-import 'package:trail_tracker/utils/location_services/start_end_location_picker.dart';
 import 'package:trail_tracker/views/admin/admin_dashboard_screen.dart';
 import 'package:trail_tracker/views/admin/admin_login_screen.dart';
 import 'package:trail_tracker/views/admin/sign_off_list_screen.dart';
@@ -58,7 +57,6 @@ class MyApp extends StatelessWidget {
         ),
         GetPage(
             name: '/splash', page: () => SplashScreen()), //LiveTrackingWebMap
-        GetPage(name: '/test', page: () => TripLocationForm()),
           GetPage(name: '/driver', page: () => DriverFormScreen()),
           GetPage(name: '/signOffList', page: () => const SignOffListScreen()),
       ],
