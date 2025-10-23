@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../controllers/admin/driver_management_controller.dart';
 import '../../../models/admin/driver_model.dart';
 import '../../../utils/image_upload_service.dart';
@@ -8,12 +9,34 @@ class EditDriverScreen extends StatelessWidget {
   final Driver driver;
   final DriverController controller = Get.put(DriverController());
   List<String>? urls;
-  EditDriverScreen({required this.driver});
+
+  EditDriverScreen({super.key, required this.driver});
 
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final employeeIdController = TextEditingController();
   final addressController = TextEditingController();
+  final expiryDateController = TextEditingController();
+  final Rx<DateTime?> licenseExpiry = Rx<DateTime?>(null);
+
+  final DateFormat _df = DateFormat('dd MMM yyyy');
+
+  Future<void> _pickExpiryDate(BuildContext context) async {
+    final today = DateTime.now();
+    final initial = licenseExpiry.value ?? today;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2000, 1, 1),
+      lastDate: DateTime(today.year + 15, 12, 31),
+      helpText: 'Select Driving License Expiry Date',
+    );
+
+    if (picked != null) {
+      licenseExpiry.value = DateTime(picked.year, picked.month, picked.day);
+      expiryDateController.text = _df.format(licenseExpiry.value!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,36 +45,98 @@ class EditDriverScreen extends StatelessWidget {
     employeeIdController.text = driver.employeeId;
     addressController.text = driver.address;
 
+    // Initialize license expiry
+    if (driver.drivingLicenseExpiryDate != null) {
+      licenseExpiry.value = driver.drivingLicenseExpiryDate;
+      expiryDateController.text =
+          _df.format(driver.drivingLicenseExpiryDate!);
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Driver')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
-            TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone')),
-            TextField(controller: employeeIdController, decoration: const InputDecoration(labelText: 'Employee ID')),
-            TextField(controller: addressController, decoration: const InputDecoration(labelText: 'Address')),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: phoneController,
+              decoration: const InputDecoration(labelText: 'Phone'),
+              keyboardType: TextInputType.phone,
+            ),
+            TextField(
+              controller: employeeIdController,
+              decoration: const InputDecoration(labelText: 'Employee ID'),
+            ),
+            TextField(
+              controller: addressController,
+              decoration: const InputDecoration(labelText: 'Address'),
+            ),
+
+            const SizedBox(height: 12),
+
+            // NEW — Driving License Expiry Date
+            Obx(
+                  () => TextField(
+                controller: expiryDateController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Driving License Expiry Date',
+                  hintText: 'Select date',
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (licenseExpiry.value != null)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            licenseExpiry.value = null;
+                            expiryDateController.clear();
+                          },
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.date_range),
+                        onPressed: () => _pickExpiryDate(context),
+                      ),
+                    ],
+                  ),
+                  border: const OutlineInputBorder(),
+                ),
+                onTap: () => _pickExpiryDate(context),
+              ),
+            ),
+
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 urls = await uploadMultipleMediaAndSendUrls();
-                print(urls);
+                // ignore: avoid_print
+                print("Uploaded URLs: $urls");
               },
               child: const Text('Upload Files'),
             ),
+
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final updatedDriver = Driver(
                   id: driver.id,
-                  name: nameController.text,
-                  phone: phoneController.text,
-                  employeeId: employeeIdController.text,
-                  address: addressController.text, locationEnabled: false, proofDocs: urls ?? [],
+                  name: nameController.text.trim(),
+                  phone: phoneController.text.trim(),
+                  employeeId: employeeIdController.text.trim(),
+                  address: addressController.text.trim(),
+                  locationEnabled: false,
+                  proofDocs: urls ?? driver.proofDocs,
+                  drivingLicenseExpiryDate: licenseExpiry.value, // ✅ NEW
                 );
-                print("Driver Data:: $updatedDriver");
-                controller.updateDriver(driver.id!, updatedDriver);
+
+                // ignore: avoid_print
+                print("Updated Driver Data:: ${updatedDriver.toJson()}");
+
+                await controller.updateDriver(driver.id!, updatedDriver);
                 Get.back();
               },
               child: const Text('Save'),
