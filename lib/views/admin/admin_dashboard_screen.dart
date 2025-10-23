@@ -8,7 +8,7 @@ import 'package:trail_tracker/views/new_trail_form/trial_form_stepper.dart';
 import 'package:trail_tracker/views/admin/admin_login_screen.dart';
 import 'package:trail_tracker/views/admin/daily_report_screen.dart';
 import 'package:trail_tracker/views/admin/dashboard_home_screen.dart';
-import 'package:trail_tracker/views/admin/driver_manageement_screen.dart';
+import 'package:trail_tracker/views/admin/driver_management_screen.dart';
 
 // NEW: Live transit screen you created earlier
 import 'package:trail_tracker/views/driver_live_transit_screen.dart';

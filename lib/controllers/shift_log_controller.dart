@@ -9,6 +9,18 @@ class ShiftLogController extends GetxController {
   final ShiftLogRepository _repository = ShiftLogRepository();
   bool _isFetching = false;
 
+  // Pagination
+  var page = 1.obs;
+  var pageSize = 20.obs;
+  var total = 0.obs;
+  var totalPages = 1.obs;
+
+  // Filters
+  var startDate = Rxn<DateTime>();
+  var endDate = Rxn<DateTime>();
+  var driverQuery = ''.obs;
+
+
   @override
   void onInit() {
     super.onInit();
@@ -16,45 +28,65 @@ class ShiftLogController extends GetxController {
   }
 
   Future<void> fetchShiftLogs({bool force = false}) async {
-    if (_isFetching && !force) {
-      print('[ShiftLogController] fetchShiftLogs skipped — already fetching');
-      return;
-    }
-
+    if (_isFetching && !force) return;
     try {
       _isFetching = true;
       isLoading(true);
-      print('[ShiftLogController] fetchShiftLogs START at ${DateTime.now().toIso8601String()}');
 
-      final logs = await _repository.fetchShiftLogs();
+      final pageResp = await _repository.fetchShiftLogs(
+        page: page.value,
+        pageSize: pageSize.value,
+        start: startDate.value,
+        end: endDate.value,
+        driver: driverQuery.value,
+      );
 
-      print('[ShiftLogController] fetched ${logs.length} from repo');
-
-      // Dedupe by id (adjust field name if different)
-      final Map<String, ShiftLog> uniqueMap = {};
-      for (final log in logs) {
-        if (log.id == null) {
-          // if id can be null, fallback to some other key or include it anyway
-          uniqueMap['null_${uniqueMap.length}'] = log;
-        } else {
-          uniqueMap[log.id.toString()] = log;
-        }
-      }
-      final deduped = uniqueMap.values.toList();
-
-      print('[ShiftLogController] deduped to ${deduped.length} items');
-
-      // Replace the list atomically
-      shiftLogs.assignAll(deduped);
-    } catch (e, st) {
-      print('[ShiftLogController] Error fetching shift logs: $e\n$st');
+      shiftLogs.assignAll(pageResp.items);
+      page.value = pageResp.page;
+      pageSize.value = pageResp.pageSize;
+      total.value = pageResp.total;
+      totalPages.value = pageResp.totalPages;
+    } catch (e) {
+      // handle/log
+      rethrow;
     } finally {
       isLoading(false);
       _isFetching = false;
-      print('[ShiftLogController] fetchShiftLogs END at ${DateTime.now().toIso8601String()}');
     }
   }
 
+  void setDriverQuery(String q) {
+    driverQuery.value = q;
+    page.value = 1;
+    fetchShiftLogs(force: true);
+  }
+
+  void setDateRange(DateTime? start, DateTime? end) {
+    startDate.value = start;
+    endDate.value = end;
+    page.value = 1;
+    fetchShiftLogs(force: true);
+  }
+
+  void setPageSize(int size) {
+    pageSize.value = size;
+    page.value = 1;
+    fetchShiftLogs(force: true);
+  }
+
+  void nextPage() {
+    if (page.value < totalPages.value) {
+      page.value++;
+      fetchShiftLogs(force: true);
+    }
+  }
+
+  void prevPage() {
+    if (page.value > 1) {
+      page.value--;
+      fetchShiftLogs(force: true);
+    }
+  }
   Future<void> addShiftLog(ShiftLog shiftLog) async {
     if (_isFetching) return;
     try {

@@ -74,6 +74,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
               DataColumn(label: Text("Phone")),
               DataColumn(label: Text("Employee ID")),
               DataColumn(label: Text("Address")),
+              DataColumn(label: Text("Driving License Expiry")),
               DataColumn(label: Text("Location Sharing")),
               DataColumn(label: Text("Download Files")),
               DataColumn(label: Text("Actions")),
@@ -85,7 +86,60 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                 DataCell(Text(driver.phone?.toString() ?? '')),
                 DataCell(Text(driver.employeeId ?? '')),
                 DataCell(Text(driver.address ?? '')),
+                DataCell(
+                  Builder(
+                    builder: (context) {
+                      final daysLeft = driver.licenseDaysLeft;
+                      final isExpiringSoon = driver.isLicenseExpiringSoon;
+                      final isExpired = driver.isLicenseExpired;
 
+                      final expiryText = driver.formattedLicenseExpiry ?? '-';
+
+                      // Choose text color
+                      final color = isExpired
+                          ? Colors.red
+                          : isExpiringSoon
+                          ? Colors.orange
+                          : Colors.black;
+
+                      // Subtext message (below date)
+                      String? subText;
+                      if (daysLeft != null) {
+                        if (isExpired) {
+                          subText = 'Expired ${daysLeft.abs()} day${daysLeft.abs() == 1 ? '' : 's'} ago';
+                        } else if (isExpiringSoon) {
+                          subText = 'Expiring in $daysLeft day${daysLeft == 1 ? '' : 's'}';
+                        }
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            expiryText,
+                            style: TextStyle(
+                              color: color,
+                              fontWeight:
+                              (isExpired || isExpiringSoon) ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                          if (subText != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                subText,
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
                 /// ✅ Toggle Switch for Location Sharing
                 DataCell(
                   Transform.scale(

@@ -7,6 +7,16 @@ class ApiManager {
   static const String baseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app';
 
 
+  static Map<String, String> _headers() {
+    final storage = GetStorage();
+    final token = storage.read('token');
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   static Future<http.Response> get(String endpoint) async {
     final storage = GetStorage();
     final token = storage.read('token');
@@ -20,6 +30,14 @@ class ApiManager {
       },
     );
   }
+
+  /// GET request with Uri (supports query parameters)
+  static Future<http.Response> getUri(Uri uri) async {
+    // Combine the base URL with the provided path/query
+    final fullUri = Uri.parse(baseUrl).resolveUri(uri);
+    return await http.get(fullUri, headers: _headers());
+  }
+
 
   static Future<http.Response> post(String endpoint, Map<String, dynamic> body) async {
     final storage = GetStorage();

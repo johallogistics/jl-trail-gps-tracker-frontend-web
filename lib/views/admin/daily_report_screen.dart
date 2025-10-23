@@ -1,10 +1,8 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
+// views/admin/daily_report_management.dart
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
+
 import '../../controllers/shift_log_controller.dart';
 import '../../models/shift_log_model.dart';
 import '../../utils/file_download_service.dart';
@@ -18,191 +16,320 @@ class DailyReportManagement extends StatefulWidget {
 class _DailyReportManagementState extends State<DailyReportManagement> {
   final ShiftLogController controller = Get.put(ShiftLogController());
 
-  final ScrollController _horizontalController = ScrollController();
-  final ScrollController _verticalController = ScrollController();
+  final TextEditingController _driverFilterCtrl = TextEditingController();
 
   @override
   void dispose() {
-    _horizontalController.dispose();
-    _verticalController.dispose();
+    _driverFilterCtrl.dispose();
     super.dispose();
   }
 
-  // TODO: change to your real API base URL
-  final String apiBaseUrl = 'https://jl-trail-gps-tracker-backend-production.up.railway.app';
-  // Replace with your backend URL
+  String _dateLabel(DateTime? d) {
+    if (d == null) return '--';
+    return '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
+  }
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final initialStart = controller.startDate.value ?? DateTime(now.year, now.month, now.day);
+    final initialEnd = controller.endDate.value ?? DateTime(now.year, now.month, now.day);
+    final res = await showDateRangePicker(
+      context: context,
+      initialDateRange: DateTimeRange(start: initialStart, end: initialEnd),
+      firstDate: DateTime(now.year - 3),
+      lastDate: DateTime(now.year + 1),
+    );
+    if (res != null) {
+      controller.setDateRange(res.start, res.end);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Daily Report Management'),
-          Spacer(),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              // Call the controller method to fetch the latest data
-              controller.fetchShiftLogs();
-            },
-          ),
-          ElevatedButton(
-            onPressed: () => exportShiftLogsToCsvImpl(controller.shiftLogs),
-            child: Text('Export to CSV'),
-          )
-        ],
-      )),
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            const SizedBox(width: 16),
+            const Text('Daily Report Management'),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => controller.fetchShiftLogs(force: true),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              onPressed: () {
+                // Export current page items (or implement server export endpoint)
+                exportShiftLogsToCsvImpl(controller.shiftLogs);
+              },
+              child: const Text('Export to CSV'),
+            ),
+            const SizedBox(width: 12),
+          ],
+        ),
+      ),
       body: Column(
         children: [
-          // Padding(
-          //   padding: EdgeInsets.all(8.0),
-          //   child: TextField(
-          //     decoration: InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
-          //     onChanged: (query) {
-          //       // TODO: Implement search functionality
-          //     },
-          //   ),
-          // ),
-          Expanded(
+          // Filters bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
             child: Obx(() {
-              final _verticalController = ScrollController();
-              final _horizontalController = ScrollController();
-
-              return Scrollbar(
-                controller: _verticalController,
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  controller: _verticalController,
-                  scrollDirection: Axis.vertical,
-                  child: Scrollbar(
-                    controller: _horizontalController,
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
-                      controller: _horizontalController,
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text('S.NO')),
-                          DataColumn(label: Text('DATE')),
-                          DataColumn(label: Text('REGION')),
-                          DataColumn(label: Text('EMP CODE')),
-                          DataColumn(label: Text('DRIVER NAME')),
-                          // DataColumn(label: Text('Allocation')),
-                          DataColumn(label: Text('Contact No.')),
-                          // DataColumn(label: Text('Designation')),
-                          // DataColumn(label: Text('Native Place')),
-                          // DataColumn(label: Text('Available at')),
-                          DataColumn(label: Text('Driver Status')),
-                          DataColumn(label: Text('Capitalized Vehicle/Customer Vehicle')),
-                          DataColumn(label: Text('Purpose of Trial')),
-                          DataColumn(label: Text('Reason, If Others')),
-                          DataColumn(label: Text('Date Of Sale')),
-                          DataColumn(label: Text('VECV reporting Person')),
-                          DataColumn(label: Text('Dealer Name')),
-                          DataColumn(label: Text('Customer Name')),
-                          DataColumn(label: Text('Customer Driver Name')),
-                          DataColumn(label: Text('Customer Driver No')),
-                          DataColumn(label: Text('Present location')),
-                          DataColumn(label: Text('Vehicle No')),
-                          DataColumn(label: Text('Chassis No')),
-                          DataColumn(label: Text('Vehicle Model')),
-                          DataColumn(label: Text('GVW')),
-                          DataColumn(label: Text('Payload')),
-                          DataColumn(label: Text('Previous KMPL')),
-                          DataColumn(label: Text('Trial KMPL')),
-                          DataColumn(label: Text('cluster KMPL')),
-                          DataColumn(label: Text('Vehicle Odometer - Start')),
-                          DataColumn(label: Text('Vehicle Odometer - End')),
-                          DataColumn(label: Text('Trial KMS')),
-                          DataColumn(label: Text('HighWay Sweet Spot %')),
-                          DataColumn(label: Text('Normal Road Sweet Spot %')),
-                          DataColumn(label: Text('Hills Road Sweet Spot %')),
-                          DataColumn(label: Text('Trial Allocation')),
-                          DataColumn(label: Text('Media')),
-                          DataColumn(label: Text('Actions')),
-                        ],
-                        rows: controller.shiftLogs.map((log) {
-                          return DataRow(cells: [
-                            DataCell(Text(log.id?.toString() ?? '')),
-                            DataCell(Text(log.date.toString() ?? '')),
-                            DataCell(Text(log.region ?? '-')),
-                            DataCell(Text(log.employeeCode)),
-                            DataCell(Text(log.employeeName)),
-                            // DataCell(Text(log.allocation ?? '-')),
-                            DataCell(Text(log.employeePhoneNo)),
-                            // DataCell(Text(log.capitalizedVehicle)),
-                            // DataCell(Text(log.presentLocation)),
-                            // DataCell(Text(log.fromPlace)),
-                            DataCell(Text(log.driverStatus)),
-                            DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
-                            DataCell(Text(log.purposeOfTrial)),
-                            DataCell(Text(log.reason)),
-                            DataCell(Text(log.dateOfSale)),
-                            DataCell(Text(log.vecvReportingPerson)),
-                            DataCell(Text(log.dealerName)),
-                            DataCell(Text(log.customerName)),
-                            DataCell(Text(log.customerDriverName)),
-                            DataCell(Text(log.customerDriverNo)),
-                            DataCell(Text(log.presentLocation)),
-                            DataCell(Text(log.vehicleNo)),
-                            DataCell(Text(log.chassisNo)),
-                            DataCell(Text(log.vehicleModel)),
-                            DataCell(Text(log.gvw.toString())),
-                            DataCell(Text(log.payload.toString())),
-                            DataCell(Text(log.previousKmpl.toString())),
-                            DataCell(Text(log.trialKMPL)),
-                            DataCell(Text(log.clusterKmpl.toString())),
-                            DataCell(Text(log.vehicleOdometerStartingReading)),
-                            DataCell(Text(log.vehicleOdometerEndingReading)),
-                            DataCell(Text(log.trialKMS)),
-                            DataCell(Text(log.highwaySweetSpotPercent.toString())),
-                            DataCell(Text(log.normalRoadSweetSpotPercent.toString())),
-                            DataCell(Text(log.hillsRoadSweetSpotPercent.toString())),
-                            DataCell(Text(log.trialAllocation)),
-                            DataCell(
-                              log.imageVideoUrls.isEmpty
-                                  ? Icon(Icons.insert_drive_file, color: Colors.grey)
-                                  : IconButton(
-                                icon: Icon(Icons.download, color: Colors.blue),
-                                onPressed: () async {
-                                  for (var url in log.imageVideoUrls) {
-                                    await downloadFileFromUrl(url);
-                                  }
-                                },
-                              ),
-                            ),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit),
-                                  onPressed: () => _showAddShiftLogDialog(
-                                    context,
-                                    isEdit: true,
-                                    existingLog: log,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _confirmDelete(context, log.id!),
-                                ),
-                              ],
-                            )),
-                          ]);
-                        }).toList(),
+              return Row(
+                children: [
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                    label: Text(
+                      'Date: ${_dateLabel(controller.startDate.value)} → ${_dateLabel(controller.endDate.value)}',
+                    ),
+                    onPressed: _pickDateRange,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _driverFilterCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Filter by driver name / code / phone',
+                        prefixIcon: const Icon(Icons.search),
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
+                      onSubmitted: controller.setDriverQuery, // press Enter to search
+                      onChanged: (text) {
+                        controller.setDriverQuery(text);
+                      },
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Row(
+                    children: [
+                      const Text('Rows:'),
+                      const SizedBox(width: 6),
+                      Obx(() {
+                        return DropdownButton<int>(
+                          value: controller.pageSize.value,
+                          items: const [10, 20, 50, 100]
+                              .map((s) => DropdownMenuItem<int>(value: s, child: Text('$s')))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v == null) return;
+                            controller.setPageSize(v);
+                          },
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      _driverFilterCtrl.clear();
+                      controller.setDriverQuery('');
+                      controller.setDateRange(null, null);
+                    },
+                    icon: const Icon(Icons.clear_all),
+                    label: const Text('Clear'),
+                  ),
+                ],
               );
             }),
           ),
-          SizedBox(height: 20,)
+
+          // Table
+          Expanded(
+            child: Obx(() {
+              final logs = controller.shiftLogs;
+
+              final verticalCtrl = ScrollController();
+              final horizontalCtrl = ScrollController();
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Scrollbar(
+                          controller: verticalCtrl,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: verticalCtrl,
+                            scrollDirection: Axis.vertical,
+                            child: Scrollbar(
+                              controller: horizontalCtrl,
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                controller: horizontalCtrl,
+                                scrollDirection: Axis.horizontal,
+                                child: DataTable(
+                                  columns: const [
+                                    DataColumn(label: Text('S.NO')),
+                                    DataColumn(label: Text('DATE')),
+                                    DataColumn(label: Text('REGION')),
+                                    DataColumn(label: Text('EMP CODE')),
+                                    DataColumn(label: Text('DRIVER NAME')),
+                                    DataColumn(label: Text('Contact No.')),
+                                    DataColumn(label: Text('Driver Status')),
+                                    DataColumn(label: Text('Capitalized Vehicle/Customer Vehicle')),
+                                    DataColumn(label: Text('Purpose of Trial')),
+                                    DataColumn(label: Text('Reason, If Others')),
+                                    DataColumn(label: Text('Date Of Sale')),
+                                    DataColumn(label: Text('VECV reporting Person')),
+                                    DataColumn(label: Text('Dealer Name')),
+                                    DataColumn(label: Text('Customer Name')),
+                                    DataColumn(label: Text('Customer Driver Name')),
+                                    DataColumn(label: Text('Customer Driver No')),
+                                    DataColumn(label: Text('Present location')),
+                                    DataColumn(label: Text('Vehicle No')),
+                                    DataColumn(label: Text('Chassis No')),
+                                    DataColumn(label: Text('Vehicle Model')),
+                                    DataColumn(label: Text('GVW')),
+                                    DataColumn(label: Text('Payload')),
+                                    DataColumn(label: Text('Previous KMPL')),
+                                    DataColumn(label: Text('Trial KMPL')),
+                                    DataColumn(label: Text('cluster KMPL')),
+                                    DataColumn(label: Text('Vehicle Odometer - Start')),
+                                    DataColumn(label: Text('Vehicle Odometer - End')),
+                                    DataColumn(label: Text('Trial KMS')),
+                                    DataColumn(label: Text('HighWay Sweet Spot %')),
+                                    DataColumn(label: Text('Normal Road Sweet Spot %')),
+                                    DataColumn(label: Text('Hills Road Sweet Spot %')),
+                                    DataColumn(label: Text('Trial Allocation')),
+                                    DataColumn(label: Text('Media')),
+                                    DataColumn(label: Text('Actions')),
+                                  ],
+                                  rows: logs.map((log) {
+                                    DateTime? dt;
+                                    try {
+                                      dt = log.date is DateTime
+                                          ? (log.date as DateTime)
+                                          : DateTime.tryParse(log.date?.toString() ?? '');
+                                    } catch (_) {}
+                                    final dateTxt = dt != null
+                                        ? dt.toString().split('.').first
+                                        : (log.date?.toString() ?? '-');
+
+                                    return DataRow(cells: [
+                                      DataCell(Text(log.id?.toString() ?? '')),
+                                      DataCell(Text(dateTxt)),
+                                      DataCell(Text(log.region ?? '-')),
+                                      DataCell(Text(log.employeeCode)),
+                                      DataCell(Text(log.employeeName)),
+                                      DataCell(Text(log.employeePhoneNo)),
+                                      DataCell(Text(log.driverStatus)),
+                                      DataCell(Text(log.capitalizedVehicleOrCustomerVehicle)),
+                                      DataCell(Text(log.purposeOfTrial)),
+                                      DataCell(Text(log.reason)),
+                                      DataCell(Text(log.dateOfSale)),
+                                      DataCell(Text(log.vecvReportingPerson)),
+                                      DataCell(Text(log.dealerName)),
+                                      DataCell(Text(log.customerName)),
+                                      DataCell(Text(log.customerDriverName)),
+                                      DataCell(Text(log.customerDriverNo)),
+                                      DataCell(Text(log.presentLocation)),
+                                      DataCell(Text(log.vehicleNo)),
+                                      DataCell(Text(log.chassisNo)),
+                                      DataCell(Text(log.vehicleModel)),
+                                      DataCell(Text(log.gvw.toString())),
+                                      DataCell(Text(log.payload.toString())),
+                                      DataCell(Text(log.previousKmpl.toString())),
+                                      DataCell(Text(log.trialKMPL)),
+                                      DataCell(Text(log.clusterKmpl.toString())),
+                                      DataCell(Text(log.vehicleOdometerStartingReading)),
+                                      DataCell(Text(log.vehicleOdometerEndingReading)),
+                                      DataCell(Text(log.trialKMS)),
+                                      DataCell(Text(log.highwaySweetSpotPercent.toString())),
+                                      DataCell(Text(log.normalRoadSweetSpotPercent.toString())),
+                                      DataCell(Text(log.hillsRoadSweetSpotPercent.toString())),
+                                      DataCell(Text(log.trialAllocation)),
+                                      DataCell(
+                                        log.imageVideoUrls.isEmpty
+                                            ? const Icon(Icons.insert_drive_file, color: Colors.grey)
+                                            : IconButton(
+                                          icon: const Icon(Icons.download, color: Colors.blue),
+                                          onPressed: () async {
+                                            for (var url in log.imageVideoUrls) {
+                                              await downloadFileFromUrl(url);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      DataCell(Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            onPressed: () => _showAddShiftLogDialog(
+                                              context,
+                                              isEdit: true,
+                                              existingLog: log,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () => _confirmDelete(context, log.id!),
+                                          ),
+                                        ],
+                                      )),
+                                    ]);
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Loading overlay
+                        if (controller.isLoading.value)
+                          Container(
+                            color: Colors.white.withOpacity(.6),
+                            child: const Center(child: CircularProgressIndicator()),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Pagination bar (server-side)
+                  Obx(() {
+                    final p = controller.page.value;
+                    final sz = controller.pageSize.value;
+                    final tot = controller.total.value;
+                    final pages = controller.totalPages.value;
+                    final from = tot == 0 ? 0 : ((p - 1) * sz + 1);
+                    final to = tot == 0 ? 0 : math.min(p * sz, tot);
+
+                    return Container(
+                      height: 52,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        children: [
+                          Text('Showing $from–$to of $tot'),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Previous page',
+                            onPressed: p <= 1 ? null : controller.prevPage,
+                            icon: const Icon(Icons.chevron_left),
+                          ),
+                          Text('Page ${tot == 0 ? 0 : p} / ${tot == 0 ? 0 : pages}'),
+                          IconButton(
+                            tooltip: 'Next page',
+                            onPressed: p >= pages ? null : controller.nextPage,
+                            icon: const Icon(Icons.chevron_right),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddShiftLogDialog(context),
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -211,20 +338,21 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text("Delete Confirmation"),
-        content: Text("Are you sure you want to delete this record?"),
+        title: const Text("Delete Confirmation"),
+        content: const Text("Are you sure you want to delete this record?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
-            onPressed: () {
-              controller.deleteShiftLog(id);
-              Navigator.of(context).pop();
+            onPressed: () async {
+              await controller.deleteShiftLog(id);
+              // controller.fetchShiftLogs(force: true); // controller already reloads after delete
+              if (context.mounted) Navigator.of(context).pop();
             },
-            child: Text("Delete"),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete"),
           ),
         ],
       ),
@@ -232,307 +360,24 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
   }
 
   void _showAddShiftLogDialog(BuildContext context, {bool isEdit = false, ShiftLog? existingLog}) {
-    final shiftController = TextEditingController(text: existingLog?.shift ?? '');
-    final otHoursController = TextEditingController(text: existingLog?.otHours.toString() ?? '0');
-    final vehicleController = TextEditingController(text: existingLog?.vehicleModel ?? '');
-    final regNoController = TextEditingController(text: existingLog?.regNo ?? '');
-    final workingHoursController = TextEditingController(text: existingLog?.workingHours.toString() ?? '0');
-    final startingKmController = TextEditingController(text: existingLog?.startingKm.toString() ?? '0');
-    final endingKmController = TextEditingController(text: existingLog?.endingKm.toString() ?? '0');
-    final totalKmController = TextEditingController(text: existingLog?.totalKm.toString() ?? '0');
-    final fromPlaceController = TextEditingController(text: existingLog?.fromPlace ?? '');
-    final toPlaceController = TextEditingController(text: existingLog?.toPlace ?? '');
-    final fuelAvgController = TextEditingController(text: existingLog?.fuelAvg.toString() ?? '0');
-    final coDriverNameController = TextEditingController(text: existingLog?.coDriverName ?? '');
-    final coDriverPhoneNoController = TextEditingController(text: existingLog?.coDriverPhoneNo ?? '');
-    final inchargeSignController = TextEditingController(text: existingLog?.inchargeSign ?? '');
-    final employeeNameController = TextEditingController(text: existingLog?.employeeName ?? '');
-    final employeePhoneNoController = TextEditingController(text: existingLog?.employeePhoneNo ?? '');
-    final employeeCodeController = TextEditingController(text: existingLog?.employeeCode ?? '');
-    final monthYearController = TextEditingController(text: existingLog?.monthYear ?? '');
-    final dicvInchargeNameController = TextEditingController(text: existingLog?.dicvInchargeName ?? '');
-    final dicvInchargePhoneNoController = TextEditingController(text: existingLog?.dicvInchargePhoneNo ?? '');
-    final trailIdController = TextEditingController(text: existingLog?.trailId ?? '');
-    final chassisNoController = TextEditingController(text: existingLog?.chassisNo ?? '');
-    final gvwController = TextEditingController(text: existingLog?.gvw.toString() ?? '0');
-    final payloadController = TextEditingController(text: existingLog?.payload.toString() ?? '0');
-    final presentLocationController = TextEditingController(text: existingLog?.presentLocation ?? '');
-    final previousKmplController = TextEditingController(text: existingLog?.previousKmpl.toString() ?? '0');
-    final clusterKmplController = TextEditingController(text: existingLog?.clusterKmpl.toString() ?? '0');
-    final highwaySweetSpotPercentController = TextEditingController(text: existingLog?.highwaySweetSpotPercent.toString() ?? '0');
-    final normalRoadSweetSpotPercentController = TextEditingController(text: existingLog?.normalRoadSweetSpotPercent.toString() ?? '0');
-    final hillsRoadSweetSpotPercentController = TextEditingController(text: existingLog?.hillsRoadSweetSpotPercent.toString() ?? '0');
-    final trialKMPLController = TextEditingController(text: existingLog?.trialKMPL ?? '');
-    final vehicleOdometerStartingReadingController = TextEditingController(text: existingLog?.vehicleOdometerStartingReading ?? '');
-    final vehicleOdometerEndingReadingController = TextEditingController(text: existingLog?.vehicleOdometerEndingReading ?? '');
-    final trialKMSController = TextEditingController(text: existingLog?.trialKMS ?? '');
-    final trialAllocationController = TextEditingController(text: existingLog?.trialAllocation ?? '');
-    final vecvReportingPersonController = TextEditingController(text: existingLog?.vecvReportingPerson ?? '');
-    final dealerNameController = TextEditingController(text: existingLog?.dealerName ?? '');
-    final customerNameController = TextEditingController(text: existingLog?.customerName ?? '');
-    final customerDriverNameController = TextEditingController(text: existingLog?.customerDriverName ?? '');
-    final customerDriverNoController = TextEditingController(text: existingLog?.customerDriverNo ?? '');
-    final capitalizedVehicleOrCustomerVehicleController = TextEditingController(text: existingLog?.capitalizedVehicleOrCustomerVehicle ?? '');
-    final customerVehicleController = TextEditingController(text: existingLog?.customerVehicle ?? '');
-    final capitalizedVehicleController = TextEditingController(text: existingLog?.capitalizedVehicle ?? '');
-    final vehicleNoController = TextEditingController(text: existingLog?.vehicleNo ?? '');
-    final driverStatusController = TextEditingController(text: existingLog?.driverStatus ?? '');
-    final purposeOfTrialController = TextEditingController(text: existingLog?.purposeOfTrial ?? '');
-    final reasonController = TextEditingController(text: existingLog?.reason ?? '');
-    final dateOfSaleController = TextEditingController(text: existingLog?.dateOfSale ?? '');
-    final regionController = TextEditingController(text: existingLog?.region ?? ''); // NEW
-    final selectedVehicleType = RxnString(existingLog?.capitalizedVehicleOrCustomerVehicle);
-    final selectedPurposeOfTrial = RxnString(existingLog?.purposeOfTrial);
-
-    // Auto Fill helper - visible only on non-web
-    Future<void> _autoFillFromLatestReport() async {
-      final box = GetStorage();
-      final storedPhone = (box.read('phone') as String?)?.trim() ?? '';
-
-      if (storedPhone.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Driver phone not found in storage.'))
-        );
-        return;
-      }
-
-      // Decide whether you want to enforce leading + on client side.
-      // If storedPhone already contains +, this will encode it as %2B.
-      final encodedPhone = Uri.encodeComponent(storedPhone);
-
-      print("STORED:::::::::::::::: $storedPhone");
-
-      final uri = Uri.parse('https://jl-trail-gps-tracker-backend-production.up.railway.app/dailyReports/latest?phone=$encodedPhone');
-
-      try {
-        final resp = await http.get(uri);
-        if (resp.statusCode == 200) {
-          final body = json.decode(resp.body);
-          final Map<String, dynamic>? payload = (body is Map && body['payload'] != null) ? body['payload'] as Map<String, dynamic> : (body is Map ? body as Map<String, dynamic> : null);
-
-          if (payload == null) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No payload returned')));
-            return;
-          }
-
-          // call the helper you already have (make sure it's in scope)
-          _populateFormFromJson(
-            payload,
-            shiftController: shiftController,
-            otHoursController: otHoursController,
-            vehicleController: vehicleController,
-            regNoController: regNoController,
-            workingHoursController: workingHoursController,
-            startingKmController: startingKmController,
-            endingKmController: endingKmController,
-            totalKmController: totalKmController,
-            fromPlaceController: fromPlaceController,
-            toPlaceController: toPlaceController,
-            fuelAvgController: fuelAvgController,
-            coDriverNameController: coDriverNameController,
-            coDriverPhoneNoController: coDriverPhoneNoController,
-            inchargeSignController: inchargeSignController,
-            employeeNameController: employeeNameController,
-            employeePhoneNoController: employeePhoneNoController,
-            employeeCodeController: employeeCodeController,
-            monthYearController: monthYearController,
-            dicvInchargeNameController: dicvInchargeNameController,
-            dicvInchargePhoneNoController: dicvInchargePhoneNoController,
-            trailIdController: trailIdController,
-            chassisNoController: chassisNoController,
-            gvwController: gvwController,
-            payloadController: payloadController,
-            presentLocationController: presentLocationController,
-            previousKmplController: previousKmplController,
-            clusterKmplController: clusterKmplController,
-            highwaySweetSpotPercentController: highwaySweetSpotPercentController,
-            normalRoadSweetSpotPercentController: normalRoadSweetSpotPercentController,
-            hillsRoadSweetSpotPercentController: hillsRoadSweetSpotPercentController,
-            trialKMPLController: trialKMPLController,
-            vehicleOdometerStartingReadingController: vehicleOdometerStartingReadingController,
-            vehicleOdometerEndingReadingController: vehicleOdometerEndingReadingController,
-            trialKMSController: trialKMSController,
-            trialAllocationController: trialAllocationController,
-            vecvReportingPersonController: vecvReportingPersonController,
-            dealerNameController: dealerNameController,
-            customerNameController: customerNameController,
-            customerDriverNameController: customerDriverNameController,
-            customerDriverNoController: customerDriverNoController,
-            capitalizedVehicleOrCustomerVehicleController: capitalizedVehicleOrCustomerVehicleController,
-            customerVehicleController: customerVehicleController,
-            capitalizedVehicleController: capitalizedVehicleController,
-            vehicleNoController: vehicleNoController,
-            driverStatusController: driverStatusController,
-            purposeOfTrialController: purposeOfTrialController,
-            reasonController: reasonController,
-            dateOfSaleController: dateOfSaleController,
-            regionController: regionController, // NEW
-            selectedVehicleType: selectedVehicleType,
-            selectedPurposeOfTrial: selectedPurposeOfTrial,
-          );
-
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Auto-fill successful')));
-        } else if (resp.statusCode == 404) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No previous report found for this driver')));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Server error: ${resp.statusCode}')));
-        }
-      } catch (e) {
-        debugPrint('Auto-fill error: $e');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to fetch latest report')));
-      }
-    }
-
     showDialog(
       context: context,
       builder: (_) => Dialog(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 900, maxHeight: 780),
+          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 780),
           child: SizedBox(
             width: double.infinity,
             height: double.infinity,
             child: DailyReportScreen(
               isEdit: isEdit,
               existingLog: existingLog,
-            ), // <-- pass existingLog & isEdit flag
+            ),
           ),
         ),
       ),
-    );
-
-  }
-
-  // Helper to populate controllers from JSON payload (best-effort mapping)
-  void _populateFormFromJson(
-      Map<String, dynamic> src, {
-        required TextEditingController shiftController,
-        required TextEditingController otHoursController,
-        required TextEditingController vehicleController,
-        required TextEditingController regNoController,
-        required TextEditingController workingHoursController,
-        required TextEditingController startingKmController,
-        required TextEditingController endingKmController,
-        required TextEditingController totalKmController,
-        required TextEditingController fromPlaceController,
-        required TextEditingController toPlaceController,
-        required TextEditingController fuelAvgController,
-        required TextEditingController coDriverNameController,
-        required TextEditingController coDriverPhoneNoController,
-        required TextEditingController inchargeSignController,
-        required TextEditingController employeeNameController,
-        required TextEditingController employeePhoneNoController,
-        required TextEditingController employeeCodeController,
-        required TextEditingController monthYearController,
-        required TextEditingController dicvInchargeNameController,
-        required TextEditingController dicvInchargePhoneNoController,
-        required TextEditingController trailIdController,
-        required TextEditingController chassisNoController,
-        required TextEditingController gvwController,
-        required TextEditingController payloadController,
-        required TextEditingController presentLocationController,
-        required TextEditingController previousKmplController,
-        required TextEditingController clusterKmplController,
-        required TextEditingController highwaySweetSpotPercentController,
-        required TextEditingController normalRoadSweetSpotPercentController,
-        required TextEditingController hillsRoadSweetSpotPercentController,
-        required TextEditingController trialKMPLController,
-        required TextEditingController vehicleOdometerStartingReadingController,
-        required TextEditingController vehicleOdometerEndingReadingController,
-        required TextEditingController trialKMSController,
-        required TextEditingController trialAllocationController,
-        required TextEditingController vecvReportingPersonController,
-        required TextEditingController dealerNameController,
-        required TextEditingController customerNameController,
-        required TextEditingController customerDriverNameController,
-        required TextEditingController customerDriverNoController,
-        required TextEditingController capitalizedVehicleOrCustomerVehicleController,
-        required TextEditingController customerVehicleController,
-        required TextEditingController capitalizedVehicleController,
-        required TextEditingController vehicleNoController,
-        required TextEditingController driverStatusController,
-        required TextEditingController purposeOfTrialController,
-        required TextEditingController reasonController,
-        required TextEditingController dateOfSaleController,
-        required TextEditingController regionController, // NEW
-        required RxnString selectedVehicleType,
-        required RxnString selectedPurposeOfTrial,
-      }) {
-    // Simple safe reads with fallback to empty strings
-    shiftController.text = src['shift']?.toString() ?? '';
-    otHoursController.text = src['otHours']?.toString() ?? '0';
-    vehicleController.text = src['vehicleModel']?.toString() ?? '';
-    regNoController.text = src['regNo']?.toString() ?? '';
-    workingHoursController.text = src['workingHours']?.toString() ?? '0';
-    startingKmController.text = src['startingKm']?.toString() ?? '0';
-    endingKmController.text = src['endingKm']?.toString() ?? '0';
-    totalKmController.text = src['totalKm']?.toString() ?? '0';
-    fromPlaceController.text = src['fromPlace']?.toString() ?? '';
-    toPlaceController.text = src['toPlace']?.toString() ?? '';
-    fuelAvgController.text = src['fuelAvg']?.toString() ?? '0';
-    coDriverNameController.text = src['coDriverName']?.toString() ?? '';
-    coDriverPhoneNoController.text = src['coDriverPhoneNo']?.toString() ?? '';
-    inchargeSignController.text = src['inchargeSign']?.toString() ?? '';
-    employeeNameController.text = src['employeeName']?.toString() ?? '';
-    employeePhoneNoController.text = src['employeePhoneNo']?.toString() ?? '';
-    employeeCodeController.text = src['employeeCode']?.toString() ?? '';
-    monthYearController.text = src['monthYear']?.toString() ?? '';
-    dicvInchargeNameController.text = src['dicvInchargeName']?.toString() ?? '';
-    dicvInchargePhoneNoController.text = src['dicvInchargePhoneNo']?.toString() ?? '';
-    trailIdController.text = src['trailId']?.toString() ?? '';
-    chassisNoController.text = src['chassisNo']?.toString() ?? '';
-    gvwController.text = src['gvw']?.toString() ?? '0';
-    payloadController.text = src['payload']?.toString() ?? '0';
-    presentLocationController.text = src['presentLocation']?.toString() ?? '';
-    previousKmplController.text = src['previousKmpl']?.toString() ?? '0';
-    clusterKmplController.text = src['clusterKmpl']?.toString() ?? '0';
-    highwaySweetSpotPercentController.text = src['highwaySweetSpotPercent']?.toString() ?? '0';
-    normalRoadSweetSpotPercentController.text = src['normalRoadSweetSpotPercent']?.toString() ?? '0';
-    hillsRoadSweetSpotPercentController.text = src['hillsRoadSweetSpotPercent']?.toString() ?? '0';
-    trialKMPLController.text = src['trialKMPL']?.toString() ?? '';
-    vehicleOdometerStartingReadingController.text = src['vehicleOdometerStartingReading']?.toString() ?? '';
-    vehicleOdometerEndingReadingController.text = src['vehicleOdometerEndingReading']?.toString() ?? '';
-    trialKMSController.text = src['trialKMS']?.toString() ?? '';
-
-    // trialAllocation: keep existing behavior; ensure fallback compatibility
-    trialAllocationController.text = src['trialAllocation']?.toString() ?? '';
-
-    vecvReportingPersonController.text = src['vecvReportingPerson']?.toString() ?? '';
-    dealerNameController.text = src['dealerName']?.toString() ?? '';
-    customerNameController.text = src['customerName']?.toString() ?? '';
-    customerDriverNameController.text = src['customerDriverName']?.toString() ?? '';
-    customerDriverNoController.text = src['customerDriverNo']?.toString() ?? '';
-    capitalizedVehicleOrCustomerVehicleController.text = src['capitalizedVehicleOrCustomerVehicle']?.toString() ?? '';
-    customerVehicleController.text = src['customerVehicle']?.toString() ?? '';
-    capitalizedVehicleController.text = src['capitalizedVehicle']?.toString() ?? '';
-    vehicleNoController.text = src['vehicleNo']?.toString() ?? '';
-    driverStatusController.text = src['driverStatus']?.toString() ?? '';
-    purposeOfTrialController.text = src['purposeOfTrial']?.toString() ?? '';
-    reasonController.text = src['reason']?.toString() ?? '';
-    dateOfSaleController.text = src['dateOfSale']?.toString() ?? '';
-
-    // NEW: populate region (if server has it)
-    regionController.text = src['region']?.toString() ?? '';
-
-    // Set reactive dropdown values where applicable
-    final typeVal = src['capitalizedVehicleOrCustomerVehicle']?.toString();
-    if (typeVal == 'Customer Vehicle' || typeVal == 'Capitalized Vehicle') {
-      selectedVehicleType.value = typeVal;
-    } else {
-      selectedVehicleType.value = null;
-    }
-
-    final purposeVal = src['purposeOfTrial']?.toString();
-    // check it's in allowed lists
-    final allowedCustomerPurposes = [
-      'Post Sale Live Training (Familiarization with product)',
-      'Post Sale FE Trial',
-      'Low Fuel Mileage issue'
-    ];
-    final allowedCapitalizedPurposes = ['Demo', 'Pre Sale FE Trial'];
-    if (allowedCustomerPurposes.contains(purposeVal) || allowedCapitalizedPurposes.contains(purposeVal)) {
-      selectedPurposeOfTrial.value = purposeVal;
-    } else {
-      selectedPurposeOfTrial.value = null;
-    }
+    ).then((_) {
+      // After closing the modal, refresh current page
+      controller.fetchShiftLogs(force: true);
+    });
   }
 }

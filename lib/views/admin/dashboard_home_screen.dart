@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:trail_tracker/views/admin/trial_report_management_screen.dart';
 import '../../repositories/admin/dashboard_repository.dart';
 import 'daily_report_screen.dart';
-import 'driver_manageement_screen.dart';
+import 'driver_management_screen.dart';
 
 class DashboardDataController extends GetxController {
   final driversCount = 0.obs;

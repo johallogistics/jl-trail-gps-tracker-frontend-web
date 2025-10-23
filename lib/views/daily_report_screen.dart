@@ -73,9 +73,12 @@ class DailyReportController extends GetxController {
   final trailIdController = TextEditingController();
   final inchargeSignController = TextEditingController();
   final regionController = TextEditingController();
+
   // Reactive dropdowns
   final selectedVehicleType = RxnString();
   final selectedPurposeOfTrial = RxnString();
+
+  final region = ''.obs;
 
   // Default date string
   var date = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -83,7 +86,8 @@ class DailyReportController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
+    region.value = regionController.text;
+    ever<String>(region, (v) => regionController.text = v);
     // Attach listeners to update total km whenever start or end changes.
     startingKmController.addListener(recalcTotalKm);
     endingKmController.addListener(recalcTotalKm);
@@ -334,8 +338,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 'employee_name'.tr, controller.employeeNameController),
             buildLabeledField(
                 'employee_phone'.tr, controller.employeePhoneController,
-                isPhone :true,
-                keyboardType: TextInputType.phone),
+                isPhone: true, keyboardType: TextInputType.phone),
             buildLabeledField(
                 'employee_code'.tr, controller.employeeCodeController),
             const SizedBox(height: 8),
@@ -444,6 +447,17 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       'Trial',
       'Transit To',
       'Demo'
+    ];
+
+    final List<String> regionOptions = [
+      'East 1',
+      'East 2',
+      'West 1',
+      'West 2',
+      'North 1',
+      'North 2',
+      'South 1',
+      'South 2',
     ];
 
     return Card(
@@ -715,8 +729,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               label1: 'capitalized_vehicle'.tr,
               controller1: controller.capitalizedVehicleController,
               label2: 'driver_status'.tr,
-              controller2: controller
-                  .driverStatusController, // but we show a dropdown below instead of direct text
+              controller2: controller.driverStatusController,
+              // but we show a dropdown below instead of direct text
               isTwoColumn: isTwoColumn,
             ),
 
@@ -753,8 +767,38 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             ),
 
             // Region field (text)
-            buildLabeledField('region'.tr, controller.regionController),
-
+            // Replace the region text field with a dropdown
+// in UI
+            Obx(() => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'region'.tr,
+                      filled: true,
+                      fillColor: Colors.blue[50],
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: controller.region.value.isNotEmpty
+                            ? controller.region.value
+                            : null,
+                        hint: const Text('Select'),
+                        items: regionOptions
+                            .map((v) =>
+                                DropdownMenuItem(value: v, child: Text(v)))
+                            .toList(),
+                        onChanged: (val) =>
+                            controller.region.value = (val ?? '').trim(),
+                      ),
+                    ),
+                  ),
+                ),
+            ),
             buildLabeledField(
                 'purpose_other'.tr, controller.purposeOfTrialController),
             buildLabeledField('reason'.tr, controller.reasonController),
@@ -972,12 +1016,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
   // Helper: label above the field (guarantees label always visible and wraps)
   Widget buildLabeledField(String label, TextEditingController controller,
       {bool enabled = true,
-        bool readOnly = false,
-        TextInputType keyboardType = TextInputType.text,
-        List<TextInputFormatter>? inputFormatters,
-        // Add the new optional boolean here
-        bool isPhone = false}) {
-
+      bool readOnly = false,
+      TextInputType keyboardType = TextInputType.text,
+      List<TextInputFormatter>? inputFormatters,
+      // Add the new optional boolean here
+      bool isPhone = false}) {
     // Conditionally set the keyboard type for phone input
     final inputKeyboardType = isPhone ? TextInputType.phone : keyboardType;
 
@@ -987,13 +1030,13 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       // If isPhone is true, use the custom formatter
       effectiveFormatters.add(IndianPhoneNumberFormatter());
       // Also limit the number of digits that can be entered
-      effectiveFormatters.add(LengthLimitingTextInputFormatter(13)); // +91 (3) + 10 digits (10) = 13
+      effectiveFormatters.add(LengthLimitingTextInputFormatter(
+          13)); // +91 (3) + 10 digits (10) = 13
     }
     // Add any other formatters passed in the argument
     if (inputFormatters != null) {
       effectiveFormatters.addAll(inputFormatters);
     }
-
 
     // The rest of your existing logic remains the same
     final fillColor = enabled
@@ -1014,7 +1057,6 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       });
     }
 
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Column(
@@ -1031,7 +1073,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             // Use the conditionally set keyboard type
             keyboardType: inputKeyboardType,
             // Use the combined list of formatters
-            inputFormatters: effectiveFormatters.isNotEmpty ? effectiveFormatters : null,
+            inputFormatters:
+                effectiveFormatters.isNotEmpty ? effectiveFormatters : null,
             maxLines: 1,
             style: TextStyle(color: Colors.blueAccent[700], fontSize: 16),
             decoration: InputDecoration(
@@ -1039,15 +1082,15 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               filled: true,
               fillColor: fillColor,
               contentPadding:
-              const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide:
-                  BorderSide(color: Colors.blueAccent[100]!, width: 1.2)),
+                      BorderSide(color: Colors.blueAccent[100]!, width: 1.2)),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide:
-                  BorderSide(color: Colors.blueAccent[700]!, width: 1.8)),
+                      BorderSide(color: Colors.blueAccent[700]!, width: 1.8)),
               disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey[400]!, width: 1.2)),
@@ -1427,4 +1470,3 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     ]);
   }
 }
-
