@@ -34,8 +34,6 @@ class Driver {
   String address;
   bool locationEnabled;
   List<String> proofDocs = [];
-
-  /// Store as DateTime for reliable comparisons
   DateTime? drivingLicenseExpiryDate;
 
   Driver({
