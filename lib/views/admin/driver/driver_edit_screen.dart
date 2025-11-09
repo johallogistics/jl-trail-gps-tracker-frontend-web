@@ -112,7 +112,7 @@ class EditDriverScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                urls = await uploadMultipleMediaAndSendUrls();
+                urls = await uploadMultipleToBackblaze();
                 // ignore: avoid_print
                 print("Uploaded URLs: $urls");
               },

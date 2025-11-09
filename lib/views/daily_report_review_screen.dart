@@ -181,7 +181,7 @@ class _DailyReportReviewScreenState extends State<DailyReportReviewScreen> {
               onPressed: uploading ? null : () async {
                 setState(() => uploading = true);
                 try {
-                  final result = await uploadMultipleMediaAndSendUrls();
+                  final result = await uploadMultipleToBackblaze();
                   setState(() => urls = result);
                   Get.snackbar('Upload', 'Uploaded ${result.length} items', backgroundColor: Colors.green, colorText: Colors.white);
                 } catch (e) {
