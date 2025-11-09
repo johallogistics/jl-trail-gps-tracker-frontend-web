@@ -22,6 +22,33 @@ class DriverManagementScreen extends StatefulWidget {
 class _DriverManagementScreenState extends State<DriverManagementScreen> {
   final DriverController driverController = Get.put(DriverController());
 
+  // cache driverId -> docCount
+  final Map<String, int> _docCountCache = {};
+
+  Future<int> _getDocCount(String driverId) async {
+    if (_docCountCache.containsKey(driverId)) {
+      return _docCountCache[driverId]!;
+    }
+    // Call /documents with tiny pageSize just to read "count"
+    final uri = Uri.parse(ApiManager.baseUrl).replace(
+      path: '${Uri.parse(ApiManager.baseUrl).path}/documents',
+      queryParameters: {
+        'driverId': driverId,
+        'page': '1',
+        'pageSize': '1',
+      },
+    );
+    final resp = await http.get(uri);
+    if (resp.statusCode != 200) {
+      _docCountCache[driverId] = 0;
+      return 0;
+    }
+    final parsed = jsonDecode(resp.body) as Map<String, dynamic>;
+    final count = (parsed['count'] as num?)?.toInt() ?? 0;
+    _docCountCache[driverId] = count;
+    return count;
+  }
+
   @override
   void initState() {
     driverController.fetchDrivers();
@@ -71,130 +98,147 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
         var drivers = driverController.drivers;
 
         return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columnSpacing: 12,
-            columns: const [
-              DataColumn(label: Text("ID")),
-              DataColumn(label: Text("Name")),
-              DataColumn(label: Text("Phone")),
-              DataColumn(label: Text("Employee ID")),
-              DataColumn(label: Text("Address")),
-              DataColumn(label: Text("Driving License Expiry")),
-              DataColumn(label: Text("Location Sharing")),
-              DataColumn(label: Text("Download Files")),
-              DataColumn(label: Text("Actions")),
-            ],
-            rows: drivers.map((driver) {
-              return DataRow(cells: [
-                DataCell(Text(driver.id?.toString() ?? "N/A")),
-                DataCell(Text(driver.name ?? '')),
-                DataCell(Text(driver.phone?.toString() ?? '')),
-                DataCell(Text(driver.employeeId ?? '')),
-                DataCell(Text(driver.address ?? '')),
-                DataCell(
-                  Builder(
-                    builder: (context) {
-                      final daysLeft = driver.licenseDaysLeft;
-                      final isExpiringSoon = driver.isLicenseExpiringSoon;
-                      final isExpired = driver.isLicenseExpired;
-                      final expiryText = driver.formattedLicenseExpiry ?? '-';
+          scrollDirection: Axis.vertical,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 12,
+              columns: const [
+                DataColumn(label: Text("ID")),
+                DataColumn(label: Text("Name")),
+                DataColumn(label: Text("Phone")),
+                DataColumn(label: Text("Employee ID")),
+                DataColumn(label: Text("Address")),
+                DataColumn(label: Text("Driving License Expiry")),
+                DataColumn(label: Text("Location Sharing")),
+                DataColumn(label: Text("Download Files")),
+                DataColumn(label: Text("Actions")),
+              ],
+              rows: drivers.map((driver) {
+                return DataRow(cells: [
+                  DataCell(Text(driver.id?.toString() ?? "N/A")),
+                  DataCell(Text(driver.name ?? '')),
+                  DataCell(Text(driver.phone?.toString() ?? '')),
+                  DataCell(Text(driver.employeeId ?? '')),
+                  DataCell(Text(driver.address ?? '')),
+                  DataCell(
+                    Builder(
+                      builder: (context) {
+                        final daysLeft = driver.licenseDaysLeft;
+                        final isExpiringSoon = driver.isLicenseExpiringSoon;
+                        final isExpired = driver.isLicenseExpired;
+                        final expiryText = driver.formattedLicenseExpiry ?? '-';
 
-                      final color = isExpired
-                          ? Colors.red
-                          : isExpiringSoon
-                          ? Colors.orange
-                          : Colors.black;
+                        final color = isExpired
+                            ? Colors.red
+                            : isExpiringSoon
+                            ? Colors.orange
+                            : Colors.black;
 
-                      String? subText;
-                      if (daysLeft != null) {
-                        if (isExpired) {
-                          subText =
-                          'Expired ${daysLeft.abs()} day${daysLeft.abs() == 1 ? '' : 's'} ago';
-                        } else if (isExpiringSoon) {
-                          subText =
-                          'Expiring in $daysLeft day${daysLeft == 1 ? '' : 's'}';
+                        String? subText;
+                        if (daysLeft != null) {
+                          if (isExpired) {
+                            subText =
+                            'Expired ${daysLeft.abs()} day${daysLeft.abs() == 1 ? '' : 's'} ago';
+                          } else if (isExpiringSoon) {
+                            subText =
+                            'Expiring in $daysLeft day${daysLeft == 1 ? '' : 's'}';
+                          }
                         }
-                      }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            expiryText,
-                            style: TextStyle(
-                              color: color,
-                              fontWeight: (isExpired || isExpiringSoon)
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                          if (subText != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                subText,
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 12,
-                                ),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              expiryText,
+                              style: TextStyle(
+                                color: color,
+                                fontWeight: (isExpired || isExpiringSoon)
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
                               ),
                             ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                /// ✅ Toggle Switch for Location Sharing
-                DataCell(
-                  Transform.scale(
-                    scale: 0.7,
-                    child: Switch(
-                      value: driver.locationEnabled ?? false,
-                      onChanged: (value) =>
-                          _toggleLocation(driver.phone ?? '', value),
-                      activeColor: Colors.blueAccent,
-                      inactiveThumbColor: Colors.grey,
-                      inactiveTrackColor: Colors.grey[300],
+                            if (subText != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  subText,
+                                  style: TextStyle(
+                                    color: color,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
-                ),
-                /// ✅ Download Files (from documents table)
-                DataCell(
-                  IconButton(
-                    icon: const Icon(Icons.download, color: Colors.blue),
-                    onPressed: () async {
-                      final id = driver.id;
-                      if (id == null || id.isEmpty) {
-                        Get.snackbar('No ID', 'Driver ID not found',
-                            snackPosition: SnackPosition.BOTTOM);
-                        return;
-                      }
-                      await _downloadDriverDocs(id);
-                    },
+                  /// ✅ Toggle Switch for Location Sharing
+                  DataCell(
+                    Transform.scale(
+                      scale: 0.7,
+                      child: Switch(
+                        value: driver.locationEnabled ?? false,
+                        onChanged: (value) =>
+                            _toggleLocation(driver.phone ?? '', value),
+                        activeColor: Colors.blueAccent,
+                        inactiveThumbColor: Colors.grey,
+                        inactiveTrackColor: Colors.grey[300],
+                      ),
+                    ),
                   ),
-                ),
-                /// ✅ Edit & Delete
-                DataCell(Row(
-                  children: [
+                  /// ✅ Download Files (from documents table)
+                  DataCell(
                     IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _showEditPopup(driver),
+                      icon: const Icon(Icons.download, color: Colors.blue),
+                      onPressed: () async {
+                        final id = driver.id;
+                        if (id == null || id.isEmpty) {
+                          Get.snackbar('No ID', 'Driver ID not found',
+                              snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        await _downloadDriverDocs(id);
+                      },
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => driverController.deleteDriver(driver.id!),
-                    ),
-                  ],
-                )),
-              ]);
-            }).toList(),
+                  ),
+                  /// ✅ Edit & Delete
+                  DataCell(Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showEditPopup(driver),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => driverController.deleteDriver(driver.id!),
+                      ),
+                    ],
+                  )),
+                ]);
+              }).toList(),
+            ),
           ),
         );
       }),
     );
   }
+
+  String buildDownloadUrl(String key, {String? filename, String disposition = 'inline'}) {
+    final uri = Uri.https(
+      'jl-trail-gps-tracker-backend-production.up.railway.app',
+      '/files/download',
+      {
+        'key': key,
+        if (filename != null && filename.isNotEmpty) 'filename': filename,
+        'disposition': disposition, // 'inline' or 'attachment'
+      },
+    );
+    return uri.toString();
+  }
+
 
   /// ✅ Fetch docs for a driver and download each file (uses /documents?driverId=...)
   Future<void> _downloadDriverDocs(String driverId) async {
@@ -212,13 +256,21 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
       // Option A: Download all immediately
       int success = 0;
       for (final d in docs) {
-        final url = (d['url'] as String?) ?? '';
-        if (url.isEmpty) continue;
+        final key = (d['key'] as String?) ?? '';
+        if (key.isEmpty) continue;
+
+        final filename = (d['metadata']?['originalName'] as String?) ?? '';
+        final url = buildDownloadUrl(key, filename: filename, disposition: 'attachment');
+
         try {
-          await downloadFileFromUrl(url);
+          // EITHER: open in new tab (lets backend 302 to signed URL)
+          // openDownload(url);
+
+          // OR: actually download bytes and save (needs CORS headers exposed)
+          await downloadFileFromUrl(url, filename: filename.isEmpty ? null : filename);
           success++;
-        } catch (e) {
-          // ignore failed ones, continue
+        } catch (_) {
+          // continue
         }
       }
 
