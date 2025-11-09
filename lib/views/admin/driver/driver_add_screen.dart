@@ -1,12 +1,12 @@
 // lib/screens/driver_add_popup.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../controllers/admin/driver_management_controller.dart';
 import '../../../models/admin/driver_model.dart';
-import '../../../utils/image_upload_service.dart';
+import '../../../utils/image_upload_service.dart'; // contains uploadMultipleViaProxy(...)
 
 class DriverAddPopup extends StatelessWidget {
   final DriverController controller = Get.put(DriverController());
@@ -16,11 +16,12 @@ class DriverAddPopup extends StatelessWidget {
   final TextEditingController employeeIdController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
 
-  // --- New: expiry date handling ---
+  // Expiry date handling
   final TextEditingController expiryTextController = TextEditingController();
   final Rx<DateTime?> licenseExpiry = Rx<DateTime?>(null);
   final DateFormat _df = DateFormat('dd MMM yyyy');
 
+  // Keep uploaded URLs locally (for preview if needed)
   List<String>? urls;
 
   DriverAddPopup({super.key});
@@ -75,8 +76,6 @@ class DriverAddPopup extends StatelessWidget {
               controller: addressController,
               decoration: const InputDecoration(labelText: 'Address'),
             ),
-
-            // --- New: Driving License Expiry Date (read-only with date picker) ---
             const SizedBox(height: 12),
             Obx(
                   () => TextField(
@@ -112,38 +111,48 @@ class DriverAddPopup extends StatelessWidget {
           ],
         ),
       ),
-
       actions: [
         const SizedBox(height: 20),
+        // Upload using draftId so docs can be claimed when driver is created
         ElevatedButton(
           onPressed: () async {
-            urls = await uploadMultipleToBackblaze();
+            if (controller.draftId.value.isEmpty) {
+              controller.startNewDriverFlow(); // generate a new draftId
+            }
+            urls = await uploadMultipleViaProxy(
+              draftId: controller.draftId.value,
+              folder: 'drivers',
+              // documentTypes: ['AADHAAR','DL','PHOTO'], // optional labels per file
+            );
             // ignore: avoid_print
-            print("URLS::: $urls");
+            print("Uploaded URLs: $urls");
           },
           child: const Text('Upload Files'),
         ),
-        Obx(() => ElevatedButton(
-          onPressed: () async {
-            final driver = Driver(
-              name: nameController.text.trim(),
-              phone: phoneController.text.trim(),
-              employeeId: employeeIdController.text.trim(),
-              address: addressController.text.trim(),
-              locationEnabled: false,
-              proofDocs: urls ?? [],
-              drivingLicenseExpiryDate: licenseExpiry.value, // <-- NEW
-            );
-            await controller.addDriver(driver);
-          },
-          child: controller.isLoading.value
-              ? const SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Text('Add'),
-        )),
+        Obx(
+              () => ElevatedButton(
+            onPressed: () async {
+              final driver = Driver(
+                name: nameController.text.trim(),
+                phone: phoneController.text.trim(),
+                employeeId: employeeIdController.text.trim(),
+                address: addressController.text.trim(),
+                locationEnabled: false,
+                proofDocs: urls ?? [],
+                drivingLicenseExpiryDate: licenseExpiry.value,
+              );
+
+              await controller.addDriver(driver); // controller adds draftId in payload
+            },
+            child: controller.isLoading.value
+                ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : const Text('Add'),
+          ),
+        ),
         TextButton(
           onPressed: () => Get.back(),
           child: const Text('Cancel'),

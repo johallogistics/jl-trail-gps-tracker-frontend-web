@@ -1,9 +1,11 @@
+// lib/screens/edit_driver_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+
 import '../../../controllers/admin/driver_management_controller.dart';
 import '../../../models/admin/driver_model.dart';
-import '../../../utils/image_upload_service.dart';
+import '../../../utils/image_upload_service.dart'; // add the function below to this helper
 
 class EditDriverScreen extends StatelessWidget {
   final Driver driver;
@@ -45,11 +47,9 @@ class EditDriverScreen extends StatelessWidget {
     employeeIdController.text = driver.employeeId;
     addressController.text = driver.address;
 
-    // Initialize license expiry
     if (driver.drivingLicenseExpiryDate != null) {
       licenseExpiry.value = driver.drivingLicenseExpiryDate;
-      expiryDateController.text =
-          _df.format(driver.drivingLicenseExpiryDate!);
+      expiryDateController.text = _df.format(driver.drivingLicenseExpiryDate!);
     }
 
     return Scaffold(
@@ -75,10 +75,7 @@ class EditDriverScreen extends StatelessWidget {
               controller: addressController,
               decoration: const InputDecoration(labelText: 'Address'),
             ),
-
             const SizedBox(height: 12),
-
-            // NEW — Driving License Expiry Date
             Obx(
                   () => TextField(
                 controller: expiryDateController,
@@ -108,11 +105,16 @@ class EditDriverScreen extends StatelessWidget {
                 onTap: () => _pickExpiryDate(context),
               ),
             ),
-
             const SizedBox(height: 20),
+
+            // Upload and attach directly to this driver
             ElevatedButton(
               onPressed: () async {
-                urls = await uploadMultipleToBackblaze();
+                urls = await uploadMultipleViaProxyForDriver(
+                  driverId: driver.id!,      // 👈 attaches immediately
+                  folder: 'drivers',
+                  // documentTypes: ['AADHAAR', 'DL'], // optional labels per file
+                );
                 // ignore: avoid_print
                 print("Uploaded URLs: $urls");
               },
@@ -128,13 +130,10 @@ class EditDriverScreen extends StatelessWidget {
                   phone: phoneController.text.trim(),
                   employeeId: employeeIdController.text.trim(),
                   address: addressController.text.trim(),
-                  locationEnabled: false,
-                  proofDocs: urls ?? driver.proofDocs,
-                  drivingLicenseExpiryDate: licenseExpiry.value, // ✅ NEW
+                  locationEnabled: driver.locationEnabled,
+                  proofDocs: urls ?? driver.proofDocs, // keep existing + new if you want to merge
+                  drivingLicenseExpiryDate: licenseExpiry.value,
                 );
-
-                // ignore: avoid_print
-                print("Updated Driver Data:: ${updatedDriver.toJson()}");
 
                 await controller.updateDriver(driver.id!, updatedDriver);
                 Get.back();

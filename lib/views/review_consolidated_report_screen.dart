@@ -66,7 +66,7 @@ class ReviewFormScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                urls =  await uploadMultipleToBackblaze();
+                urls =  await uploadMultipleViaProxy(folder: 'trip-forms');
                 print(urls);
               },
               style: ElevatedButton.styleFrom(

@@ -1,18 +1,21 @@
 import 'dart:convert';
-
 import 'package:get/get.dart';
 import '../../models/admin/driver_model.dart';
 import '../../repositories/admin/driver_repository.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
+import '../../utils/image_upload_service.dart'; // <— wherever you put the file above
+// or import the functions directly if in the same file
 
 class DriverController extends GetxController {
-
-
   var drivers = <Driver>[].obs;
   var selectedDriver = Rxn<Driver>();
   var service = DriverRepository();
   var isLoading = false.obs;
   var errorMessage = ''.obs;
+
+  // 👇 Manage a draftId for this "create driver" session
+  final RxString draftId = ''.obs;
 
   @override
   void onInit() {
@@ -20,17 +23,49 @@ class DriverController extends GetxController {
     fetchDrivers();
   }
 
-  /// ✅ Add Driver to Backend
+  /// Start a new driver creation flow: generate a fresh draftId
+  void startNewDriverFlow() {
+    draftId.value = const Uuid().v4();
+  }
+
+  /// Upload one or more documents for the pending driver (before driver exists)
+  /// Optionally pass document types to label each file (AADHAAR, DL, PHOTO…)
+  Future<List<String>> uploadDriverDocs({
+    String folder = 'drivers',
+    List<String>? documentTypes,
+  }) async {
+    if (draftId.value.isEmpty) startNewDriverFlow();
+    final urls = await uploadMultipleViaProxy(
+      draftId: draftId.value,
+      folder: folder,
+      documentTypes: documentTypes,
+    );
+    return urls;
+  }
+
+  /// ✅ Create Driver and claim all previously uploaded docs by draftId
   Future<void> addDriver(Driver driver) async {
+    if (draftId.value.isEmpty) {
+      // if user somehow skipped uploads, still generate one so BE is consistent
+      startNewDriverFlow();
+    }
+
     isLoading(true);
 
-    final response = await service.addDriver(driver.toJson());
-    fetchDrivers(); // Refresh list after adding
-    if (response['success']) {
+    // inject draftId into payload so backend can update documents.driverId
+    final payload = driver.toJson();
+    payload['draftId'] = draftId.value;
+
+    final response = await service.addDriver(payload);
+    await fetchDrivers(); // Refresh list after adding
+
+    if (response['success'] == true) {
       Get.back();
-      Get.snackbar('Success', response['message']);
+      Get.snackbar('Success', response['message'] ?? 'Driver created');
+      // reset draftId after success (new flow will get a fresh one)
+      draftId.value = '';
     } else {
-      Get.snackbar('Error', response['message']);
+      Get.snackbar('Error', response['message'] ?? 'Failed to create driver');
     }
 
     isLoading(false);
@@ -38,12 +73,12 @@ class DriverController extends GetxController {
 
   Future<void> fetchDrivers() async {
     try {
-      final response = await DriverRepository.fetchDrivers();  // Full JSON response
-
+      final response = await DriverRepository.fetchDrivers();
       if (response['success'] == true) {
         var driverResponse = DriversResponse.fromJson(response);
-        drivers.value = [];
-        drivers.assignAll(driverResponse.drivers);
+        drivers
+          ..clear()
+          ..assignAll(driverResponse.drivers);
       } else {
         print('Failed to load drivers');
       }
@@ -52,17 +87,14 @@ class DriverController extends GetxController {
     }
   }
 
-  /// Update Driver
   Future<void> updateDriver(String id, Driver updatedDriver) async {
     try {
       isLoading(true);
-      bool success = await service.updateDriver(id, updatedDriver);
+      final success = await service.updateDriver(id, updatedDriver);
 
       if (success) {
-        int index = drivers.indexWhere((driver) => driver.id == id);
-        if (index != -1) {
-          drivers[index] = updatedDriver; // Update list locally
-        }
+        final index = drivers.indexWhere((d) => d.id == id);
+        if (index != -1) drivers[index] = updatedDriver;
         selectedDriver.value = updatedDriver;
         Get.snackbar("Success", "Driver updated successfully!");
       } else {
@@ -76,14 +108,13 @@ class DriverController extends GetxController {
     }
   }
 
-  /// Delete Driver
   Future<void> deleteDriver(String id) async {
     try {
       isLoading(true);
-      bool success = await service.deleteDriver(id);
+      final success = await service.deleteDriver(id);
 
       if (success) {
-        drivers.removeWhere((driver) => driver.id == id);
+        drivers.removeWhere((d) => d.id == id);
         selectedDriver.value = drivers.isNotEmpty ? drivers.first : null;
         Get.snackbar("Deleted", "Driver deleted successfully!");
       } else {
@@ -108,17 +139,11 @@ class DriverController extends GetxController {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {
-          'success': false,
-          'message': 'Failed to update location service'
-        };
+        return {'success': false, 'message': 'Failed to update location service'};
       }
     } catch (e) {
       print("Error toggling location: $e");
-      return {
-        'success': false,
-        'message': 'Error occurred'
-      };
+      return {'success': false, 'message': 'Error occurred'};
     }
   }
 }

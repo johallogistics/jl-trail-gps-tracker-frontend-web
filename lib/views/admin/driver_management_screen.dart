@@ -1,10 +1,16 @@
+// lib/screens/driver_management_screen.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+
+import '../../api/api_manager.dart';
 import '../../controllers/admin/driver_management_controller.dart';
-import '../../utils/file_download_service.dart'; // <- fixed import
+import '../../utils/file_download_service.dart'; // platform-safe downloader
 import 'driver/driver_add_screen.dart';
 import 'driver/driver_edit_screen.dart';
-import 'driver_live_location_screen.dart';
+// import 'driver_live_location_screen.dart'; // if you enable later
 
 class DriverManagementScreen extends StatefulWidget {
   DriverManagementScreen({super.key});
@@ -57,7 +63,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     );
   }
 
-  /// ✅ Driver List with Toggle Location Switch
+  /// ✅ Driver List with Toggle Location Switch + Download Files
   Widget _buildDriverList() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -92,23 +98,22 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                       final daysLeft = driver.licenseDaysLeft;
                       final isExpiringSoon = driver.isLicenseExpiringSoon;
                       final isExpired = driver.isLicenseExpired;
-
                       final expiryText = driver.formattedLicenseExpiry ?? '-';
 
-                      // Choose text color
                       final color = isExpired
                           ? Colors.red
                           : isExpiringSoon
                           ? Colors.orange
                           : Colors.black;
 
-                      // Subtext message (below date)
                       String? subText;
                       if (daysLeft != null) {
                         if (isExpired) {
-                          subText = 'Expired ${daysLeft.abs()} day${daysLeft.abs() == 1 ? '' : 's'} ago';
+                          subText =
+                          'Expired ${daysLeft.abs()} day${daysLeft.abs() == 1 ? '' : 's'} ago';
                         } else if (isExpiringSoon) {
-                          subText = 'Expiring in $daysLeft day${daysLeft == 1 ? '' : 's'}';
+                          subText =
+                          'Expiring in $daysLeft day${daysLeft == 1 ? '' : 's'}';
                         }
                       }
 
@@ -120,8 +125,9 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                             expiryText,
                             style: TextStyle(
                               color: color,
-                              fontWeight:
-                              (isExpired || isExpiringSoon) ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: (isExpired || isExpiringSoon)
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                           if (subText != null)
@@ -143,35 +149,33 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                 /// ✅ Toggle Switch for Location Sharing
                 DataCell(
                   Transform.scale(
-                    scale: 0.7, // ✅ Makes the Switch smaller
+                    scale: 0.7,
                     child: Switch(
                       value: driver.locationEnabled ?? false,
-                      onChanged: (value) => _toggleLocation(driver.phone ?? '', value),
-                      activeColor:
-                      Colors.blueAccent, // ✅ Switch color when enabled
-                      inactiveThumbColor:
-                      Colors.grey, // ✅ Thumb color when disabled
-                      inactiveTrackColor:
-                      Colors.grey[300], // ✅ Track color when disabled
+                      onChanged: (value) =>
+                          _toggleLocation(driver.phone ?? '', value),
+                      activeColor: Colors.blueAccent,
+                      inactiveThumbColor: Colors.grey,
+                      inactiveTrackColor: Colors.grey[300],
                     ),
                   ),
                 ),
-                /// ✅ Download Files Button
+                /// ✅ Download Files (from documents table)
                 DataCell(
-                  (driver.proofDocs != null && driver.proofDocs.isNotEmpty)
-                      ? IconButton(
+                  IconButton(
                     icon: const Icon(Icons.download, color: Colors.blue),
                     onPressed: () async {
-                      for (final url in driver.proofDocs) {
-                        // platform-safe download; implementation chosen by utils/file_download_service.dart
-                        await downloadFileFromUrl(url);
+                      final id = driver.id;
+                      if (id == null || id.isEmpty) {
+                        Get.snackbar('No ID', 'Driver ID not found',
+                            snackPosition: SnackPosition.BOTTOM);
+                        return;
                       }
+                      await _downloadDriverDocs(id);
                     },
-                  )
-                      : const Icon(Icons.insert_drive_file, color: Colors.grey),
+                  ),
                 ),
-
-                /// ✅ Edit & Delete Actions
+                /// ✅ Edit & Delete
                 DataCell(Row(
                   children: [
                     IconButton(
@@ -192,11 +196,71 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     );
   }
 
-  /// ✅ Toggle Location Sharing Service
-  /// ✅ Toggle Location Sharing Service with Local Update
+  /// ✅ Fetch docs for a driver and download each file (uses /documents?driverId=...)
+  Future<void> _downloadDriverDocs(String driverId) async {
+    try {
+      Get.snackbar('Fetching', 'Getting documents...',
+          snackPosition: SnackPosition.BOTTOM, duration: const Duration(milliseconds: 800));
+
+      final docs = await _fetchDriverDocuments(driverId);
+      if (docs.isEmpty) {
+        Get.snackbar('No Files', 'No documents found for this driver',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+
+      // Option A: Download all immediately
+      int success = 0;
+      for (final d in docs) {
+        final url = (d['url'] as String?) ?? '';
+        if (url.isEmpty) continue;
+        try {
+          await downloadFileFromUrl(url);
+          success++;
+        } catch (e) {
+          // ignore failed ones, continue
+        }
+      }
+
+      Get.snackbar(
+        'Download',
+        'Downloaded $success of ${docs.length} file(s)',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      // Option B (if you prefer): show a dialog with a list of files and let user pick
+      // await _showDocsDialog(docs);
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to download: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+    }
+  }
+
+  /// Calls GET {baseUrl}/documents?driverId=<id>&page=1&pageSize=100
+  Future<List<Map<String, dynamic>>> _fetchDriverDocuments(String driverId) async {
+    final uri = Uri.parse(ApiManager.baseUrl)
+        .replace(path: '${Uri.parse(ApiManager.baseUrl).path}/documents', queryParameters: {
+      'driverId': driverId,
+      'page': '1',
+      'pageSize': '100',
+    });
+
+    final resp = await http.get(uri);
+    if (resp.statusCode != 200) {
+      throw Exception('List failed: ${resp.statusCode} ${resp.body}');
+    }
+    final parsed = jsonDecode(resp.body) as Map<String, dynamic>;
+    final items = (parsed['items'] as List).cast<Map<String, dynamic>>();
+    return items;
+  }
+
+  /// ✅ Toggle Location Sharing with Local Update
   Future<void> _toggleLocation(String phone, bool isEnabled) async {
     try {
-      // Show loading indicator
       Get.snackbar(
         "Updating Location",
         "Please wait...",
@@ -204,18 +268,16 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
         duration: const Duration(seconds: 1),
       );
 
-      // ✅ Make API call
       final response = await driverController.toggleLocation(phone, isEnabled);
 
       if (response['success'] == true) {
-        // ✅ Update the local state
-        int index = driverController.drivers.indexWhere((d) => d.phone == phone);
+        final index =
+        driverController.drivers.indexWhere((d) => d.phone == phone);
         if (index != -1) {
           driverController.drivers[index].locationEnabled = isEnabled;
-          driverController.drivers.refresh(); // 🔥 Trigger UI refresh
+          driverController.drivers.refresh();
         }
 
-        // ✅ Show success message
         Get.snackbar(
           "Success",
           response['message'],

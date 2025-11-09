@@ -3,86 +3,50 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // 👈 for MediaType
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 import '../api/api_manager.dart';
 
-const String backendBase = ApiManager.baseUrl;
+const String backendBase = ApiManager.baseUrl; // e.g. https://your-host/api
 
-class PresignResult {
+class UploadedDocument {
   final String id;
   final String key;
-  final String putUrl;
-  final String publicUrl;
-  PresignResult({required this.id, required this.key, required this.putUrl, required this.publicUrl});
-  factory PresignResult.fromJson(Map<String, dynamic> j) =>
-      PresignResult(id: j['id'], key: j['key'], putUrl: j['putUrl'], publicUrl: j['publicUrl']);
-}
+  final String url;         // backend download/stream URL (e.g. /api/files/download?key=...)
+  final String contentType;
+  final int? size;
 
-Future<List<String>> uploadMultipleToBackblaze() async {
-  final result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
+  UploadedDocument({
+    required this.id,
+    required this.key,
+    required this.url,
+    required this.contentType,
+    this.size,
+  });
 
-  if (result == null || result.files.isEmpty) {
-    print('❌ No files selected');
-    return [];
-  }
-
-  // 1) Ask backend for presigned URLs
-  final filesPayload = result.files.map((f) => {
-    'fileName': f.name,
-    'contentType': f.bytes != null ? _guessContentType(f.name) : _guessContentType(f.path ?? f.name),
-    'size': f.size,
-  }).toList();
-
-  final presignResp = await http.post(
-    Uri.parse('$backendBase/documents/presign'),
-    headers: {'Content-Type': 'application/json'},
-    body: '{"files": ${_toJson(filesPayload)}, "userId": "abc123"}', // include your auth userId or remove
+  factory UploadedDocument.fromJson(Map<String, dynamic> j) => UploadedDocument(
+    id: j['id'] as String,
+    key: j['key'] as String,
+    url: j['url'] as String,
+    contentType: (j['contentType'] ?? 'application/octet-stream') as String,
+    size: (j['size'] is int)
+        ? j['size'] as int
+        : (j['size'] is String ? int.tryParse(j['size']) : null),
   );
-
-  if (presignResp.statusCode != 200) {
-    print('❌ Presign failed: ${presignResp.body}');
-    return [];
-  }
-
-  final parsed = _parseJson(presignResp.body) as Map<String, dynamic>;
-  final List<dynamic> results = (parsed['results'] as List<dynamic>);
-
-  final presigned = results.map((e) => PresignResult.fromJson(e)).toList();
-
-  // 2) PUT each file bytes directly to Backblaze S3
-  final uploaded = <String>[];
-  for (int i = 0; i < result.files.length; i++) {
-    final f = result.files[i];
-    final target = presigned[i];
-
-    Uint8List bytes = f.bytes ?? await File(f.path!).readAsBytes();
-    final contentType = _guessContentType(f.name);
-
-    final put = await http.put(
-      Uri.parse(target.putUrl),
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': bytes.length.toString(),
-      },
-      body: bytes,
-    );
-
-    if (put.statusCode == 200) {
-      print('✅ Uploaded: ${target.publicUrl}');
-      uploaded.add(target.publicUrl);
-
-      // 3) (Optional) confirm to backend so it updates size/contentType
-      await http.post(Uri.parse('$backendBase/documents/${target.id}/confirm'));
-    } else {
-      print('❌ Upload failed for ${f.name}: ${put.statusCode} - ${put.body}');
-    }
-  }
-
-  return uploaded;
 }
 
-// Helpers (keep minimal, no extra packages)
+/// Generate a new draftId to group uploads before driver creation
+String newDraftId() => const Uuid().v4();
+
+
+MediaType _mediaType(String contentType) {
+  final parts = contentType.split('/');
+  if (parts.length == 2) return MediaType(parts[0], parts[1]);
+  return  MediaType('application', 'octet-stream');
+}
+
 String _guessContentType(String nameOrPath) {
   final ext = p.extension(nameOrPath).toLowerCase();
   switch (ext) {
@@ -97,34 +61,180 @@ String _guessContentType(String nameOrPath) {
       return 'video/mp4';
     case '.pdf':
       return 'application/pdf';
+    case '.txt':
+      return 'text/plain';
     default:
       return 'application/octet-stream';
   }
 }
 
-// tiny JSON utils to avoid bringing dart:convert usage here explicitly:
-String _toJson(Object o) => _jsonEncoder.convert(o);
-dynamic _parseJson(String s) => _jsonDecoder.convert(s);
-final _jsonEncoder = JsonEncoder();
-final _jsonDecoder = JsonDecoder();
+/// Upload files and attach directly to an existing driver
+Future<List<String>> uploadMultipleViaProxyForDriver({
+  required String driverId,           // 👈 existing driver id
+  String? folder,                     // e.g. 'drivers'
+  List<String>? documentTypes,        // optional labels per file
+}) async {
+  final picked = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
+  if (picked == null || picked.files.isEmpty) return [];
+
+  final uploadedUrls = <String>[];
+
+  for (var i = 0; i < picked.files.length; i++) {
+    final f = picked.files[i];
+    final docType = (documentTypes != null && i < documentTypes.length) ? documentTypes[i] : null;
+
+    final req = http.MultipartRequest('POST', Uri.parse('$backendBase/documents/upload'));
+    req.fields['driverId'] = driverId;      // 👈 attach on server
+    if (folder != null && folder.isNotEmpty) req.fields['folder'] = folder;
+    if (docType != null && docType.isNotEmpty) req.fields['documentType'] = docType;
+
+    final bytes = f.bytes ?? await File(f.path!).readAsBytes();
+    req.files.add(http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: f.name,
+      contentType: _mediaType(_guessContentType(f.name)),
+    ));
+
+    final streamed = await req.send();
+    final respBody = await streamed.stream.bytesToString();
+    if (streamed.statusCode != 201) {
+      // ignore: avoid_print
+      print('❌ Upload failed: ${streamed.statusCode} $respBody');
+      continue;
+    }
+
+    final parsed = jsonDecode(respBody) as Map<String, dynamic>;
+    final docJson = parsed['document'] as Map<String, dynamic>;
+    final url = (docJson['url'] as String?) ?? '';
+    if (url.isNotEmpty) uploadedUrls.add(url);
+  }
+
+  return uploadedUrls;
+}
 
 
-Future<List<Map<String, dynamic>>> listDocuments({int page = 1, int pageSize = 20}) async {
-  final resp = await http.get(Uri.parse('$backendBase/documents?page=$page&pageSize=$pageSize&userId=abc123'));
-  if (resp.statusCode != 200) throw Exception('Failed to list: ${resp.body}');
-  final parsed = _parseJson(resp.body) as Map<String, dynamic>;
+Future<List<String>> uploadMultipleViaProxy({
+  String? folder,
+  String? draftId,
+  String? driverId,
+  List<String>? documentTypes, // same length as picked files if used
+}) async {
+  final picked = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
+  if (picked == null || picked.files.isEmpty) return [];
+
+  final uploadedUrls = <String>[];
+
+  for (var i = 0; i < picked.files.length; i++) {
+    final f = picked.files[i];
+    final docType = (documentTypes != null && i < documentTypes.length) ? documentTypes[i] : null;
+
+    final req = http.MultipartRequest('POST', Uri.parse('$backendBase/documents/upload'));
+
+    // Optional fields – only sent if provided
+    if (folder != null && folder.isNotEmpty) req.fields['folder'] = folder;
+    if (draftId != null && draftId.isNotEmpty) req.fields['draftId'] = draftId;
+    if (driverId != null && driverId.isNotEmpty) req.fields['driverId'] = driverId;
+    if (docType != null && docType.isNotEmpty) req.fields['documentType'] = docType;
+
+    final bytes = f.bytes ?? await File(f.path!).readAsBytes();
+    req.files.add(http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: f.name,
+      contentType: _mediaType(_guessContentType(f.name)),
+    ));
+
+    final streamed = await req.send();
+    final respBody = await streamed.stream.bytesToString();
+    if (streamed.statusCode != 201) {
+      // ignore: avoid_print
+      print('❌ Upload failed: ${streamed.statusCode} $respBody');
+      continue;
+    }
+
+    final parsed = jsonDecode(respBody) as Map<String, dynamic>;
+    final docJson = parsed['document'] as Map<String, dynamic>;
+    final url = (docJson['url'] as String?) ?? '';
+    if (url.isNotEmpty) uploadedUrls.add(url);
+  }
+
+  return uploadedUrls;
+}
+
+/// Upload one file with multipart/form-data to /documents/upload
+Future<UploadedDocument> _uploadSingleFileViaProxy({
+  required String fileName,
+  required Uint8List bytes,
+  required String contentType,
+  String? folder,
+  required String draftId,
+  String? documentType,
+}) async {
+  final uri = Uri.parse('$backendBase/documents/upload');
+
+  final req = http.MultipartRequest('POST', uri);
+
+  // required to claim later
+  req.fields['draftId'] = draftId;
+
+  // optional helpers
+  if (folder != null && folder.isNotEmpty) req.fields['folder'] = folder;
+  if (documentType != null && documentType.isNotEmpty) {
+    req.fields['documentType'] = documentType;
+  }
+
+  final filePart = http.MultipartFile.fromBytes(
+    'file',
+    bytes,
+    filename: fileName,
+    contentType: _mediaType(contentType),
+  );
+  req.files.add(filePart);
+
+  final streamed = await req.send();
+  final respBody = await streamed.stream.bytesToString();
+
+  if (streamed.statusCode != 201) {
+    throw Exception('Upload failed: ${streamed.statusCode} $respBody');
+  }
+
+  final parsed = jsonDecode(respBody) as Map<String, dynamic>;
+  final docJson = (parsed['document'] as Map<String, dynamic>);
+  return UploadedDocument.fromJson(docJson);
+}
+
+/// List documents (uses backend pagination and optional userId filter)
+Future<List<Map<String, dynamic>>> listDocuments(
+    {int page = 1, int pageSize = 20, String? userId}) async {
+  final q = <String, String>{
+    'page': '$page',
+    'pageSize': '$pageSize',
+    if (userId != null && userId.isNotEmpty) 'userId': userId,
+  };
+  final uri = Uri.parse('$backendBase/documents').replace(queryParameters: q);
+  final resp = await http.get(uri);
+
+  if (resp.statusCode != 200) {
+    throw Exception('Failed to list: ${resp.statusCode} ${resp.body}');
+  }
+
+  final parsed = jsonDecode(resp.body) as Map<String, dynamic>;
   final items = (parsed['items'] as List).cast<Map<String, dynamic>>();
   return items;
 }
 
-Future<Uri> getDownloadUrl(String docId) async {
-  final resp = await http.get(Uri.parse('$backendBase/documents/$docId/download'));
-  if (resp.statusCode != 200) throw Exception('Failed: ${resp.body}');
-  final parsed = _parseJson(resp.body) as Map<String, dynamic>;
-  return Uri.parse(parsed['downloadUrl'] as String);
+Uri getDocumentUrlFromItem(Map<String, dynamic> item) {
+  final url = (item['url'] as String?) ?? '';
+  if (url.isEmpty) throw Exception('Document item has no url');
+  return Uri.parse(url);
 }
 
 Future<bool> deleteDocument(String docId) async {
   final resp = await http.delete(Uri.parse('$backendBase/documents/$docId'));
-  return resp.statusCode == 200;
+  return resp.statusCode == 204 || resp.statusCode == 200;
 }
+
+
+
+
