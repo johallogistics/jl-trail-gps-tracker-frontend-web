@@ -1,4 +1,3 @@
-// lib/screens/driver_management_screen.dart
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -8,9 +7,9 @@ import 'package:http/http.dart' as http;
 import '../../api/api_manager.dart';
 import '../../controllers/admin/driver_management_controller.dart';
 import '../../utils/file_download_service.dart'; // platform-safe downloader
+import '../widgets/driver_docs_manager.dart';
 import 'driver/driver_add_screen.dart';
 import 'driver/driver_edit_screen.dart';
-// import 'driver_live_location_screen.dart'; // if you enable later
 
 class DriverManagementScreen extends StatefulWidget {
   DriverManagementScreen({super.key});
@@ -29,9 +28,9 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     if (_docCountCache.containsKey(driverId)) {
       return _docCountCache[driverId]!;
     }
-    // Call /documents with tiny pageSize just to read "count"
-    final uri = Uri.parse(ApiManager.baseUrl).replace(
-      path: '${Uri.parse(ApiManager.baseUrl).path}/documents',
+    final base = Uri.parse(ApiManager.baseUrl);
+    final uri = base.replace(
+      path: '${base.path}/documents',
       queryParameters: {
         'driverId': driverId,
         'page': '1',
@@ -76,26 +75,24 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
           bottom: const TabBar(
             tabs: [
               Tab(text: "Driver List"),
-              // Tab(text: "Live Location"),
             ],
           ),
         ),
         body: TabBarView(
           children: [
             _buildDriverList(),
-            // const DriverLiveLocationScreen(),
           ],
         ),
       ),
     );
   }
 
-  /// ✅ Driver List with Toggle Location Switch + Download Files
+  /// ✅ Driver List with Toggle Location Switch + Manage Docs
   Widget _buildDriverList() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Obx(() {
-        var drivers = driverController.drivers;
+        final drivers = driverController.drivers;
 
         return SingleChildScrollView(
           scrollDirection: Axis.vertical,
@@ -111,7 +108,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                 DataColumn(label: Text("Address")),
                 DataColumn(label: Text("Driving License Expiry")),
                 DataColumn(label: Text("Location Sharing")),
-                DataColumn(label: Text("Download Files")),
+                DataColumn(label: Text("Documents")),
                 DataColumn(label: Text("Actions")),
               ],
               rows: drivers.map((driver) {
@@ -175,7 +172,7 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                       },
                     ),
                   ),
-                  /// ✅ Toggle Switch for Location Sharing
+                  // Toggle Location
                   DataCell(
                     Transform.scale(
                       scale: 0.7,
@@ -189,22 +186,50 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                       ),
                     ),
                   ),
-                  /// ✅ Download Files (from documents table)
+                  // Manage Documents (greyed if none)
                   DataCell(
-                    IconButton(
-                      icon: const Icon(Icons.download, color: Colors.blue),
-                      onPressed: () async {
-                        final id = driver.id;
-                        if (id == null || id.isEmpty) {
-                          Get.snackbar('No ID', 'Driver ID not found',
-                              snackPosition: SnackPosition.BOTTOM);
-                          return;
+                    FutureBuilder<int>(
+                      future: _getDocCount(driver.id ?? ''),
+                      builder: (context, snap) {
+                        final loading =
+                            snap.connectionState == ConnectionState.waiting;
+                        final hasFiles = (snap.data ?? 0) > 0;
+
+                        if (loading) {
+                          return const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          );
                         }
-                        await _downloadDriverDocs(id);
+
+                        return IconButton(
+                          icon: Icon(Icons.folder_open,
+                              color: hasFiles ? Colors.blue : Colors.grey),
+                          tooltip: hasFiles
+                              ? 'Manage Documents'
+                              : 'No files',
+                          onPressed: hasFiles
+                              ? () {
+                            final id = driver.id;
+                            if (id == null || id.isEmpty) {
+                              Get.snackbar('No ID', 'Driver ID not found',
+                                  snackPosition: SnackPosition.BOTTOM);
+                              return;
+                            }
+                            openDocsManager(
+                              id,
+                              driver.name ?? 'Driver',
+                              buildDownloadUrl: buildDownloadUrl,
+                              downloadFileFromUrl: downloadFileFromUrl,
+                            );
+                          }
+                              : null,
+                        );
                       },
                     ),
                   ),
-                  /// ✅ Edit & Delete
+                  // Edit & Delete
                   DataCell(Row(
                     children: [
                       IconButton(
@@ -213,7 +238,8 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => driverController.deleteDriver(driver.id!),
+                        onPressed: () =>
+                            driverController.deleteDriver(driver.id!),
                       ),
                     ],
                   )),
@@ -226,7 +252,12 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     );
   }
 
-  String buildDownloadUrl(String key, {String? filename, String disposition = 'inline'}) {
+  // ✅ Correct backend path here
+  String buildDownloadUrl(
+      String key, {
+        String? filename,
+        String disposition = 'inline',
+      }) {
     final uri = Uri.https(
       'jl-trail-gps-tracker-backend-production.up.railway.app',
       '/files/download',
@@ -239,12 +270,12 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     return uri.toString();
   }
 
-
-  /// ✅ Fetch docs for a driver and download each file (uses /documents?driverId=...)
+  /// If you still want your bulk download helper
   Future<void> _downloadDriverDocs(String driverId) async {
     try {
       Get.snackbar('Fetching', 'Getting documents...',
-          snackPosition: SnackPosition.BOTTOM, duration: const Duration(milliseconds: 800));
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(milliseconds: 800));
 
       final docs = await _fetchDriverDocuments(driverId);
       if (docs.isEmpty) {
@@ -253,25 +284,20 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
         return;
       }
 
-      // Option A: Download all immediately
       int success = 0;
       for (final d in docs) {
         final key = (d['key'] as String?) ?? '';
         if (key.isEmpty) continue;
 
         final filename = (d['metadata']?['originalName'] as String?) ?? '';
-        final url = buildDownloadUrl(key, filename: filename, disposition: 'attachment');
+        final url =
+        buildDownloadUrl(key, filename: filename, disposition: 'attachment');
 
         try {
-          // EITHER: open in new tab (lets backend 302 to signed URL)
-          // openDownload(url);
-
-          // OR: actually download bytes and save (needs CORS headers exposed)
-          await downloadFileFromUrl(url, filename: filename.isEmpty ? null : filename);
+          await downloadFileFromUrl(url,
+              filename: filename.isEmpty ? null : filename);
           success++;
-        } catch (_) {
-          // continue
-        }
+        } catch (_) {}
       }
 
       Get.snackbar(
@@ -281,9 +307,6 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-
-      // Option B (if you prefer): show a dialog with a list of files and let user pick
-      // await _showDocsDialog(docs);
     } catch (e) {
       Get.snackbar('Error', 'Failed to download: $e',
           snackPosition: SnackPosition.BOTTOM,
@@ -292,14 +315,17 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     }
   }
 
-  /// Calls GET {baseUrl}/documents?driverId=<id>&page=1&pageSize=100
-  Future<List<Map<String, dynamic>>> _fetchDriverDocuments(String driverId) async {
-    final uri = Uri.parse(ApiManager.baseUrl)
-        .replace(path: '${Uri.parse(ApiManager.baseUrl).path}/documents', queryParameters: {
-      'driverId': driverId,
-      'page': '1',
-      'pageSize': '100',
-    });
+  Future<List<Map<String, dynamic>>> _fetchDriverDocuments(
+      String driverId) async {
+    final base = Uri.parse(ApiManager.baseUrl);
+    final uri = base.replace(
+      path: '${base.path}/documents',
+      queryParameters: {
+        'driverId': driverId,
+        'page': '1',
+        'pageSize': '100',
+      },
+    );
 
     final resp = await http.get(uri);
     if (resp.statusCode != 200) {
@@ -310,7 +336,6 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
     return items;
   }
 
-  /// ✅ Toggle Location Sharing with Local Update
   Future<void> _toggleLocation(String phone, bool isEnabled) async {
     try {
       Get.snackbar(
@@ -360,7 +385,6 @@ class _DriverManagementScreenState extends State<DriverManagementScreen> {
   }
 }
 
-/// ✅ Show Edit Screen as a Popup Dialog
 void _showEditPopup(driver) {
   Get.dialog(
     Dialog(
