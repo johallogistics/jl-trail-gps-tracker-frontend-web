@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../../api/api_manager.dart';
 import '../../models/shift_log_model.dart';
+import '../../utils/file_download_service_b2.dart';
 
 
 class ShiftLogRepository {
@@ -156,6 +159,32 @@ class ShiftLogRepository {
     }
   }
 
+  Future<bool> deleteMediaForShiftLog(int shiftLogId, String rawUrlOrKey) async {
+    try {
+      // Prefer to send the file key to server. If rawUrl contains query key param -> extract it
+      String fileKey = rawUrlOrKey;
+      try {
+        final uri = Uri.parse(rawUrlOrKey);
+        if (uri.queryParameters.containsKey('key')) {
+          fileKey = uri.queryParameters['key']!;
+        } else if (uri.pathSegments.isNotEmpty) {
+          // maybe last segment is file name; you can adapt
+          fileKey = uri.pathSegments.last;
+        }
+      } catch (_) {}
+
+      // Example delete endpoint: DELETE /dailyReports/:id/media
+      final resp = await ApiManager.delete('dailyReports/$shiftLogId/media', body: {'key': fileKey});
+      if (resp.statusCode == 200 || resp.statusCode == 204) {
+        return true;
+      } else {
+        // optional: log resp.body
+        return false;
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 
 
   Future<ShiftLogResponse?> fetchShiftLogById(String id) async {
@@ -192,6 +221,90 @@ class ShiftLogRepository {
 
     return response.statusCode == 200;
   }
+
+  Future<Map<String, dynamic>> uploadFileToServer({
+    required Uint8List bytes,
+    required String filename,
+    required String mimeType, // e.g. 'image/jpeg' or 'video/mp4' or 'application/pdf'
+  }) async {
+    final token = box.read('token') as String?;
+    final uri = Uri.parse('$baseUrl/documents/upload'); // adjust if your endpoint differs
+
+    final request = http.MultipartRequest('POST', uri);
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    // Attach file. For web, use MultipartFile.fromBytes; for mobile it's okay too.
+    final multipartFile = http.MultipartFile.fromBytes(
+      'file', // field name expected by backend; change if different
+      bytes,
+      filename: filename,
+      contentType: MediaTypeFromString(mimeType),
+    );
+    request.files.add(multipartFile);
+
+    final streamed = await request.send();
+    final resp = await http.Response.fromStream(streamed);
+    if (resp.statusCode != 200 && resp.statusCode != 201) {
+      throw Exception('Upload failed: ${resp.statusCode} ${resp.body}');
+    }
+
+    final json = jsonDecode(resp.body) as Map<String, dynamic>;
+    return json;
+  }
+
+  /// Helper to attach uploaded media (by key or url) to the shift log record
+  /// Expects server endpoint POST /dailyReports/:id/media with body { "url": "...", "key": "..." }
+// ShiftLogRepository (add or replace existing attach method)
+  Future<bool> attachMediaToShiftLog(int shiftLogId, {
+    required String url,
+    String? key,
+    String? documentId,
+  }) async {
+    // Normalized payload
+    final body = <String, dynamic>{ 'url': url };
+    if (key != null && key.isNotEmpty) body['key'] = key;
+    if (documentId != null && documentId.isNotEmpty) body['documentId'] = documentId;
+    try {
+      // fetch current record
+      final getResp = await ApiManager.get('dailyReports/$shiftLogId');
+      if (getResp.statusCode == 200) {
+        final decoded = jsonDecode(getResp.body);
+        // normalize: find payload or document
+        Map<String, dynamic>? payload;
+        if (decoded is Map && decoded.containsKey('payload')) payload = decoded['payload'];
+        // else if (decoded is Map && decoded.containsKey('document')) payload = decoded; // fallback
+        else payload = decoded as Map<String, dynamic>?;
+
+        final currentList = <String>[];
+        if (payload != null) {
+          final existing = payload['imageVideoUrls'] ?? payload['image_video_urls'] ?? payload['media'] ?? payload['documents'];
+          if (existing is List) {
+            for (var e in existing) currentList.add(e?.toString() ?? '');
+          }
+        }
+
+        // avoid duplicates
+        if (!currentList.contains(url)) currentList.add(url);
+
+        final updateBody = {
+          'imageVideoUrls': currentList,
+        };
+
+        final putResp = await ApiManager.put('dailyReports/$shiftLogId', updateBody);
+        if (putResp.statusCode == 200) return true;
+        print('attachMedia: PATCH dailyReports/$shiftLogId -> ${putResp.statusCode} ${putResp.body}');
+      } else {
+        print('attachMedia: GET dailyReports/$shiftLogId -> ${getResp.statusCode} ${getResp.body}');
+      }
+    } catch (e) {
+      print('attachMedia (patch) exception: $e');
+    }
+
+    // all attempts failed
+    return false;
+  }
+
 }
 
 class ShiftLogPage {

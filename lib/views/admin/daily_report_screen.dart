@@ -1,11 +1,19 @@
 // views/admin/daily_report_management.dart
+import 'dart:io';
 import 'dart:math' as math;
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mime/mime.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../api/api_manager.dart';
+import '../../controllers/admin/daily_report_controller.dart';
 import '../../controllers/shift_log_controller.dart';
 import '../../models/shift_log_model.dart';
-import '../../utils/file_download_service.dart';
+import '../../utils/file_download_service.dart' hide downloadFileFromUrl;
+import '../../utils/file_download_service_b2.dart';
 import '../daily_report_screen.dart';
 
 class DailyReportManagement extends StatefulWidget {
@@ -196,6 +204,7 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
                                     DataColumn(label: Text('Hills Road Sweet Spot %')),
                                     DataColumn(label: Text('Trial Allocation')),
                                     DataColumn(label: Text('Media')),
+                                    DataColumn(label: Text('Files')),
                                     DataColumn(label: Text('Actions')),
                                   ],
                                   rows: logs.map((log) {
@@ -251,6 +260,14 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
                                             for (var url in log.imageVideoUrls) {
                                               await downloadFileFromUrl(url);
                                             }
+                                          },
+                                        ),
+                                      ),
+                                      DataCell(
+                                        IconButton(
+                                          icon: const Icon(Icons.more_horiz),
+                                          onPressed: () {
+                                            _showMediaDialog(context, log);
                                           },
                                         ),
                                       ),
@@ -333,6 +350,257 @@ class _DailyReportManagementState extends State<DailyReportManagement> {
       ),
     );
   }
+
+  void _showMediaDialog(BuildContext context, ShiftLog log) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 600),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Text('Media for ${log.vehicleNo ?? log.employeeName}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () => setState(() {}), // placeholder
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: log.imageVideoUrls.isEmpty
+                      ? const Center(child: Text('No media attached'))
+                      : ListView.separated(
+                    itemCount: log.imageVideoUrls.length,
+                    separatorBuilder: (_, __) => const Divider(),
+                    itemBuilder: (ctx, i) {
+                      final raw = log.imageVideoUrls[i] ?? '';
+                      final full = getFullMediaUrl(raw);
+                      final isVideo = full.toLowerCase().endsWith('.mp4') || full.toLowerCase().contains('video');
+
+                      return ListTile(
+                        leading: isVideo
+                            ? const Icon(Icons.videocam)
+                            : (full.isNotEmpty ? Image.network(full, width: 56, height: 56, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.insert_drive_file)) : const Icon(Icons.insert_drive_file)),
+                        title: Text(full.length > 80 ? '${full.substring(0, 80)}...' : full),
+                        subtitle: Text(isVideo ? 'Video' : 'Image / Document'),
+                        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                          IconButton(
+                            tooltip: 'View',
+                            icon: const Icon(Icons.visibility),
+                            onPressed: () => _previewMedia(context, full, isVideo),
+                          ),
+                          IconButton(
+                            tooltip: 'Download',
+                            icon: const Icon(Icons.download),
+                            onPressed: () async {
+                              try {
+                                await downloadFileFromUrl(full);
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+                              }
+                            },
+                          ),
+                          IconButton(
+                            tooltip: 'Delete',
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Delete file'),
+                                  content: const Text('Are you sure you want to delete this file?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                try {
+                                  // Remove locally (UI)
+                                  setState(() {
+                                    log.imageVideoUrls.removeAt(i);
+                                  });
+                                  // Call repository to delete from server. We'll implement below.
+                                  await ShiftLogRepository().deleteMediaForShiftLog(log.id!, raw);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deleted')));
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+                                }
+                              }
+                            },
+                          ),
+                        ]),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Add / Upload Media'),
+                  onPressed: () async {
+                    try {
+                      // 1) Pick files (allow multiple)
+                      final result = await FilePicker.platform.pickFiles(
+                        allowMultiple: true,
+                        withData: kIsWeb, // on web we need bytes; on mobile we'll get path
+                        type: FileType.any,
+                      );
+
+                      if (result == null) return; // user cancelled
+
+                      // Show a simple progress dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => const Dialog(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(width: 12),
+                                Text('Uploading...'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+
+                      // 2) Upload each file and attach to shift log
+                      bool allOk = true;
+                      final repo = ShiftLogRepository();
+                      for (var f in result.files) {
+                        final filename = f.name;
+                        late Uint8List bytes;
+                        if (kIsWeb) {
+                          // On web we get bytes directly
+                          bytes = f.bytes!;
+                        } else {
+                          // On mobile/desktop, read from path
+                          final path = f.path;
+                          if (path == null) {
+                            allOk = false;
+                            continue;
+                          }
+                          final file = File(path);
+                          bytes = await file.readAsBytes();
+                        }
+
+                        // Determine mime type (optional) — basic fallback
+                        final mimeType = lookupMimeType(filename) ?? 'application/octet-stream';
+
+                        // Upload file bytes (this should return the backend shape you showed)
+                        final uploadResp = await repo.uploadFileToServer(
+                          bytes: bytes,
+                          filename: filename,
+                          mimeType: mimeType,
+                        );
+
+                        // --- Parse upload response robustly ---
+                        // Expected shapes:
+                        // { ok: true, document: { id, key, url, ... } }
+                        // or { document: {...} }
+                        // or { url: "...", key: "..." }
+                        Map<String, dynamic>? doc;
+                        if (uploadResp is Map<String, dynamic>) {
+                          if (uploadResp['document'] is Map<String, dynamic>) {
+                            doc = (uploadResp['document'] as Map).cast<String, dynamic>();
+                          } else if (uploadResp['data'] is Map<String, dynamic> && uploadResp['data']['document'] is Map) {
+                            doc = (uploadResp['data']['document'] as Map).cast<String, dynamic>();
+                          } else if (uploadResp.containsKey('url') || uploadResp.containsKey('key') || uploadResp.containsKey('id')) {
+                            doc = uploadResp.cast<String, dynamic>();
+                          }
+                        }
+
+                        if (doc == null) {
+                          print('Upload succeeded but response shape not recognized: $uploadResp');
+                          allOk = false;
+                          continue;
+                        }
+
+                        final rawUrl = (doc['url'] ?? doc['link'] ?? doc['fileUrl'])?.toString() ?? '';
+                        final docKey = (doc['key'] ?? doc['fileKey'])?.toString();
+                        final docId = (doc['id'] ?? doc['documentId'])?.toString();
+
+                        // Build fullUrl (if backend returned relative url like "/files/download?key=...")
+                        final fullUrl = rawUrl.startsWith('http')
+                            ? rawUrl
+                            : '${ApiManager.baseUrl.replaceAll(RegExp(r'/$'), '')}${rawUrl.startsWith('/') ? '' : '/'}$rawUrl';
+
+                        // Attach it to shift log (repo method should call backend to link doc to dailyReport)
+                        final attached = await repo.attachMediaToShiftLog(log.id!, url: fullUrl, key: docKey, documentId: docId);
+
+                        if (!attached) {
+                          allOk = false;
+                          print('Failed to attach uploaded doc to shift log id ${log.id}: url=$fullUrl key=$docKey id=$docId');
+                        } else {
+                          // Update UI immediately (use rawUrl so the UI shows the same path shape returned by server)
+                          setState(() {
+                            log.imageVideoUrls.add(rawUrl);
+                          });
+                        }
+                      }
+
+                      // Close progress dialog (if still open)
+                      if (context.mounted) Navigator.of(context).pop();
+
+                      // Refresh UI: re-fetch logs or the single item
+                      await controller.fetchShiftLogs(force: true);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(allOk ? 'Upload successful' : 'Upload partially failed')),
+                      );
+                    } catch (e) {
+                      // Ensure progress dialog is closed
+                      if (context.mounted) Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload error: $e')));
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _previewMedia(BuildContext context, String fullUrl, bool isVideo) {
+    if (fullUrl.isEmpty) return;
+    // Web: open in new tab
+    if (kIsWeb) {
+      launchUrl(Uri.parse(fullUrl), webOnlyWindowName: '_blank');
+      return;
+    }
+
+    // Simple preview dialog (images)
+    if (!isVideo) {
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          child: InteractiveViewer(
+            child: Image.network(fullUrl, errorBuilder: (_, __, ___) => const SizedBox(width: 300, height: 200, child: Center(child: Text('Preview failed')))),
+          ),
+        ),
+      );
+    } else {
+      // For video preview on mobile you may embed VideoPlayer; for brevity, open system player:
+      launchUrl(Uri.parse(fullUrl), mode: LaunchMode.externalApplication);
+    }
+  }
+
 
   void _confirmDelete(BuildContext context, int id) {
     showDialog(

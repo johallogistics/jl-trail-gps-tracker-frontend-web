@@ -69,4 +69,14 @@ class ApiManager {
     );
   }
 
+  static Future<http.Response> delete(String endpoint, {Map<String, dynamic>? body}) async {
+    final url = Uri.parse('$baseUrl/$endpoint');
+    if (body == null) {
+      return await http.delete(url, headers: _headers());
+    } else {
+      // http.delete supports body param; send JSON
+      return await http.delete(url, headers: _headers(), body: jsonEncode(body));
+    }
+  }
+
 }
