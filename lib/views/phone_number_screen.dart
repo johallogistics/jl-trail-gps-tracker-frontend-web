@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../api/api_manager.dart';
 import '../utils/device_utils.dart';
+import 'home_screen.dart';
 import 'login_screen.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,12 +19,22 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   bool isLoading = false;
 
   String BACKEND_BASE_URL = "jl-trail-gps-tracker-backend-production.up.railway.app";
+  final box = GetStorage();
+
+  // REVIEWER / TEST PHONES
+  // You may include full +91 prefixed numbers or plain 10-digit numbers.
+  // Keep this list updated with the test numbers you created on the server.
+  final List<String> reviewerPhones = const [
+    '+918888888888', // example
+    '+919999999999', // example
+    '8888888888',    // support plain 10-digit input as well
+    '9999999999',
+  ];
 
   @override
   void initState() {
     super.initState();
     // 1. Set the default prefix and position the cursor after it.
-    // We only do this if the controller is empty (to prevent overwriting pre-filled data)
     if (phoneController.text.isEmpty) {
       phoneController.text = '+91';
       phoneController.selection = TextSelection.fromPosition(
@@ -47,17 +58,14 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     const prefix = '+91';
 
     if (!text.startsWith(prefix)) {
-      // If the prefix is deleted, revert the text back to the prefix
       final cursorPosition = phoneController.selection.start;
 
-      // If the cursor is at the beginning, assume they tried to delete the '+'
       if (cursorPosition < prefix.length) {
         phoneController.text = prefix;
         phoneController.selection = TextSelection.fromPosition(
           TextPosition(offset: prefix.length),
         );
       } else {
-        // This handles cases where user pastes something without the prefix
         final newText = prefix + text.replaceAll(RegExp(r'^\+?91'), '').replaceAll(RegExp(r'\D'), '');
         phoneController.value = phoneController.value.copyWith(
           text: newText,
@@ -67,12 +75,39 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     }
   }
 
+  // Normalize phone to full +91XXXXXXXXXX form for matching
+  String _normalizePhone(String raw) {
+    var p = raw.trim();
+    // If user typed just 10 digits, add +91
+    if (RegExp(r'^\d{10}$').hasMatch(p)) {
+      return '+91$p';
+    }
+    // If user typed +91 followed by 10 digits, keep it
+    if (RegExp(r'^\+91\d{10}$').hasMatch(p)) {
+      return p;
+    }
+    // If user typed something like 919xxxxxxxxx, convert to +91...
+    if (RegExp(r'^91\d{10}$').hasMatch(p)) {
+      return '+${p.substring(0)}';
+    }
+    // fallback: return trimmed input
+    return p;
+  }
+
+  bool _isReviewerPhone(String normalizedPlus91) {
+    // allow reviewerPhones to be stored either as +91 form or plain 10-digit
+    final plain10 = normalizedPlus91.replaceFirst('+91', '');
+    return reviewerPhones.contains(normalizedPlus91) || reviewerPhones.contains(plain10);
+  }
 
   Future<void> sendOTP() async {
-    String phone = phoneController.text.trim();
+    String phoneRaw = phoneController.text.trim();
 
-    // The full phone number should be 13 characters (+91 and 10 digits)
-    if (phone.length != 13 || !phone.startsWith('+91')) {
+    // Quick normalization attempt: allow user to enter either +91XXXXXXXXXX or XXXXXXXXXX
+    final normalized = _normalizePhone(phoneRaw);
+
+    // Validate
+    if (!RegExp(r'^\+91\d{10}$').hasMatch(normalized)) {
       Get.snackbar(
         'Error',
         'Enter a valid 10-digit number (e.g., +919876543210)',
@@ -83,6 +118,29 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       return;
     }
 
+    // If this is a reviewer/test account -> bypass OTP sending (client-side)
+    final isReviewer = _isReviewerPhone(normalized);
+    if (isReviewer) {
+      // Save reviewer metadata locally so Splash/other logic can detect it
+      await box.write('phone', normalized);
+      await box.write('isReviewer', true);
+
+      // Optionally you can store a flag so your Splash or server side can skip device lock check
+      Get.snackbar(
+        'Reviewer mode',
+        'Reviewer account detected — bypassing OTP and device checks on client.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      // Navigate to LoginScreen where the reviewer can proceed.
+      // Your server should also allow this phone to login without deviceId restriction, or accept a fixed OTP.
+      Get.to(() => HomeScreen());
+      return;
+    }
+
+    // Normal app flow (send OTP)
     setState(() => isLoading = true);
 
     try {
@@ -90,19 +148,20 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        // phone already has '+91'
-        body: jsonEncode({'phone': phone}),
+        body: jsonEncode({'phone': normalized}),
       );
 
       if (response.statusCode == 200) {
         // Save phone locally
-        final box = GetStorage();
-        box.write('phone', phone);
+        await box.write('phone', normalized);
+        // ensure reviewer flag cleared
+        await box.write('isReviewer', false);
+
         final deviceId = await DeviceUtils.getDeviceId();
         debugPrint('deviceId: $deviceId');
 
-        // Navigate to OTP screen
-        Get.to(() => LoginScreen(phoneNumber: phone));
+        // Navigate to OTP screen (LoginScreen)
+        Get.to(() => LoginScreen(phoneNumber: normalized));
       } else {
         Get.snackbar(
           'Error',
@@ -154,15 +213,13 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
               keyboardType: TextInputType.phone,
               // Apply formatters to restrict input
               inputFormatters: [
-                // 2. Allow only digits
+                // Allow digits and plus sign
                 FilteringTextInputFormatter.allow(RegExp(r'[\d+]')),
-                // 3. Limit total characters to 13 (+91 and 10 digits)
+                // Limit total characters to 13 (+91 and 10 digits)
                 LengthLimitingTextInputFormatter(13),
               ],
               decoration: InputDecoration(
                 labelText: 'Phone Number',
-                // Explicitly show the prefix text in the decoration
-                // prefixText: '+91',
                 prefixIcon: Icon(Icons.phone, color: Colors.blueAccent[700]),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(

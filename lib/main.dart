@@ -8,6 +8,7 @@ import 'package:trail_tracker/utils/app_translations.dart';
 import 'package:trail_tracker/utils/auth_middleware.dart';
 import 'package:trail_tracker/views/admin/admin_dashboard_screen.dart';
 import 'package:trail_tracker/views/admin/admin_login_screen.dart';
+import 'package:trail_tracker/views/admin/privacy_policy_screen.dart';
 import 'package:trail_tracker/views/admin/sign_off_list_screen.dart';
 import 'package:trail_tracker/views/driver/driver_form_screen.dart';
 import 'package:trail_tracker/views/home_screen.dart';
@@ -25,11 +26,6 @@ void main() async {
 
   await GetStorage.init();
 
-  await Supabase.initialize(
-    url: 'https://bkzkunjuoshokpilksxp.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJremt1bmp1b3Nob2twaWxrc3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODEwMzAsImV4cCI6MjA2NjA1NzAzMH0.esUaqXN6y88-BroMRW19SyqjVdBNbl_KeI0bJILyS60',
-  );
   const apiBaseUrl = "https://jl-trail-gps-tracker-backend-production.up.railway.app";
 
   Get.lazyPut<SignOffService>(() => SignOffService(apiBaseUrl));
@@ -45,6 +41,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/splash',
       getPages: [
         GetPage(name: '/login', page: () => AdminLoginScreen()),
+        GetPage(name: '/privacy', page: () => PrivacyPolicyScreen()),
         GetPage(
           name: '/dashboard',
           page: () => DashboardScreen(),

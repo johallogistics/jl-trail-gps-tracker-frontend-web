@@ -24,6 +24,13 @@ class _SplashScreenState extends State<SplashScreen> {
       "jl-trail-gps-tracker-backend-production.up.railway.app";
   final box = GetStorage();
 
+  // Add your reviewer/test phone numbers here (no country code or include it, match what you store)
+  // Example: ['8888888888', '9999999999']
+  final List<String> reviewerPhones = const [
+    '8888888888',
+    '9999999999'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -53,23 +60,35 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
+    // If this is a reviewer/test phone, note it
+    final isReviewer = reviewerPhones.contains(storedPhone);
+    if (isReviewer) {
+      debugPrint('Splash: storedPhone is a reviewer/test account -> bypassing device checks');
+    }
+
     // try to fetch device id from device
     final deviceId = await DeviceUtils.getDeviceId();
     debugPrint('Splash: deviceId=$deviceId');
 
     // If deviceId not available -> request phone & OTP again (re-auth)
-    if (deviceId == null) {
+    if (deviceId == null && !isReviewer) {
       debugPrint('Splash: deviceId null -> go to PhoneNumberScreen');
       Get.off(() => PhoneNumberScreen());
       return;
     }
 
-    // We have stored phone AND deviceId. Now check whether driver exists and deviceId matches.
+    // We have stored phone AND deviceId (or reviewer). Now check whether driver exists and deviceId matches.
     final driver = await _fetchDriverByPhone(storedPhone);
 
     if (driver == null) {
       // driver not found -> contact admin and go to phone screen
       debugPrint('Splash: driver not found for $storedPhone');
+      // If reviewer and driver not found, we can either create a soft fallback to LoginScreen
+      if (isReviewer) {
+        debugPrint('Splash: reviewer account not found on server -> going to LoginScreen for reviewer');
+        Get.off(() => LoginScreen(phoneNumber: storedPhone));
+        return;
+      }
       await _showContactAdminDialog();
       return;
     }
@@ -80,16 +99,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // If driverDeviceId is empty => first-time driver on server (maybe not saved yet)
     // treat as not-registered-device: let OTP flow handle device registration
-    if (driverDeviceId.isEmpty) {
+    if (driverDeviceId.isEmpty && !isReviewer) {
       debugPrint('Splash: driver deviceId empty on server => OTP flow');
       Get.off(() => LoginScreen(phoneNumber: storedPhone));
       return;
     }
 
     // If deviceId matches -> try direct login
-    if (driverDeviceId == deviceId) {
-      debugPrint('Splash: deviceId matched -> trying direct login');
-      final success = await _tryDirectLogin(storedPhone, deviceId);
+    // For reviewer/test phones we *bypass* mismatch and always try direct login first
+    final deviceMatches = (driverDeviceId == deviceId);
+    if (deviceMatches || isReviewer) {
+      if (!deviceMatches && isReviewer) {
+        debugPrint('Splash: reviewer bypass active (device mismatch ignored)');
+      } else {
+        debugPrint('Splash: deviceId matched -> trying direct login');
+      }
+
+      final success = await _tryDirectLogin(storedPhone, deviceId ?? '');
       if (success) {
         debugPrint('Splash: direct login success -> Home');
         Get.offAll(() => HomeScreen());
@@ -145,8 +171,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     return null;
   }
-
-
 
   Future<void> _showContactAdminDialog() async {
     await Get.defaultDialog(
