@@ -371,9 +371,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             buildLabeledField('vehicle_reg_no'.tr, controller.regNoController),
             _threeFieldRow(
               isTwoColumn: isTwoColumn,
-              label1: 'starting_km'.tr,
+              label1: 'odo_start_reading'.tr,
               c1: controller.startingKmController,
-              label2: 'ending_km'.tr,
+              label2: 'odo_end_reading'.tr,
               c2: controller.endingKmController,
               label3: 'total_km'.tr,
               c3: controller.totalKmController,
@@ -601,13 +601,13 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               isTwoColumn: isTwoColumn,
             ),
 
-            _twoFieldRow(
-              label1: 'odo_start_reading'.tr,
-              controller1: controller.vehicleOdometerStartingReadingController,
-              label2: 'odo_end_reading'.tr,
-              controller2: controller.vehicleOdometerEndingReadingController,
-              isTwoColumn: isTwoColumn,
-            ),
+            // _twoFieldRow(
+            //   label1: 'odo_start_reading'.tr,
+            //   controller1: controller.vehicleOdometerStartingReadingController,
+            //   label2: 'odo_end_reading'.tr,
+            //   controller2: controller.vehicleOdometerEndingReadingController,
+            //   isTwoColumn: isTwoColumn,
+            // ),
 
             // Trial KMS + Trial Allocation (dropdown)
             Padding(

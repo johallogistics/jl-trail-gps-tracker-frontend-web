@@ -11,6 +11,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../utils/image_upload_service.dart';
 
+
 class ReviewFormScreen extends StatelessWidget {
   final FormController controller = Get.put(FormController());
   // final FormController controller = Get.find<FormController>();
@@ -297,11 +298,13 @@ class PdfServiceConsolidatedForm {
     final List<int> bytes = await document.save();
     document.dispose();
 
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory != null) {
-      final file = File('$selectedDirectory/FormReview.pdf');
-      await file.writeAsBytes(bytes);
-      print('PDF saved at: ${file.path}');
-    }
+    final Directory dir = await getApplicationDocumentsDirectory();
+    final String filePath = '${dir.path}/FormReview.pdf';
+
+    final File file = File(filePath);
+    await file.writeAsBytes(bytes);
+
+    print('PDF saved at: $filePath');
+
   }
 }

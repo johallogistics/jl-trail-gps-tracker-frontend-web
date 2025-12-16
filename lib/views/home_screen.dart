@@ -7,13 +7,26 @@ import 'package:trail_tracker/views/transit_screen.dart';
 import '../utils/location_service.dart';
 
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
 
+  final LocationPostService locationService = LocationPostService();
   HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    widget.locationService.startTracking();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     // Initialize the TrailController
+
     final TrailController trailController = Get.put(TrailController());
     final LocationPostService locationService = LocationPostService();
 
@@ -64,16 +77,16 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Text('Start Transit'.tr, style: const TextStyle(fontSize: 16)),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => locationService.startTracking(),
-              child: Text('Start Tracking'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: locationService.stopTracking,
-              child: Text('Stop Tracking'),
-            ),
+            // const SizedBox(height: 20),
+            // ElevatedButton(
+            //   onPressed: () => locationService.startTracking(),
+            //   child: Text('Start Work'),
+            // ),
+            // const SizedBox(height: 20),
+            // ElevatedButton(
+            //   onPressed: locationService.stopTracking,
+            //   child: Text('Stop Tracking'),
+            // ),
             const SizedBox(height: 20),
             Obx(() {
               if (trailController.hasActiveTrail.value == null) {

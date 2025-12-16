@@ -200,6 +200,7 @@ class _TransitScreenState extends State<TransitScreen> {
                 minimumSize: const Size(double.infinity, 50),
               ),
             ),
+            const Spacer(),
           ],
         ),
       ),

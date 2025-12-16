@@ -78,7 +78,7 @@ class _DriverLiveTransitScreenState extends State<DriverLiveTransitScreen> {
   }
 
   Future<BitmapDescriptor> _liveIcon() async {
-    if (kIsWeb) return _pinWithLabel('live', 'Live', Colors.blue);
+    if (kIsWeb) return _pinWithLabel('live', 'Live', Colors.yellow);
     return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
   }
 

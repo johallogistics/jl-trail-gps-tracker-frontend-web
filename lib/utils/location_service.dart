@@ -56,7 +56,7 @@ class LocationPostService {
 
       // defensive: ensure phone exists
       if (phone == null || phone.isEmpty) {
-        debugPrint('sendLocationToBackend: phone not found in storage, skipping send');
+        print('sendLocationToBackend: phone not found in storage, skipping send');
         return;
       }
       // normalize phone if needed (ensure + prefix)
@@ -79,9 +79,9 @@ class LocationPostService {
         // if (deviceId != null) 'deviceId': deviceId,
       };
 
-      debugPrint('sendLocationToBackend -> url: $baseUrl/api/driver-locations');
-      debugPrint('sendLocationToBackend -> headers: token present=${token != null}');
-      debugPrint('sendLocationToBackend -> body: ${jsonEncode(payload)}');
+      print('sendLocationToBackend -> url: $baseUrl/api/driver-locations');
+      print('sendLocationToBackend -> headers: token present=${token != null}');
+      print('sendLocationToBackend -> body: ${jsonEncode(payload)}');
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/driver-locations'),
@@ -92,22 +92,22 @@ class LocationPostService {
         body: jsonEncode(payload),
       );
 
-      debugPrint('sendLocationToBackend -> status=${response.statusCode} body=${response.body}');
+      print('sendLocationToBackend -> status=${response.statusCode} body=${response.body}');
 
       if (response.statusCode == 200) {
         // inspect returned JSON (server might return the saved object)
         try {
           final data = jsonDecode(response.body);
-          debugPrint('Location send success, server returned: $data');
+          print('Location send success, server returned: $data');
         } catch (_) {}
       } else if (response.statusCode == 401) {
-        debugPrint('Unauthorized sending location (401). Token may be invalid.');
+        print('Unauthorized sending location (401). Token may be invalid.');
         // optional: try refresh token or force logout
       } else {
-        debugPrint('Failed to send location: ${response.statusCode} ${response.body}');
+        print('Failed to send location: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
-      debugPrint('⚠️ Error sending location: $e');
+      print('⚠️ Error sending location: $e');
     }
   }
 

@@ -1,8 +1,12 @@
 import 'dart:typed_data';
 import 'dart:io';
 import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../views/daily_report_screen.dart';
 
@@ -63,12 +67,40 @@ class PdfService {
     document.dispose();
 
     // Ask user to choose save location
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory == null) {
-      return;
-    }
+    final dir = await getApplicationDocumentsDirectory();
+    final filePath = '${dir.path}/DailyReport.pdf';
 
-    final file = File('$selectedDirectory/DailyReport.pdf');
+    final file = File(filePath);
     await file.writeAsBytes(bytes);
+    await _showPdfSavedDialog(Get.context!, filePath);
+
+    print('PDF saved at: $filePath');
+
   }
 }
+
+Future<void> _showPdfSavedDialog(BuildContext context, String path) async {
+  await showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('PDF Generated'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('File saved at:'),
+          const SizedBox(height: 8),
+          SelectableText(path, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+
