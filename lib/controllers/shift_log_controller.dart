@@ -106,7 +106,6 @@ class ShiftLogController extends GetxController {
     try {
       isLoading(true);
       var log = await _repository.fetchShiftLogById(id);
-      print("log:: ${log?.payload?.coDriverName}");
       selectedShiftLog.value = log;
     } catch (e) {
       print("Error fetching shift log by ID: $e");

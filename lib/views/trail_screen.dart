@@ -120,15 +120,18 @@ class _TrailScreenState extends State<TrailScreen> {
               Get.to(() => const SignOffForm(submitRole: 'DRIVER'),
                   binding: SignOffBinding());
             }),
-            _buildElevatedButton('complete_trail'.tr, Colors.green[600]!, () {
-              _stopTrackingLocation();
-              print('Trail Completed');
-            }),
+            // _buildElevatedButton('complete_trail'.tr, Colors.green[600]!, () {
+            //   _stopTrackingLocation();
+            //   print('Trail Completed');
+            // }),
           ],
         ),
       ),
     );
   }
+
+
+
 
   Widget _buildElevatedButton(
       String text, Color? color, VoidCallback onPressed) {

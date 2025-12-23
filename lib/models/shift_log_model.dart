@@ -1,11 +1,11 @@
 class ShiftLog {
   final int? id;
   // Timing
-  final String shift;
+  // final String shift;
   final String? date;
-  final int otHours;
-  final DateTime inTime;
-  final DateTime outTime;
+  // final int otHours;
+  // final DateTime inTime;
+  // final DateTime outTime;
   final int workingHours;
   final String monthYear;
 
@@ -25,16 +25,16 @@ class ShiftLog {
   final double normalRoadSweetSpotPercent;
   final double hillsRoadSweetSpotPercent;
   final String trialKMPL;
-  final String vehicleOdometerStartingReading;
-  final String vehicleOdometerEndingReading;
-  final String trialKMS;
+  // final String vehicleOdometerStartingReading;
+  // final String vehicleOdometerEndingReading;
+  // final String trialKMS;
   final String trialAllocation; // existing
 
   // NEW allocation (distinct from trialAllocation)
   final String allocation;
 
   // Trial info
-  final String purposeOfTrial;
+  // final String purposeOfTrial;
   final String reason;
   final String dateOfSale;
   final String trailId;
@@ -63,8 +63,8 @@ class ShiftLog {
   final String vehicleNo;
 
   // Driver
-  final String coDriverName;
-  final String coDriverPhoneNo;
+  // final String coDriverName;
+  // final String coDriverPhoneNo;
   final String driverStatus;
 
   // Media
@@ -79,11 +79,11 @@ class ShiftLog {
 
   ShiftLog({
     this.id,
-    required this.shift,
+    // required this.shift,
     required this.date,
-    required this.otHours,
-    required this.inTime,
-    required this.outTime,
+    // required this.otHours,
+    // required this.inTime,
+    // required this.outTime,
     required this.workingHours,
     required this.monthYear,
     required this.vehicleModel,
@@ -101,12 +101,12 @@ class ShiftLog {
     required this.normalRoadSweetSpotPercent,
     required this.hillsRoadSweetSpotPercent,
     required this.trialKMPL,
-    required this.vehicleOdometerStartingReading,
-    required this.vehicleOdometerEndingReading,
-    required this.trialKMS,
+    // required this.vehicleOdometerStartingReading,
+    // required this.vehicleOdometerEndingReading,
+    // required this.trialKMS,
     required this.trialAllocation,
     required this.allocation, // new
-    required this.purposeOfTrial,
+    // required this.purposeOfTrial,
     required this.reason,
     required this.dateOfSale,
     required this.trailId,
@@ -127,8 +127,8 @@ class ShiftLog {
     required this.customerVehicle,
     required this.capitalizedVehicle,
     required this.vehicleNo,
-    required this.coDriverName,
-    required this.coDriverPhoneNo,
+    // required this.coDriverName,
+    // required this.coDriverPhoneNo,
     required this.driverStatus,
     required this.imageVideoUrls,
     required this.inchargeSign,
@@ -172,11 +172,11 @@ class ShiftLog {
 
     return ShiftLog(
       id: json['id'] is int ? json['id'] as int : (json['id'] != null ? int.tryParse(json['id'].toString()) : null),
-      shift: _toString(json['shift']),
+      // shift: _toString(json['shift']),
       date: _toString(json['date']),
-      otHours: _toInt(json['otHours']),
-      inTime: _parseDate(json['inTime']),
-      outTime: _parseDate(json['outTime']),
+      // otHours: _toInt(json['otHours']),
+      // inTime: _parseDate(json['inTime']),
+      // outTime: _parseDate(json['outTime']),
       workingHours: _toInt(json['workingHours']),
       monthYear: _toString(json['monthYear']),
       vehicleModel: _toString(json['vehicleModel']),
@@ -194,12 +194,12 @@ class ShiftLog {
       normalRoadSweetSpotPercent: _toDouble(json['normalRoadSweetSpotPercent']),
       hillsRoadSweetSpotPercent: _toDouble(json['hillsRoadSweetSpotPercent']),
       trialKMPL: _toString(json['trialKMPL']),
-      vehicleOdometerStartingReading: _toString(json['vehicleOdometerStartingReading']),
-      vehicleOdometerEndingReading: _toString(json['vehicleOdometerEndingReading']),
-      trialKMS: _toString(json['trialKMS']),
+      // vehicleOdometerStartingReading: _toString(json['vehicleOdometerStartingReading']),
+      // vehicleOdometerEndingReading: _toString(json['vehicleOdometerEndingReading']),
+      // trialKMS: _toString(json['trialKMS']),
       trialAllocation: _toString(json['trialAllocation']),
       allocation: _toString(json['allocation']), // new field
-      purposeOfTrial: _toString(json['purposeOfTrial']),
+      // purposeOfTrial: _toString(json['purposeOfTrial']),
       reason: _toString(json['reason']),
       dateOfSale: _toString(json['dateOfSale']),
       trailId: _toString(json['trailId']),
@@ -220,8 +220,8 @@ class ShiftLog {
       customerVehicle: _toString(json['customerVehicle']),
       capitalizedVehicle: _toString(json['capitalizedVehicle']),
       vehicleNo: _toString(json['vehicleNo']),
-      coDriverName: _toString(json['coDriverName']),
-      coDriverPhoneNo: _toString(json['coDriverPhoneNo']),
+      // coDriverName: _toString(json['coDriverName']),
+      // coDriverPhoneNo: _toString(json['coDriverPhoneNo']),
       driverStatus: _toString(json['driverStatus']),
       imageVideoUrls: (json['imageVideoUrls'] as List?)?.map((e) => e.toString()).toList() ?? [],
       inchargeSign: _toString(json['inchargeSign']),
@@ -234,11 +234,11 @@ class ShiftLog {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'shift': shift,
+      // 'shift': shift,
       'date':date,
-      'otHours': otHours,
-      'inTime': inTime.toIso8601String(),
-      'outTime': outTime.toIso8601String(),
+      // 'otHours': otHours,
+      // 'inTime': inTime.toIso8601String(),
+      // 'outTime': outTime.toIso8601String(),
       'workingHours': workingHours,
       'monthYear': monthYear,
       'vehicleModel': vehicleModel,
@@ -256,12 +256,12 @@ class ShiftLog {
       'normalRoadSweetSpotPercent': normalRoadSweetSpotPercent,
       'hillsRoadSweetSpotPercent': hillsRoadSweetSpotPercent,
       'trialKMPL': trialKMPL,
-      'vehicleOdometerStartingReading': vehicleOdometerStartingReading,
-      'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
-      'trialKMS': trialKMS,
+      // 'vehicleOdometerStartingReading': vehicleOdometerStartingReading,
+      // 'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
+      // 'trialKMS': trialKMS,
       'trialAllocation': trialAllocation,
       'allocation': allocation, // new
-      'purposeOfTrial': purposeOfTrial,
+      // 'purposeOfTrial': purposeOfTrial,
       'reason': reason,
       'dateOfSale': dateOfSale,
       'trailId': trailId,
@@ -282,8 +282,8 @@ class ShiftLog {
       'customerVehicle': customerVehicle,
       'capitalizedVehicle': capitalizedVehicle,
       'vehicleNo': vehicleNo,
-      'coDriverName': coDriverName,
-      'coDriverPhoneNo': coDriverPhoneNo,
+      // 'coDriverName': coDriverName,
+      // 'coDriverPhoneNo': coDriverPhoneNo,
       'driverStatus': driverStatus,
       'imageVideoUrls': imageVideoUrls,
       'inchargeSign': inchargeSign,
@@ -295,16 +295,16 @@ class ShiftLog {
 
   Map<String, dynamic> toJsonWithoutId() {
     final map = {
-      'shift': shift,
+      // 'shift': shift,
       'date': date,
-      'otHours': otHours,
+      // 'otHours': otHours,
       'vehicleModel': vehicleModel,
       'regNo': regNo,
       'chassisNo': chassisNo,
       'gvw': gvw,
       'payload': payload,
-      'inTime': inTime.toIso8601String(),
-      'outTime': outTime.toIso8601String(),
+      // 'inTime': inTime.toIso8601String(),
+      // 'outTime': outTime.toIso8601String(),
       'workingHours': workingHours,
       'startingKm': startingKm,
       'endingKm': endingKm,
@@ -319,13 +319,13 @@ class ShiftLog {
       'normalRoadSweetSpotPercent': normalRoadSweetSpotPercent,
       'hillsRoadSweetSpotPercent': hillsRoadSweetSpotPercent,
       'trialKMPL': trialKMPL,
-      'vehicleOdometerStartingReading': vehicleOdometerStartingReading,
-      'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
-      'trialKMS': trialKMS,
+      // 'vehicleOdometerStartingReading': vehicleOdometerStartingReading,
+      // 'vehicleOdometerEndingReading': vehicleOdometerEndingReading,
+      // 'trialKMS': trialKMS,
       'trialAllocation': trialAllocation,
       'allocation': allocation, // <-- ✅ NEW FIELD
-      'coDriverName': coDriverName,
-      'coDriverPhoneNo': coDriverPhoneNo,
+      // 'coDriverName': coDriverName,
+      // 'coDriverPhoneNo': coDriverPhoneNo,
       'inchargeSign': inchargeSign,
       'employeeName': employeeName,
       'employeePhoneNo': employeePhoneNo,
@@ -343,7 +343,7 @@ class ShiftLog {
       'capitalizedVehicle': capitalizedVehicle,
       'vehicleNo': vehicleNo,
       'driverStatus': driverStatus,
-      'purposeOfTrial': purposeOfTrial,
+      // 'purposeOfTrial': purposeOfTrial,
       'reason': reason,
       'dateOfSale': dateOfSale,
       'trailId': trailId,

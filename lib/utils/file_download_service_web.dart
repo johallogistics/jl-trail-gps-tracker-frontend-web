@@ -65,10 +65,10 @@ Future<String?> exportShiftLogsToCsvImpl(List<ShiftLog> logs, {String filename =
     // 'Available at',
     'Driver Status',
     'Capitalized Vehicle/Customer Vehicle',
-    'Purpose of Trial',
+    // 'Purpose of Trial',
     'Reason (If Others)',
     'Date Of Sale',
-    'VECV reporting Person',
+    'VECV Incharge',
     'Dealer Name',
     'Customer Name',
     'Customer Driver (Name / No)',
@@ -113,7 +113,7 @@ Future<String?> exportShiftLogsToCsvImpl(List<ShiftLog> logs, {String filename =
       // _fmt(log.presentLocation), // Available at
       _fmt(log.driverStatus), // Driver Status (explicit)
       _fmt(log.capitalizedVehicleOrCustomerVehicle), // Capitalized Vehicle/Customer Vehicle
-      _fmt(log.purposeOfTrial), // Purpose of Trial
+      // _fmt(log.purposeOfTrial), // Purpose of Trial
       _fmt(log.reason), // Reason (If Others)
       _fmt(log.dateOfSale), // Date Of Sale
       _fmt(log.vecvReportingPerson), // VECV reporting Person
@@ -127,11 +127,11 @@ Future<String?> exportShiftLogsToCsvImpl(List<ShiftLog> logs, {String filename =
       _fmt(log.gvw), // GVW
       _fmt(log.payload), // Payload
       _fmt(log.previousKmpl), // Previous KMPL
-      _fmt(log.trialKMPL), // Trial KMPL
+      // _fmt(log.trialKMPL), // Trial KMPL
       _fmt(log.clusterKmpl), // Cluster KMPL
-      _fmt(log.vehicleOdometerStartingReading), // Vehicle Odometer - Starting
-      _fmt(log.vehicleOdometerEndingReading), // Vehicle Odometer - Ending
-      _fmt(log.trialKMS), // Trial KMS
+      _fmt(log.startingKm), // Vehicle Odometer - Starting
+      _fmt(log.endingKm), // Vehicle Odometer - Ending
+      _fmt(log.totalKm), // Trial KMS
       _fmt(log.highwaySweetSpotPercent), // HighWay Sweet Spot %
       _fmt(log.normalRoadSweetSpotPercent), // Normal Road Sweet Spot %
       _fmt(log.hillsRoadSweetSpotPercent), // Hills Road Sweet Spot %

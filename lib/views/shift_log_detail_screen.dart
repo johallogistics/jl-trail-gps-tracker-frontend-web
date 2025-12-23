@@ -40,7 +40,7 @@ class ShiftLogDetailScreen extends StatelessWidget {
               final log = controller.selectedShiftLog.value!;
               return Card(
                 child: ListTile(
-                  title: Text('Shift: ${log.payload.shift}'),
+                  // title: Text('Shift: ${log.payload.shift}'),
                   subtitle: Text('Vehicle: ${log.payload.vehicleModel}, KM: ${log.payload.totalKm}'),
                 ),
               );

@@ -53,8 +53,8 @@ class PdfService {
     addText('From: ${controller.fromPlaceController.text}');
     addText('To: ${controller.toPlaceController.text}');
     addText('Fuel Avg: ${controller.fuelAvgController.text}');
-    addText('Co-Driver: ${controller.coDriverNameController.text}');
-    addText('Co-Driver Phone: ${controller.coDriverPhoneController.text}');
+    // addText('Co-Driver: ${controller.coDriverNameController.text}');
+    // addText('Co-Driver Phone: ${controller.coDriverPhoneController.text}');
 
     // Add Signature if Available
     if (signature != null) {

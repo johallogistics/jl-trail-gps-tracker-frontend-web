@@ -15,7 +15,10 @@ class SignOffController extends GetxController {
 
   /// UI / State
   var isSubmitting = false.obs;
-  var editingId = RxnInt(); // null = new draft, non-null = existing
+  var editingId = RxnInt();
+
+  /// ✅ Trial completion checkbox flag
+  final isTrialCompleted = false.obs;
 
   final box = GetStorage();
 
@@ -30,6 +33,7 @@ class SignOffController extends GetxController {
 
   /// Data models
   final vehicleDetails = CustomerVehicleDetails();
+
   final participants = <ParticipantSignOff>[
     ParticipantSignOff(role: 'CSM'),
     ParticipantSignOff(role: 'PC'),
@@ -39,7 +43,7 @@ class SignOffController extends GetxController {
 
   final tripDetails = <TripDetail>[
     for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)
-  ].obs; // last trip = overall
+  ].obs;
 
   final photos = <Photo>[].obs;
 
@@ -54,33 +58,35 @@ class SignOffController extends GetxController {
       beforeTrialsFE: double.tryParse(beforeTrialsFE.text),
       afterTrialsFE: double.tryParse(afterTrialsFE.text),
       customerVehicleDetails: vehicleDetails,
-      issuesFoundDuringTrial: issuesFoundDuringTrial.text.trim().isEmpty
-          ? null
-          : issuesFoundDuringTrial.text.trim(),
+      issuesFoundDuringTrial:
+      issuesFoundDuringTrial.text.trim().isEmpty ? null : issuesFoundDuringTrial.text.trim(),
       trialRemarks: trialRemarks.text.trim().isEmpty ? null : trialRemarks.text.trim(),
       customerRemarks: customerRemarks.text.trim().isEmpty ? null : customerRemarks.text.trim(),
       createdByRole: createdByRole,
       tripDetails: tripDetails,
       participants: participants,
       photos: photos,
+
+      /// 🔴 checkbox-driven submit
       isSubmitted: isFinal,
-      driverId: (box.read('driverId') as String?) ?? participants.firstWhereOrNull((p) => p.role == 'DRIVER')?.id?.toString() ?? '',
+      trialCompleted: isTrialCompleted.value,
+
+      driverId: (box.read('driverId') as String?) ??
+          participants.firstWhereOrNull((p) => p.role == 'DRIVER')?.id?.toString() ??
+          '',
     );
   }
 
-
   /// ------------------------
-  /// Load / Create Draft
+  /// Load / Draft
   /// ------------------------
   Future<void> loadOrCreateDraft() async {
     try {
       final draft = await api.getDraftForDriver();
-      print("DRAFT::: data ${draft?.customerName}");
       if (draft != null) {
         _loadFromModel(draft);
       } else {
-        final initial = buildPayload('DRIVER', isFinal: false);
-        final newDraft = await api.createDraftForDriver(initial);
+        final newDraft = await api.createDraftForDriver(buildPayload('DRIVER'));
         _loadFromModel(newDraft);
       }
     } catch (e) {
@@ -94,65 +100,23 @@ class SignOffController extends GetxController {
     customerExpectedFE.text = data.customerExpectedFE?.toString() ?? '';
     beforeTrialsFE.text = data.beforeTrialsFE?.toString() ?? '';
     afterTrialsFE.text = data.afterTrialsFE?.toString() ?? '';
+
     vehicleDetails.copyFrom(data.customerVehicleDetails);
+
     issuesFoundDuringTrial.text = data.issuesFoundDuringTrial ?? '';
     trialRemarks.text = data.trialRemarks ?? '';
     customerRemarks.text = data.customerRemarks ?? '';
 
-    // trips
-    tripDetails.assignAll(data.tripDetails?.isNotEmpty == true
-        ? data.tripDetails!
-        : [for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)]);
+    isTrialCompleted.value = data.trialCompleted ?? false;
 
-    // participants & photos
+    tripDetails.assignAll(
+      data.tripDetails?.isNotEmpty == true
+          ? data.tripDetails!
+          : [for (int i = 1; i <= 6; i++) TripDetail(tripNo: i)],
+    );
+
     participants.assignAll(data.participants ?? participants);
     photos.assignAll(data.photos ?? []);
-  }
-
-  /// ------------------------
-  /// Trip Utilities
-  /// ------------------------
-  bool _hasAnyTripData(TripDetail t) {
-    return (t.tripRoute?.isNotEmpty ?? false) ||
-        (t.tripStartDate?.isNotEmpty ?? false) ||
-        (t.tripEndDate?.isNotEmpty ?? false) ||
-        t.startKm != null ||
-        t.endKm != null ||
-        t.tripKm != null ||
-        t.maxSpeed != null ||
-        t.weightGVW != null ||
-        t.actualDieselLtrs != null ||
-        t.totalTripKm != null ||
-        t.actualFE != null;
-  }
-
-  TripDetail? get latestEditedTrip {
-    final edited = tripDetails
-        .where((t) => (t.tripNo ?? 0) != 6 && _hasAnyTripData(t))
-        .toList()
-      ..sort((a, b) => (a.tripNo ?? 0).compareTo(b.tripNo ?? 0));
-    return edited.isEmpty ? null : edited.last;
-  }
-
-  bool _isTripComplete(TripDetail t) {
-    return t.tripRoute?.isNotEmpty == true &&
-        t.tripStartDate?.isNotEmpty == true &&
-        t.tripEndDate?.isNotEmpty == true &&
-        t.startKm != null &&
-        t.endKm != null &&
-        t.tripKm != null;
-  }
-
-  bool canDriverSubmitNow() {
-    // overall trip (tripNo 6) must be fully completed
-    final overallTrip = tripDetails.firstWhere((t) => t.tripNo == 6);
-    if (!_isTripComplete(overallTrip)) return false;
-
-    // ensure no earlier trip is incomplete
-    for (var t in tripDetails.where((t) => t.tripNo != 6)) {
-      if (_hasAnyTripData(t) && !_isTripComplete(t)) return false;
-    }
-    return true;
   }
 
   /// ------------------------
@@ -165,16 +129,15 @@ class SignOffController extends GetxController {
         editingId.value = draft.id;
       }
       await api.update(editingId.value!, buildPayload('DRIVER'));
-      Get.snackbar('Saved', 'Progress saved successfully');
+      Get.snackbar('Saved', 'Progress saved');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save: $e');
+      Get.snackbar('Error', e.toString());
     }
   }
 
   Future<SignOff?> submit({required String createdByRole}) async {
-    // Only enforce check if role == DRIVER
-    if (createdByRole == 'DRIVER' && !canDriverSubmitNow()) {
-      Get.snackbar('Incomplete', 'Please complete all trip data before submitting');
+    if (createdByRole == 'DRIVER' && !isTrialCompleted.value) {
+      Get.snackbar('Incomplete', 'Please mark trial as completed');
       return null;
     }
 
@@ -188,10 +151,8 @@ class SignOffController extends GetxController {
       final payload = buildPayload(createdByRole, isFinal: true);
       final result = await api.submit(editingId.value!, payload, createdByRole);
 
-      if (result != null) {
-        _loadFromModel(result);
-      }
-      Get.snackbar('Success', 'Trip submitted successfully');
+      if (result != null) _loadFromModel(result);
+      Get.snackbar('Success', 'Trip submitted');
       return result;
     } catch (e) {
       Get.snackbar('Error', e.toString());
@@ -204,26 +165,13 @@ class SignOffController extends GetxController {
   Future<SignOff?> updateAsAdmin() async {
     isSubmitting.value = true;
     try {
-      if (editingId.value == null) {
-        Get.snackbar('Error', 'No record selected to update');
-        return null;
-      }
-
-      final payload = buildPayload('ADMIN', isFinal: false); // <-- never submit
-      final result = await api.update(editingId.value!, payload);
-
-      if (result != null) {
-        _loadFromModel(result);
-      }
-      Get.snackbar('Success', 'Record updated successfully');
+      if (editingId.value == null) return null;
+      final result = await api.update(editingId.value!, buildPayload('ADMIN'));
+      if (result != null) _loadFromModel(result);
+      Get.snackbar('Success', 'Updated');
       return result;
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-      return null;
     } finally {
       isSubmitting.value = false;
     }
   }
-
-
 }

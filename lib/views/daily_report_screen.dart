@@ -29,8 +29,8 @@ class DailyReportController extends GetxController {
   final fromPlaceController = TextEditingController();
   final toPlaceController = TextEditingController();
   final fuelAvgController = TextEditingController();
-  final coDriverNameController = TextEditingController();
-  final coDriverPhoneController = TextEditingController();
+  // final coDriverNameController = TextEditingController();
+  // final coDriverPhoneController = TextEditingController();
 
   // Employee details
   final employeeNameController = TextEditingController();
@@ -52,9 +52,9 @@ class DailyReportController extends GetxController {
   final normalRoadSweetSpotPercentController = TextEditingController();
   final hillsRoadSweetSpotPercentController = TextEditingController();
   final trialKMPLController = TextEditingController();
-  final vehicleOdometerStartingReadingController = TextEditingController();
-  final vehicleOdometerEndingReadingController = TextEditingController();
-  final trialKMSController = TextEditingController();
+  // final vehicleOdometerStartingReadingController = TextEditingController();
+  // final vehicleOdometerEndingReadingController = TextEditingController();
+  // final trialKMSController = TextEditingController();
   final trialAllocationController = TextEditingController();
   final allocationController = TextEditingController();
   final vecvReportingPersonController = TextEditingController();
@@ -67,7 +67,7 @@ class DailyReportController extends GetxController {
   final capitalizedVehicleController = TextEditingController();
   final vehicleNoController = TextEditingController();
   final driverStatusController = TextEditingController();
-  final purposeOfTrialController = TextEditingController();
+  // final purposeOfTrialController = TextEditingController();
   final reasonController = TextEditingController();
   final dateOfSaleController = TextEditingController();
   final trailIdController = TextEditingController();
@@ -128,8 +128,8 @@ class DailyReportController extends GetxController {
     fromPlaceController.dispose();
     toPlaceController.dispose();
     fuelAvgController.dispose();
-    coDriverNameController.dispose();
-    coDriverPhoneController.dispose();
+    // coDriverNameController.dispose();
+    // coDriverPhoneController.dispose();
 
     employeeNameController.dispose();
     employeePhoneController.dispose();
@@ -149,9 +149,9 @@ class DailyReportController extends GetxController {
     normalRoadSweetSpotPercentController.dispose();
     hillsRoadSweetSpotPercentController.dispose();
     trialKMPLController.dispose();
-    vehicleOdometerStartingReadingController.dispose();
-    vehicleOdometerEndingReadingController.dispose();
-    trialKMSController.dispose();
+    // vehicleOdometerStartingReadingController.dispose();
+    // vehicleOdometerEndingReadingController.dispose();
+    // trialKMSController.dispose();
     trialAllocationController.dispose();
     vecvReportingPersonController.dispose();
     dealerNameController.dispose();
@@ -163,7 +163,7 @@ class DailyReportController extends GetxController {
     capitalizedVehicleController.dispose();
     vehicleNoController.dispose();
     driverStatusController.dispose();
-    purposeOfTrialController.dispose();
+    // purposeOfTrialController.dispose();
     reasonController.dispose();
     dateOfSaleController.dispose();
     trailIdController.dispose();
@@ -387,11 +387,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             ),
             buildLabeledField('fuel_avg'.tr, controller.fuelAvgController,
                 keyboardType: TextInputType.number),
-            buildLabeledField(
-                'co_driver_name'.tr, controller.coDriverNameController),
-            buildLabeledField(
-                'co_driver_phone'.tr, controller.coDriverPhoneController,
-                keyboardType: TextInputType.phone),
+            // buildLabeledField(
+            //     'co_driver_name'.tr, controller.coDriverNameController),
+            // buildLabeledField(
+            //     'co_driver_phone'.tr, controller.coDriverPhoneController,
+            //     keyboardType: TextInputType.phone),
           ],
         ),
       ),
@@ -615,10 +615,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               child: isTwoColumn
                   ? Row(
                       children: [
-                        Expanded(
-                            child: buildLabeledField(
-                                'trial_kms'.tr, controller.trialKMSController)),
-                        const SizedBox(width: 12),
+                        // Expanded(
+                        //     child: buildLabeledField(
+                        //         'trial_kms'.tr, controller.trialKMSController)),
+                        // const SizedBox(width: 12),
                         Expanded(
                           child: InputDecorator(
                             decoration: InputDecoration(
@@ -656,9 +656,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                     )
                   : Column(
                       children: [
-                        buildLabeledField(
-                            'trial_kms'.tr, controller.trialKMSController),
-                        const SizedBox(height: 6),
+                        // buildLabeledField(
+                        //     'trial_kms'.tr, controller.trialKMSController),
+                        // const SizedBox(height: 6),
                         InputDecorator(
                           decoration: InputDecoration(
                             labelText: 'trial_allocation'.tr,
@@ -799,8 +799,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                   ),
                 ),
             ),
-            buildLabeledField(
-                'purpose_other'.tr, controller.purposeOfTrialController),
+            // buildLabeledField(
+            //     'purpose_other'.tr, controller.purposeOfTrialController),
             buildLabeledField('reason'.tr, controller.reasonController),
             buildLabeledField(
                 'date_of_sale'.tr, controller.dateOfSaleController),
@@ -893,11 +893,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     final shiftLog = ShiftLog(
       id: widget.existingLog?.id,
       date: controller.date,
-      shift: controller.shiftController.text.trim(),
+      // shift: controller.shiftController.text.trim(),
       region: controller.regionController.text.trim(),
-      otHours: _parseInt(controller.otHoursController.text.trim()),
-      inTime: _tryParseDateTime(controller.inTimeController.text.trim()),
-      outTime: _tryParseDateTime(controller.outTimeController.text.trim()),
+      // otHours: _parseInt(controller.otHoursController.text.trim()),
+      // inTime: _tryParseDateTime(controller.inTimeController.text.trim()),
+      // outTime: _tryParseDateTime(controller.outTimeController.text.trim()),
       workingHours: _parseInt(controller.workingHoursController.text.trim()),
       monthYear:
           '${controller.monthController.text.trim()}-${controller.yearController.text.trim()}',
@@ -922,14 +922,14 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       hillsRoadSweetSpotPercent: _parseDouble(
           controller.hillsRoadSweetSpotPercentController.text.trim()),
       trialKMPL: controller.trialKMPLController.text.trim(),
-      vehicleOdometerStartingReading:
-          controller.vehicleOdometerStartingReadingController.text.trim(),
-      vehicleOdometerEndingReading:
-          controller.vehicleOdometerEndingReadingController.text.trim(),
-      trialKMS: controller.trialKMSController.text.trim(),
+      // vehicleOdometerStartingReading:
+      //     controller.vehicleOdometerStartingReadingController.text.trim(),
+      // vehicleOdometerEndingReading:
+      //     controller.vehicleOdometerEndingReadingController.text.trim(),
+      // trialKMS: controller.trialKMSController.text.trim(),
       trialAllocation: controller.trialAllocationController.text.trim(),
-      coDriverName: controller.coDriverNameController.text.trim(),
-      coDriverPhoneNo: controller.coDriverPhoneController.text.trim(),
+      // coDriverName: controller.coDriverNameController.text.trim(),
+      // coDriverPhoneNo: controller.coDriverPhoneController.text.trim(),
       inchargeSign: controller.inchargeSignController.text.trim(),
       employeeName: controller.employeeNameController.text.trim(),
       vecvReportingPerson: controller.vecvReportingPersonController.text.trim(),
@@ -951,8 +951,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       capitalizedVehicle: controller.capitalizedVehicleController.text.trim(),
       vehicleNo: controller.vehicleNoController.text.trim(),
       driverStatus: controller.driverStatusController.text.trim(),
-      purposeOfTrial: controller.selectedPurposeOfTrial.value ??
-          controller.purposeOfTrialController.text.trim(),
+      // purposeOfTrial: controller.selectedPurposeOfTrial.value ??
+      //     controller.purposeOfTrialController.text.trim(),
       reason: controller.reasonController.text.trim(),
       dateOfSale: controller.dateOfSaleController.text.trim(),
       trailId: controller.trailIdController.text.trim(),
@@ -1173,10 +1173,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     controller.presentLocationController.text =
         src['presentLocation']?.toString() ?? '';
     controller.fuelAvgController.text = src['fuelAvg']?.toString() ?? '';
-    controller.coDriverNameController.text =
-        src['coDriverName']?.toString() ?? '';
-    controller.coDriverPhoneController.text =
-        src['coDriverPhoneNo']?.toString() ?? '';
+    // controller.coDriverNameController.text =
+    //     src['coDriverName']?.toString() ?? '';
+    // controller.coDriverPhoneController.text =
+    //     src['coDriverPhoneNo']?.toString() ?? '';
 
     // employee fields
     controller.employeeNameController.text =
@@ -1217,11 +1217,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     controller.hillsRoadSweetSpotPercentController.text =
         src['hillsRoadSweetSpotPercent']?.toString() ?? '';
     controller.trialKMPLController.text = src['trialKMPL']?.toString() ?? '';
-    controller.vehicleOdometerStartingReadingController.text =
-        src['vehicleOdometerStartingReading']?.toString() ?? '';
-    controller.vehicleOdometerEndingReadingController.text =
-        src['vehicleOdometerEndingReading']?.toString() ?? '';
-    controller.trialKMSController.text = src['trialKMS']?.toString() ?? '';
+    // controller.vehicleOdometerStartingReadingController.text =
+    //     src['vehicleOdometerStartingReading']?.toString() ?? '';
+    // controller.vehicleOdometerEndingReadingController.text =
+    //     src['vehicleOdometerEndingReading']?.toString() ?? '';
+    // controller.trialKMSController.text = src['trialKMS']?.toString() ?? '';
 
     // trial / trialAllocation (auto-fill)
     // set both the older trialAllocationController and the new trailAllocationController
@@ -1324,13 +1324,13 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
   // Helper: populate controllers from a ShiftLog model (edit mode)
   // -----------------------
   void _populateFromShiftLog(ShiftLog log) {
-    controller.shiftController.text = log.shift;
+    // controller.shiftController.text = log.shift;
     controller.date = log.date ?? "NA";
-    controller.otHoursController.text = log.otHours.toString();
+    // controller.otHoursController.text = log.otHours.toString();
     controller.vehicleModelController.text = log.vehicleModel;
     controller.regNoController.text = log.regNo;
-    controller.inTimeController.text = log.inTime.toIso8601String();
-    controller.outTimeController.text = log.outTime.toIso8601String();
+    // controller.inTimeController.text = log.inTime.toIso8601String();
+    // controller.outTimeController.text = log.outTime.toIso8601String();
     controller.workingHoursController.text = log.workingHours.toString();
     controller.startingKmController.text = log.startingKm.toString();
     controller.endingKmController.text = log.endingKm.toString();
@@ -1339,8 +1339,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     controller.toPlaceController.text = log.toPlace;
     controller.presentLocationController.text = log.presentLocation;
     controller.fuelAvgController.text = log.fuelAvg.toString();
-    controller.coDriverNameController.text = log.coDriverName;
-    controller.coDriverPhoneController.text = log.coDriverPhoneNo;
+    // controller.coDriverNameController.text = log.coDriverName;
+    // controller.coDriverPhoneController.text = log.coDriverPhoneNo;
 
     // employee fields
     controller.employeeNameController.text = log.employeeName;
@@ -1374,11 +1374,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     controller.hillsRoadSweetSpotPercentController.text =
         log.hillsRoadSweetSpotPercent.toString();
     controller.trialKMPLController.text = log.trialKMPL;
-    controller.vehicleOdometerStartingReadingController.text =
-        log.vehicleOdometerStartingReading;
-    controller.vehicleOdometerEndingReadingController.text =
-        log.vehicleOdometerEndingReading;
-    controller.trialKMSController.text = log.trialKMS;
+    // controller.vehicleOdometerStartingReadingController.text =
+    //     log.vehicleOdometerStartingReading;
+    // controller.vehicleOdometerEndingReadingController.text =
+    //     log.vehicleOdometerEndingReading;
+    // controller.trialKMSController.text = log.trialKMS;
     controller.trialAllocationController.text = log.trialAllocation;
     controller.vecvReportingPersonController.text = log.vecvReportingPerson;
     controller.dealerNameController.text = log.dealerName;
@@ -1391,7 +1391,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     controller.capitalizedVehicleController.text = log.capitalizedVehicle;
     controller.vehicleNoController.text = log.vehicleNo;
     controller.driverStatusController.text = log.driverStatus;
-    controller.purposeOfTrialController.text = log.purposeOfTrial;
+    // controller.purposeOfTrialController.text = log.purposeOfTrial;
     controller.reasonController.text = log.reason;
     controller.dateOfSaleController.text = log.dateOfSale;
     controller.trailIdController.text = log.trailId;
@@ -1402,7 +1402,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     // set reactive dropdowns
     controller.selectedVehicleType.value =
         log.capitalizedVehicleOrCustomerVehicle;
-    controller.selectedPurposeOfTrial.value = log.purposeOfTrial;
+    // controller.selectedPurposeOfTrial.value = log.purposeOfTrial;
 
     // recalc totals if needed
     controller.recalcTotalKm();

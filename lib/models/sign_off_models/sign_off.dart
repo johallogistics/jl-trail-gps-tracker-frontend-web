@@ -94,6 +94,7 @@ class SignOff {
   List<ParticipantSignOff> participants;
   List<Photo> photos;
   bool? isSubmitted;
+  final bool? trialCompleted;
 
   SignOff({
     this.id,
@@ -111,11 +112,13 @@ class SignOff {
     this.participants = const [],
     this.photos = const [],
     this.isSubmitted,
+    this.trialCompleted,
   });
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'customerName': customerName,
+    'trialCompleted': trialCompleted,
     'customerExpectedFE': customerExpectedFE,
     'beforeTrialsFE': beforeTrialsFE,
     'afterTrialsFE': afterTrialsFE,
@@ -134,6 +137,7 @@ class SignOff {
   factory SignOff.fromJson(Map<String, dynamic> j) => SignOff(
     id: j['id'] as int?,
     customerName: j['customerName'] as String?,
+    trialCompleted: j['trialCompleted'],
     customerExpectedFE: (j['customerExpectedFE'] as num?)?.toDouble(),
     beforeTrialsFE: (j['beforeTrialsFE'] as num?)?.toDouble(),
     afterTrialsFE: (j['afterTrialsFE'] as num?)?.toDouble(),

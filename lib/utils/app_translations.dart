@@ -167,7 +167,7 @@ class AppTranslations extends Translations {
       'odo_end_reading': 'Odometer End Reading',
       'trial_kms': 'Trial KMS',
       'trial_allocation': 'Trial Allocation',
-      'vecv_reporting_person': 'VECV Reporting Person',
+      'vecv_reporting_person': 'VECV In-charge Person',
       'dealer_name': 'Dealer Name',
       'customer_driver_no': 'Customer Driver No',
       'capitalized_customer_vehicle': 'Capitalized / Customer Vehicle',
@@ -320,7 +320,7 @@ class AppTranslations extends Translations {
 
       // NEW KEYS (Tamil)
       'capitalized_or_customer_vehicle': 'முதன்மை/வாடிக்கையாளர் வாகனம்',
-      'purpose_of_trial': 'சோதனையின் நோக்கம்',
+      // 'purpose_of_trial': 'சோதனையின் நோக்கம்',
       'purpose_other': 'நோக்கம் (மற்றவை)',
       'incharge_signature': 'பொறுப்பாளர் கையொப்பம்',
       'auto_fill': 'தானாக நிரப்புக',
@@ -502,7 +502,7 @@ class AppTranslations extends Translations {
 
       // NEW KEYS (Hindi)
       'capitalized_or_customer_vehicle': 'पूंजीகர்த / ग्राहक वाहन',
-      'purpose_of_trial': 'परीक्षण का उद्देश्य',
+      // 'purpose_of_trial': 'परीक्षण का उद्देश्य',
       'purpose_other': 'उद्देश्य (अन्य)',
       'incharge_signature': 'प्रभारी हस्ताक्षर',
       'auto_fill': 'ऑटो फ़िल',
@@ -686,7 +686,7 @@ class AppTranslations extends Translations {
 
       // NEW KEYS (Telugu)
       'capitalized_or_customer_vehicle': 'పూర్తిగా / కస్టమర్ వాహనం',
-      'purpose_of_trial': 'ట్రయల్ లక్ష్యం',
+      // 'purpose_of_trial': 'ట్రయల్ లక్ష్యం',
       'purpose_other': 'లక్ష్యం (ఇతరులు)',
       'incharge_signature': 'ఇన్-చార్జ్ సంతకం',
       'auto_fill': 'ఆటో-ఫిల్',
@@ -843,7 +843,7 @@ class AppTranslations extends Translations {
 
       // NEW KEYS (Malayalam)
       'capitalized_or_customer_vehicle': 'പട്ടിക/ഉപഭോക്തൃ വാഹനം',
-      'purpose_of_trial': 'പരിശോധനയുടെ ഉദ്ദേശ്യം',
+      // 'purpose_of_trial': 'പരിശോധനയുടെ ഉദ്ദേശ്യം',
       'purpose_other': 'ഉദ്ദേശ്യം (മറ്റുള്ളവ)',
       'incharge_signature': 'ഇൻ-ചാർജ് സിഗ്നേച്ചർ',
       'auto_fill': 'ഓട്ടോ ഫിൽ',
@@ -998,7 +998,7 @@ class AppTranslations extends Translations {
 
       // NEW KEYS (Kannada)
       'capitalized_or_customer_vehicle': 'ಉದ್ಯಮ/ಗ್ರಾಹಕ ವಾಹನ',
-      'purpose_of_trial': 'ಟ್ರಯಲ್ ಉದ್ದೇಶ',
+      // 'purpose_of_trial': 'ಟ್ರಯಲ್ ಉದ್ದೇಶ',
       'purpose_other': 'ಉದ್ದೇಶ (ಇತರೆ)',
       'incharge_signature': 'ಜವಾಬ್ದಾರಿ ಸಹಿ',
       'auto_fill': 'ಸ್ವಯಂ ಪೂರ್ಣಗೊಳಿಸಿ',
